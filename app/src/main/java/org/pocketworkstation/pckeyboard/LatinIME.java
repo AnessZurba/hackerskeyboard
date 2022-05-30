@@ -16,6 +16,8 @@
 
 package org.pocketworkstation.pckeyboard;
 
+import static org.pocketworkstation.pckeyboard.KeyboardSwitcher.FULL_MODE_5_ROW;
+import static org.pocketworkstation.pckeyboard.KeyboardSwitcher.FULL_MODE_5_ROW_COMPACT;
 import org.pocketworkstation.pckeyboard.LatinIMEUtil.RingCharBuffer;
 
 import com.google.android.voiceime.VoiceRecognitionTrigger;
@@ -437,9 +439,11 @@ public class LatinIME extends InputMethodService implements
     }
 
     private int getKeyboardModeNum(int origMode, int override) {
-        if (mNumKeyboardModes == 2 && origMode == 2) origMode = 1; // skip "compact". FIXME!
+        if (!sKeyboardSettings.compactModeEnabled && origMode == FULL_MODE_5_ROW)
+            origMode = FULL_MODE_5_ROW_COMPACT; // skip "compact".
         int num = (origMode + override) % mNumKeyboardModes;
-        if (mNumKeyboardModes == 2 && num == 1) num = 2; // skip "compact". FIXME!
+        if (!sKeyboardSettings.compactModeEnabled && num == FULL_MODE_5_ROW_COMPACT)
+            num = FULL_MODE_5_ROW; // skip "compact".
         return num;
     }
     
@@ -447,7 +451,7 @@ public class LatinIME extends InputMethodService implements
         //Log.i(TAG, "setFullKeyboardOptions " + fullInPortrait + " " + heightPercentPortrait + " " + heightPercentLandscape);
         boolean isPortrait = isPortrait();
         int kbMode;
-        mNumKeyboardModes = sKeyboardSettings.compactModeEnabled ? 3 : 2; // FIXME!
+        mNumKeyboardModes = sKeyboardSettings.compactModeEnabled ? 4 : 3; // FIXME!
         if (isPortrait) {
             kbMode = getKeyboardModeNum(sKeyboardSettings.keyboardModePortrait, mKeyboardModeOverridePortrait);
         } else {

@@ -40,6 +40,12 @@ public class KeyboardSwitcher implements
     public static final int MODE_EMAIL = 5;
     public static final int MODE_IM = 6;
     public static final int MODE_WEB = 7;
+    
+    // Keyboard full layout mode
+    public static final int FULL_MODE_4_ROW = 0;
+    public static final int FULL_MODE_5_ROW_COMPACT = 1;
+    public static final int FULL_MODE_5_ROW = 2;
+    public static final int FULL_MODE_5_ROW_SWAP_CTRL_ESC = 3;
 
     // Main keyboard layouts without the settings key
     public static final int KEYBOARDMODE_NORMAL = R.id.mode_normal;
@@ -78,10 +84,12 @@ public class KeyboardSwitcher implements
     private static final int KBD_SYMBOLS = R.xml.kbd_symbols;
     private static final int KBD_SYMBOLS_SHIFT = R.xml.kbd_symbols_shift;
     private static final int KBD_QWERTY = R.xml.kbd_qwerty;
-    private static final int KBD_FULL = R.xml.kbd_full;
-    private static final int KBD_FULL_FN = R.xml.kbd_full_fn;
     private static final int KBD_COMPACT = R.xml.kbd_compact;
     private static final int KBD_COMPACT_FN = R.xml.kbd_compact_fn;
+    private static final int KBD_FULL = R.xml.kbd_full;
+    private static final int KBD_FULL_FN = R.xml.kbd_full_fn;
+    private static final int KBD_FULL_SWAP = R.xml.kbd_full_swap;
+    private static final int KBD_FULL_SWAP_FN = R.xml.kbd_full_swap_fn;
 
     private LatinKeyboardView mInputView;
     private static final int[] ALPHABET_MODES = { KEYBOARDMODE_NORMAL,
@@ -177,18 +185,22 @@ public class KeyboardSwitcher implements
     }
 
     private KeyboardId makeSymbolsId(boolean hasVoice) {
-        if (mFullMode == 1) {
+        switch (mFullMode) {
+        case FULL_MODE_5_ROW_COMPACT:
             return new KeyboardId(KBD_COMPACT_FN, KEYBOARDMODE_SYMBOLS, true, hasVoice);
-        } else if (mFullMode == 2) {
+        case FULL_MODE_5_ROW:
             return new KeyboardId(KBD_FULL_FN, KEYBOARDMODE_SYMBOLS, true, hasVoice);
+        case FULL_MODE_5_ROW_SWAP_CTRL_ESC:
+            return new KeyboardId(KBD_FULL_SWAP_FN, KEYBOARDMODE_SYMBOLS, true, hasVoice);
+        default:
+            return new KeyboardId(KBD_SYMBOLS,
+                    mHasSettingsKey ? KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY
+                            : KEYBOARDMODE_SYMBOLS, false, hasVoice);
         }
-        return new KeyboardId(KBD_SYMBOLS,
-                mHasSettingsKey ? KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY
-                        : KEYBOARDMODE_SYMBOLS, false, hasVoice);
     }
 
     private KeyboardId makeSymbolsShiftedId(boolean hasVoice) {
-        if (mFullMode > 0)
+        if (isFullMode())
             return null;
         return new KeyboardId(KBD_SYMBOLS_SHIFT,
                 mHasSettingsKey ? KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY
@@ -354,20 +366,26 @@ public class KeyboardSwitcher implements
     }
 
     public boolean isFullMode() {
-        return mFullMode > 0;
+        return mFullMode != FULL_MODE_4_ROW;
     }
 
     private KeyboardId getKeyboardId(int mode, int imeOptions, boolean isSymbols) {
         boolean hasVoice = hasVoiceButton(isSymbols);
-        if (mFullMode > 0) {
+        if (isFullMode()) {
             switch (mode) {
             case MODE_TEXT:
             case MODE_URL:
             case MODE_EMAIL:
             case MODE_IM:
             case MODE_WEB:
-                return new KeyboardId(mFullMode == 1 ? KBD_COMPACT : KBD_FULL,
-                        KEYBOARDMODE_NORMAL, true, hasVoice);
+                switch (mFullMode) {
+                case FULL_MODE_5_ROW_COMPACT:
+                    return new KeyboardId(KBD_COMPACT, KEYBOARDMODE_NORMAL, true, hasVoice);
+                case FULL_MODE_5_ROW:
+                    return new KeyboardId(KBD_FULL, KEYBOARDMODE_NORMAL, true, hasVoice);
+                case FULL_MODE_5_ROW_SWAP_CTRL_ESC:
+                    return new KeyboardId(KBD_FULL_SWAP, KEYBOARDMODE_NORMAL, true, hasVoice);
+                }
             }
         }
         // TODO: generalize for any KeyboardId
@@ -424,7 +442,7 @@ public class KeyboardSwitcher implements
             return false;
         }
         int currentMode = mCurrentId.mKeyboardMode;
-        if (mFullMode > 0 && currentMode == KEYBOARDMODE_NORMAL)
+        if (isFullMode() && currentMode == KEYBOARDMODE_NORMAL)
             return true;
         for (Integer mode : ALPHABET_MODES) {
             if (currentMode == mode) {
@@ -475,7 +493,7 @@ public class KeyboardSwitcher implements
         //Log.i(TAG, "toggleShift isAlphabetMode=" + isAlphabetMode() + " mSettings.fullMode=" + mSettings.fullMode);
         if (isAlphabetMode())
             return;
-        if (mFullMode > 0) {
+        if (isFullMode()) {
             boolean shifted = mInputView.isShiftAll();
             mInputView.setShiftState(shifted ? Keyboard.SHIFT_OFF : Keyboard.SHIFT_ON);
             return;

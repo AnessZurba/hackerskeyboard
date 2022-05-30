@@ -327,6 +327,7 @@
         <item>4 ряда (Имбирный пряник)</item>
         <item>5 рядов (Компактная)</item>
         <item>5 рядов (Полная)</item>
+        <item>5 рядов (Полная, поменять местами клавиши Ctrl/Esc)</item>
     </string-array>
 
     <string name="title_ctrl_a_override">Настройки Ctrl-A</string>

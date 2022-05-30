@@ -192,7 +192,7 @@
             android:keyLabel="@string/key_ad11_main"
             android:shiftLabel="@string/key_ad11_shift"
             android:popupKeyboard="@xml/kbd_popup_template"
-            android:popupCharacters="@string/key_ad11_alt" />res/xml/kbd_full.xml
+            android:popupCharacters="@string/key_ad11_alt" />
         <Key
             android:keyLabel="@string/key_ad12_main"
             android:shiftLabel="@string/key_ad12_shift"
