@@ -1,30 +1,97 @@
 #!/usr/bin/env python3
-# Builds app/src/main/assets/wordlists/<lang>.txt from an AOSP LatinIME wordlist, e.g.
-#   curl -s "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/refs/heads/main/dictionaries/en_US_wordlist.combined.gz?format=TEXT" | base64 -d > en_US.gz
-#   python3 tools/mkwordlist.py en_US.gz app/src/main/assets/wordlists/en.txt 60000
-import gzip, re, sys
-src, dst, limit = sys.argv[1], sys.argv[2], int(sys.argv[3])
-best = {}
-ok = re.compile(r"^[a-z']+$")
-with gzip.open(src, 'rt', encoding='utf-8') as f:
-    for line in f:
-        if not line.startswith(' word='):
+"""Builds app/src/main/assets/wordlists/<lang>.txt for adaptive key targets.
+
+Output: one "word<TAB>f" line per word, sorted by word, where f is a 0-255 log-scale
+frequency (the app weights a word by 2^(f/10)). Words are NFKC-normalised, lower-cased
+and stripped of combining marks (Arabic tashkeel, Hebrew niqqud) and tatweel, the same
+normalisation the keyboard applies to the text before the cursor.
+
+Two input formats are understood:
+
+  aosp   AOSP LatinIME "combined" wordlists (Apache 2.0), e.g.
+           curl -s "https://android.googlesource.com/platform/packages/inputmethods/LatinIME/+/refs/heads/main/dictionaries/en_US_wordlist.combined.gz?format=TEXT" | base64 -d > en_US.gz
+  counts "word count" lines, e.g. Hermit Dave's FrequencyWords (content CC BY-SA 4.0)
+           https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/ar/ar_50k.txt
+
+Usage:
+  mkwordlist.py aosp   en_US.gz   latin  60000 app/src/main/assets/wordlists/en.txt
+  mkwordlist.py aosp   iw.gz      hebrew 60000 app/src/main/assets/wordlists/he.txt
+  mkwordlist.py counts ar_50k.txt arabic 50000 app/src/main/assets/wordlists/ar.txt
+"""
+import gzip
+import math
+import sys
+import unicodedata
+
+SOURCES = {
+    'en': 'AOSP LatinIME dictionaries/en_US_wordlist.combined.gz (Apache License 2.0)',
+    'he': 'AOSP LatinIME dictionaries/iw_wordlist.combined.gz (Apache License 2.0)',
+    'ar': "Hermit Dave's FrequencyWords, content/2018/ar/ar_50k.txt, from OpenSubtitles "
+          "(https://github.com/hermitdave/FrequencyWords). Licensed CC BY-SA 4.0; "
+          "this derived list is distributed under the same licence",
+}
+
+
+def in_script(ch, script):
+    if script == 'latin':
+        return ch == "'" or ('a' <= ch <= 'z') or (ch.isalpha() and 'LATIN' in unicodedata.name(ch, ''))
+    if script == 'arabic':
+        return ch.isalpha() and 'ARABIC' in unicodedata.name(ch, '')
+    if script == 'hebrew':
+        return ch.isalpha() and 'HEBREW' in unicodedata.name(ch, '')
+    raise SystemExit('unknown script ' + script)
+
+
+def normalise(word):
+    word = unicodedata.normalize('NFKC', word).lower()
+    return ''.join(c for c in word
+                   if not unicodedata.category(c).startswith('M') and c != 'ـ')
+
+
+def read_aosp(path):
+    opener = gzip.open if path.endswith('.gz') else open
+    with opener(path, 'rt', encoding='utf-8') as f:
+        for line in f:
+            if not line.startswith(' word='):
+                continue
+            fields = dict(kv.split('=', 1) for kv in line.strip().split(',') if '=' in kv)
+            if 'offensive' in fields.get('flags', '') or fields.get('not_a_word') == 'true':
+                continue
+            yield fields['word'], int(fields['f'])
+
+
+def read_counts(path):
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            parts = line.split()
+            if len(parts) != 2:
+                continue
+            count = int(parts[1])
+            if count > 0:
+                yield parts[0], min(255, round(10 * math.log2(count)))
+
+
+def main():
+    fmt, src, script, limit, dst = sys.argv[1:6]
+    lang = dst.rsplit('/', 1)[-1].split('.')[0]
+    best = {}
+    reader = read_aosp if fmt == 'aosp' else read_counts
+    for raw, freq in reader(src):
+        w = normalise(raw)
+        if not w or w.strip("'") != w or not all(in_script(c, script) for c in w):
             continue
-        fields = dict(kv.split('=', 1) for kv in line.strip().split(',') if '=' in kv)
-        if 'offensive' in fields.get('flags', '') or fields.get('not_a_word') == 'true':
-            continue
-        w = fields['word'].lower()
-        if not ok.match(w) or w.strip("'") != w:
-            continue
-        fr = int(fields['f'])
-        if fr > best.get(w, -1):
-            best[w] = fr
-top = sorted(best.items(), key=lambda kv: -kv[1])[:limit]
-top.sort()
-with open(dst, 'w', encoding='utf-8') as out:
-    out.write('# English word frequencies for adaptive key targets.\n')
-    out.write('# Derived from AOSP LatinIME dictionaries/en_US_wordlist.combined.gz (Apache License 2.0).\n')
-    out.write('# Format: word<TAB>frequency (0-255, log scale), sorted by word.\n')
-    for w, fr in top:
-        out.write(f'{w}\t{fr}\n')
-print(len(best), len(top))
+        if freq > best.get(w, -1):
+            best[w] = freq
+    top = sorted(best.items(), key=lambda kv: -kv[1])[:int(limit)]
+    top.sort()
+    with open(dst, 'w', encoding='utf-8') as out:
+        out.write('# Word frequencies for adaptive key targets, generated by tools/mkwordlist.py.\n')
+        out.write('# Source: %s.\n' % SOURCES.get(lang, src))
+        out.write('# Format: word<TAB>frequency (0-255, log scale), sorted by word.\n')
+        for w, freq in top:
+            out.write('%s\t%d\n' % (w, freq))
+    print(lang, len(best), 'distinct,', len(top), 'written')
+
+
+if __name__ == '__main__':
+    main()

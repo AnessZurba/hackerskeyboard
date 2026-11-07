@@ -3060,6 +3060,7 @@ public class LatinIME extends InputMethodService implements
         mKeyboardSwitcher.setKeyboardMode(currentKeyboardMode, 0,
                 mEnableVoiceButton && mEnableVoice);
         initSuggest(mLanguageSwitcher.getInputLanguage());
+        mAdaptive.setLanguage(mLanguageSwitcher.getInputLanguage());
         mLanguageSwitcher.persist();
         mAutoCapActive = mAutoCapPref && mLanguageSwitcher.allowAutoCap();
         mDeadKeysActive = mLanguageSwitcher.allowDeadKeys();

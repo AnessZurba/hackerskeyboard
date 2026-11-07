@@ -32,10 +32,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -45,10 +46,14 @@ import java.util.TreeMap;
  * <p>A touch near the border between two letter keys is resolved by comparing, for each
  * candidate key, how far the touch is from the key's centre (a Gaussian touch model)
  * with how likely the key's letter is to follow the letters already typed (from a word
- * frequency list, plus words the user has typed when learning is on). A touch in the
- * middle of a key always gives that key, and a key's hit area can never reach more
- * than a fixed fraction of a key into its neighbour, so unusual words and plain
- * mistakes stay typeable.
+ * frequency list for the input language, plus words the user has typed when learning is
+ * on). A key's hit area can never reach more than a fixed fraction of a key into its
+ * neighbour, so unusual words and plain mistakes stay typeable.
+ *
+ * <p>Word lists exist for English, Arabic and Hebrew (assets/wordlists, built by
+ * tools/mkwordlist.py). Text is compared after NFKC normalisation, lower-casing and
+ * removal of combining marks and tatweel, so presentation forms such as the Arabic
+ * lam-alef key (U+FEFB) count as their letters and tashkeel/niqqud are ignored.
  *
  * <p>It stays off where words are not expected: password and number fields, editors
  * that report no input type (terminals such as Termux and ConnectBot), while Ctrl,
@@ -67,7 +72,7 @@ final class AdaptiveKeyTargets {
     private static final int MAX_USER_WORDS = 5000;
     private static final int MAX_USER_COUNT = 50;
     /**
-     * List frequencies are AOSP's 0-255 log scale; 2^(f/10) puts "the" (222) about 10^4.5
+     * List frequencies are a 0-255 log scale; 2^(f/10) puts "the" (222) about 10^4.5
      * times above a rare word (70), close to real usage.
      */
     private static final double FREQ_DIVISOR = 10.0;
@@ -77,9 +82,11 @@ final class AdaptiveKeyTargets {
     private static final double WORD_START_STRENGTH = 0.5;
     /** Floor mixed into every letter's probability, so no key ever becomes unreachable. */
     private static final double PRIOR_FLOOR = 0.03;
+    /** Rough alphabet size the floor is spread over. */
+    private static final double ALPHABET_SIZE = 32;
     /** Standard deviation of the touch model, in key widths/heights. */
     private static final double TOUCH_SIGMA = 0.38;
-    private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz'";
+    private static final char TATWEEL = 'ـ';
 
     private static AdaptiveKeyTargets sInstance;
 
@@ -93,6 +100,17 @@ final class AdaptiveKeyTargets {
         return sInstance;
     }
 
+    /** Word-list asset for an input language code ("en_US", "ar", "iw"...), or null. */
+    static String wordListFor(String language) {
+        if (language == null || language.length() < 2) return null;
+        switch (language.substring(0, 2).toLowerCase()) {
+            case "en": return "en";
+            case "ar": return "ar";
+            case "iw": case "he": return "he";
+            default: return null;
+        }
+    }
+
     private final Context mContext;
     private final Handler mMainHandler = new Handler(Looper.getMainLooper());
 
@@ -102,12 +120,14 @@ final class AdaptiveKeyTargets {
     private double mStrength = 0.6;   // weight of log-probability against touch distance
     private double mMaxGrow = 0.25;   // how far (in keys) a hit area may reach into a neighbour
 
-    // Static word list: sorted words with prefix sums of their weights.
-    private volatile String[] mWords;
-    private volatile double[] mCumWeight;
-    private String mListLanguage;
+    // Word list of the current input language: sorted words with prefix sums of weights.
+    private String[] mWords;
+    private double[] mCumWeight;
+    private String mLoadedList;      // list in mWords, or null
+    private String mWantedList;      // list for the current input language, or null
+    private int mLoadGeneration;
 
-    // Learned words (word -> count), only touched on the main thread.
+    // Learned words (word -> count), all languages in one map; main thread only.
     private final TreeMap<String, Integer> mUserWords = new TreeMap<>();
     private boolean mUserWordsLoaded;
     private boolean mUserWordsDirty;
@@ -116,17 +136,17 @@ final class AdaptiveKeyTargets {
     private boolean mFieldAllowsAdaptive;
     private boolean mFieldAllowsLearning;
     private boolean mModifierActive;
-    private String mLanguage = "";
 
-    // Current word before the cursor, refreshed at touch down and up.
+    // Current word before the cursor (normalised), refreshed at touch down and up.
     private String mPrefix = "";
     private InputConnection mInputConnection;
     // Letters typed in sequence by the keyboard since the last word boundary or cursor jump.
     private int mTypedRun;
 
-    // Cache of the last next-letter distribution.
+    // Probabilities already computed for mCachedPrefix, by key text.
     private String mCachedPrefix;
-    private double[] mCachedProbs;
+    private double mCachedTotal;
+    private final HashMap<String, Double> mCachedProbs = new HashMap<>();
 
     private AdaptiveKeyTargets(Context context) {
         mContext = context;
@@ -155,15 +175,23 @@ final class AdaptiveKeyTargets {
                 mMaxGrow = 0.25;
                 break;
         }
-        if (mEnabledPref) ensureWordList();
+        loadWantedList();
+    }
+
+    /** The input language changed (or a new field started). */
+    void setLanguage(String inputLanguage) {
+        String wanted = wordListFor(inputLanguage);
+        if (wanted == null ? mWantedList == null : wanted.equals(mWantedList)) return;
+        mWantedList = wanted;
+        loadWantedList();
     }
 
     // ---------------------------------------------------------------- editor state
 
     void onStartInput(EditorInfo info, InputConnection ic, String inputLanguage) {
         mInputConnection = ic;
-        mLanguage = inputLanguage == null ? "" : inputLanguage;
         mTypedRun = 0;
+        setLanguage(inputLanguage);
         int type = info == null ? InputType.TYPE_NULL : info.inputType;
         int cls = type & InputType.TYPE_MASK_CLASS;
         int variation = type & InputType.TYPE_MASK_VARIATION;
@@ -194,7 +222,7 @@ final class AdaptiveKeyTargets {
     /** True when touches should currently be biased. */
     boolean isActive() {
         return mEnabledPref && mFieldAllowsAdaptive && !mModifierActive
-                && mWords != null && mLanguage.startsWith(mListLanguage == null ? "en" : mListLanguage);
+                && mWords != null && mLoadedList != null && mLoadedList.equals(mWantedList);
     }
 
     /** Re-reads the word before the cursor; called on touch down and before a key is sent. */
@@ -203,9 +231,12 @@ final class AdaptiveKeyTargets {
             mPrefix = "";
             return;
         }
+        mPrefix = wordBeforeCursor();
+    }
+
+    private String wordBeforeCursor() {
         InputConnection ic = mInputConnection;
-        CharSequence before = ic == null ? null : ic.getTextBeforeCursor(MAX_PREFIX + 1, 0);
-        mPrefix = trailingWord(before);
+        return trailingWord(ic == null ? null : ic.getTextBeforeCursor(MAX_PREFIX * 2, 0));
     }
 
     /**
@@ -219,14 +250,10 @@ final class AdaptiveKeyTargets {
     /** Called for every key, after LatinIME has handled it. */
     void afterKey(int code) {
         if (code > 0 && isWordChar(code)) {
-            mTypedRun++;
+            mTypedRun += normalise(new String(Character.toChars(code))).length();
         } else if (code == Keyboard.KEYCODE_DELETE) {
-            onBackspace();
+            if (mTypedRun > 0) mTypedRun--;
         }
-    }
-
-    void onBackspace() {
-        if (mTypedRun > 0) mTypedRun--;
     }
 
     /** The cursor moved somewhere the keyboard did not put it. */
@@ -235,13 +262,12 @@ final class AdaptiveKeyTargets {
     }
 
     /**
-     * Called before a separator is typed. Learns the word just finished if the keyboard
-     * typed all of its letters in one run (not a word the cursor was merely placed after).
+     * Learns the word just finished if the keyboard typed all of its letters in one run
+     * (not a word the cursor was merely placed after).
      */
-    void onWordBoundary() {
+    private void onWordBoundary() {
         if (mEnabledPref && mLearnPref && mFieldAllowsLearning && !mModifierActive) {
-            InputConnection ic = mInputConnection;
-            String word = trailingWord(ic == null ? null : ic.getTextBeforeCursor(MAX_PREFIX + 1, 0));
+            String word = wordBeforeCursor();
             if (word.length() >= 2 && word.length() <= mTypedRun && word.length() < MAX_PREFIX) {
                 learn(word);
             }
@@ -264,23 +290,22 @@ final class AdaptiveKeyTargets {
         if (!isActive() || geometricIndex < 0 || geometricIndex >= keys.length) {
             return geometricIndex;
         }
-        if (letterOf(keys[geometricIndex]) < 0) return geometricIndex; // only letters compete
-        double[] probs = nextLetterProbabilities(mPrefix);
-        if (probs == null) return geometricIndex; // no known word continues this prefix
+        if (keyText(keys[geometricIndex]) == null) return geometricIndex; // only letters compete
+        if (continuationMass(mPrefix) <= 0) return geometricIndex; // no known word goes on
 
         double strength = mPrefix.isEmpty() ? mStrength * WORD_START_STRENGTH : mStrength;
+        double reach = 0.5 + mMaxGrow;
         int best = geometricIndex;
         double bestScore = Double.NEGATIVE_INFINITY;
-        double reach = 0.5 + mMaxGrow;
         for (int index : candidates) {
             Keyboard.Key key = keys[index];
-            int letter = letterOf(key);
-            if (letter < 0 || key.width <= 0 || key.height <= 0) continue;
+            String text = keyText(key);
+            if (text == null || key.width <= 0 || key.height <= 0) continue;
             double dx = (touchX - (key.x + key.width / 2.0)) / key.width;
             double dy = (touchY - (key.y + key.height / 2.0)) / key.height;
             if (Math.abs(dx) > reach || Math.abs(dy) > reach) continue;
             double score = -(dx * dx + dy * dy) / (2 * TOUCH_SIGMA * TOUCH_SIGMA)
-                    + strength * Math.log(probs[letter]);
+                    + strength * Math.log(probability(mPrefix, text));
             if (score > bestScore) {
                 bestScore = score;
                 best = index;
@@ -289,61 +314,105 @@ final class AdaptiveKeyTargets {
         return best;
     }
 
-    /** Index into {@link #LETTERS} for a letter key, or -1. */
-    private static int letterOf(Keyboard.Key key) {
-        if (key == null || key.codes == null || key.codes.length == 0) return -1;
-        return LETTERS.indexOf(Character.toLowerCase(key.codes[0]));
+    /** The normalised letters a key types, or null if it is not a letter key. */
+    private static String keyText(Keyboard.Key key) {
+        if (key == null || key.codes == null || key.codes.length == 0) return null;
+        int code = key.codes[0];
+        if (code <= 0 || !Character.isLetter(code)) return null;
+        String text = normalise(new String(Character.toChars(code)));
+        return text.isEmpty() ? null : text;
     }
 
     private static boolean isWordChar(int code) {
-        return Character.isLetter(code) || code == '\'';
+        if (code == '\'' || code == TATWEEL || Character.isLetter(code)) return true;
+        int type = Character.getType(code);
+        return type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK
+                || type == Character.ENCLOSING_MARK;
     }
 
-    /** The lower-cased letters immediately before the cursor (empty at a word boundary). */
+    /** NFKC, lower case, without combining marks (tashkeel, niqqud, accents) or tatweel. */
+    static String normalise(CharSequence text) {
+        String s = Normalizer.normalize(text, Normalizer.Form.NFKC).toLowerCase();
+        StringBuilder out = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            i += Character.charCount(cp);
+            int type = Character.getType(cp);
+            if (cp == TATWEEL || type == Character.NON_SPACING_MARK
+                    || type == Character.COMBINING_SPACING_MARK
+                    || type == Character.ENCLOSING_MARK) {
+                continue;
+            }
+            out.appendCodePoint(cp);
+        }
+        return out.toString();
+    }
+
+    /** The normalised word immediately before the cursor (empty at a word boundary). */
     private static String trailingWord(CharSequence text) {
         if (text == null) return "";
-        int end = text.length();
-        int start = end;
-        while (start > 0 && isWordChar(text.charAt(start - 1))) start--;
-        if (end - start > MAX_PREFIX) return ""; // too long to be a word we can help with
-        return text.subSequence(start, end).toString().toLowerCase();
+        int start = text.length();
+        while (start > 0) {
+            int cp = Character.codePointBefore(text, start);
+            if (!isWordChar(cp)) break;
+            start -= Character.charCount(cp);
+        }
+        String word = normalise(text.subSequence(start, text.length()));
+        if (word.length() > MAX_PREFIX) return ""; // too long to be a word we can help with
+        // A leading apostrophe is an opening quote, not part of the word.
+        while (word.startsWith("'")) word = word.substring(1);
+        return word;
     }
 
     // ---------------------------------------------------------------- language model
 
-    /**
-     * Probability of each letter in {@link #LETTERS} following the prefix, or null when
-     * neither the list nor the learned words contain a word starting with it.
-     */
-    double[] nextLetterProbabilities(String prefix) {
-        if (prefix.equals(mCachedPrefix)) return mCachedProbs;
-        String[] words = mWords;
-        double[] cum = mCumWeight;
-        if (words == null) return null;
-        ensureUserWordsLoaded();
+    /** Weight of all words that continue the prefix with at least one more letter. */
+    private double continuationMass(String prefix) {
+        if (!prefix.equals(mCachedPrefix)) {
+            mCachedPrefix = prefix;
+            mCachedProbs.clear();
+            mCachedTotal = mass(prefix) - exactWeight(prefix);
+        }
+        return mCachedTotal;
+    }
 
-        double[] mass = new double[LETTERS.length()];
-        double total = 0;
-        for (int i = 0; i < mass.length; i++) {
-            String p = prefix + LETTERS.charAt(i);
-            int lo = lowerBound(words, p);
-            int hi = lowerBound(words, p + Character.MAX_VALUE);
-            double m = cum[hi] - cum[lo];
-            SortedMap<String, Integer> learned = mUserWords.subMap(p, p + Character.MAX_VALUE);
-            for (int count : learned.values()) m += count * USER_WORD_WEIGHT;
-            mass[i] = m;
-            total += m;
+    /** Probability that the next letters after the prefix are the key's text. */
+    private double probability(String prefix, String keyText) {
+        double total = continuationMass(prefix);
+        Double cached = mCachedProbs.get(keyText);
+        if (cached != null) return cached;
+        double p = (1 - PRIOR_FLOOR) * mass(prefix + keyText) / total + PRIOR_FLOOR / ALPHABET_SIZE;
+        mCachedProbs.put(keyText, p);
+        return p;
+    }
+
+    /** Total weight of list and learned words starting with the prefix. */
+    private double mass(String prefix) {
+        String[] words = mWords;
+        double m = 0;
+        if (words != null) {
+            String end = prefix + Character.MAX_VALUE;
+            m = mCumWeight[lowerBound(words, end)] - mCumWeight[lowerBound(words, prefix)];
         }
-        double[] probs = null;
-        if (total > 0) {
-            probs = new double[mass.length];
-            for (int i = 0; i < mass.length; i++) {
-                probs[i] = (1 - PRIOR_FLOOR) * mass[i] / total + PRIOR_FLOOR / mass.length;
-            }
+        ensureUserWordsLoaded();
+        for (int count : mUserWords.subMap(prefix, prefix + Character.MAX_VALUE).values()) {
+            m += count * USER_WORD_WEIGHT;
         }
-        mCachedPrefix = prefix;
-        mCachedProbs = probs;
-        return probs;
+        return m;
+    }
+
+    /** Weight of the prefix itself as a whole word. */
+    private double exactWeight(String word) {
+        double w = 0;
+        String[] words = mWords;
+        if (words != null) {
+            int i = lowerBound(words, word);
+            if (i < words.length && words[i].equals(word)) w = mCumWeight[i + 1] - mCumWeight[i];
+        }
+        ensureUserWordsLoaded();
+        Integer count = mUserWords.get(word);
+        if (count != null) w += count * USER_WORD_WEIGHT;
+        return w;
     }
 
     private static int lowerBound(String[] words, String key) {
@@ -356,14 +425,22 @@ final class AdaptiveKeyTargets {
         return lo;
     }
 
-    private void ensureWordList() {
-        if (mWords != null || mListLanguage != null) return;
-        mListLanguage = "en";
-        new Thread(() -> loadWordList("wordlists/en.txt"), "AdaptiveKeysLoad").start();
+    /** Loads the list for the current language in the background, dropping any other. */
+    private void loadWantedList() {
+        if (!mEnabledPref || mWantedList == null) return;
+        if (mWantedList.equals(mLoadedList)) return;
+        final String list = mWantedList;
+        final int generation = ++mLoadGeneration;
+        mWords = null;
+        mCumWeight = null;
+        mLoadedList = null;
+        mCachedPrefix = null;
+        new Thread(() -> loadWordList(list, generation), "AdaptiveKeysLoad").start();
     }
 
-    private void loadWordList(String asset) {
+    private void loadWordList(String list, int generation) {
         long start = System.currentTimeMillis();
+        String asset = "wordlists/" + list + ".txt";
         ArrayList<String> words = new ArrayList<>(60000);
         ArrayList<Double> weights = new ArrayList<>(60000);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(
@@ -374,7 +451,8 @@ final class AdaptiveKeyTargets {
                 int tab = line.indexOf('\t');
                 if (tab <= 0) continue;
                 words.add(line.substring(0, tab));
-                weights.add(Math.pow(2, Integer.parseInt(line.substring(tab + 1).trim()) / FREQ_DIVISOR));
+                weights.add(Math.pow(2,
+                        Integer.parseInt(line.substring(tab + 1).trim()) / FREQ_DIVISOR));
             }
         } catch (IOException | NumberFormatException e) {
             Log.w(TAG, "Could not load " + asset, e);
@@ -392,10 +470,12 @@ final class AdaptiveKeyTargets {
             cum[i + 1] = cum[i] + weights.get(order[i]);
         }
         mMainHandler.post(() -> {
+            if (generation != mLoadGeneration) return; // language changed meanwhile
             mCumWeight = cum;
             mWords = sorted;
+            mLoadedList = list;
             mCachedPrefix = null;
-            Log.i(TAG, "Loaded " + sorted.length + " words in "
+            Log.i(TAG, "Loaded " + sorted.length + " " + list + " words in "
                     + (System.currentTimeMillis() - start) + " ms");
         });
     }
