@@ -14,14 +14,16 @@
      limitations under the License.
 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:key="prefs_actions"
-    android:title="@string/pref_screen_actions_title" >
+    android:title="@string/pref_screen_actions_title"
+    app:iconSpaceReserved="false">
 
     <PreferenceCategory
         android:key="swipe_actions"
         android:title="@string/title_swipe_gestures" >
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_swipe_up"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"
@@ -29,7 +31,7 @@
             android:persistent="true"
             android:title="@string/title_swipe_up" />
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_swipe_down"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"
@@ -37,7 +39,7 @@
             android:persistent="true"
             android:title="@string/title_swipe_down" />
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_swipe_left"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"
@@ -45,7 +47,7 @@
             android:persistent="true"
             android:title="@string/title_swipe_left" />
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_swipe_right"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"
@@ -58,7 +60,7 @@
         android:key="key_actions"
         android:title="@string/title_hardware_key_actions" >
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_vol_up"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"
@@ -66,7 +68,7 @@
             android:persistent="true"
             android:title="@string/title_vol_up" />
 
-        <org.pocketworkstation.pckeyboard.AutoSummaryListPreference
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_vol_down"
             android:entries="@array/swipe_action_entries"
             android:entryValues="@array/swipe_action_values"

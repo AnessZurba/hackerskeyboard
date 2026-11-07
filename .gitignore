@@ -1,4 +1,6 @@
 *.iml
+*.jks
+*.keystore
 .gradle
 /local.properties
 /.idea
@@ -9,6 +11,11 @@
 .DS_Store
 /build
 /captures
-gradle
 .externalNativeBuild
-app/.cxx
+app/.cxx/
+.claude
+/issues
+/PLAN.md
+/PRD.md
+app/src/androidTest/
+.todo/

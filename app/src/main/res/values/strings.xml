@@ -19,7 +19,7 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Title for Latin keyboard  -->
-    <string name="english_ime_name">Hacker\'s Keyboard</string>
+    <string name="english_ime_name">Hacker\'s Keyboard 2</string>
     <!-- Title for Latin keyboard settings activity / dialog -->
     <string name="english_ime_settings">Settings for Hacker\'s Keyboard</string>
     <!-- Title for Latin keyboard input options dialog -->
@@ -378,9 +378,9 @@
     <string-array name="keyboard_layout_modes_values" translatable="false">
         <item>0</item>
         <item>6</item>
-        <item>5</item>
-        <item>4</item>
         <item>7</item>
+        <item>4</item>
+        <item>5</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
@@ -670,7 +670,7 @@
         </blockquote>
         
         <h2>Additional information</h2>
-        <p>Please refer to the <a href='https://github.com/klausw/hackerskeyboard'>project web page</a> for more information, including the user's guide, issue tracker, and discussion group.</p>
+        <p>Please refer to the <a href='https://github.com/jcb1ee/hackerskeyboard2'>project web page</a> for more information, including the user's guide, issue tracker, and discussion group.</p>
       "]]>
     </Data></string>
     <string name="text_test">Test</string>
