@@ -1174,6 +1174,7 @@ public class LatinIME extends InputMethodService implements
         && onEvaluateInputViewShown()
         && mKeyboardSwitcher.getInputView() != null
         && isPredictionOn()
+        && hasSuggestionSource()
         && (needsInputViewShown
                 ? mKeyboardSwitcher.getInputView().isShown()
                         : true);
@@ -2596,7 +2597,17 @@ public class LatinIME extends InputMethodService implements
     }
 
     private boolean isCandidateStripVisible() {
-        return isPredictionOn();
+        return isPredictionOn() && hasSuggestionSource();
+    }
+
+    /**
+     * Whether the suggestion strip would have anything to show. Without a main dictionary
+     * (the bundled one is an empty placeholder; real ones come from dictionary plugins)
+     * and without completions from the app, the strip stays empty and only leaves a gap
+     * above the keyboard, so it is not shown.
+     */
+    private boolean hasSuggestionSource() {
+        return mCompletionOn || (mSuggest != null && mSuggest.hasMainDictionary());
     }
 
     private void switchToKeyboardView() {
