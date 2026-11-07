@@ -32,6 +32,7 @@ public class Main extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        if (savedInstanceState == null) CrashLog.showIfAny(this);
 
         TextView version = findViewById(R.id.main_version);
         version.setText("Version " + getString(R.string.auto_version));

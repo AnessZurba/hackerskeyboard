@@ -68,13 +68,25 @@ configurations.all {
     }
 }
 
+android.testOptions.unitTests.includeAndroidResources = true
+// Robolectric downloads its Android runtime jar at test time; pass
+// -ProbolectricDeps=<dir holding the jar> to run offline instead.
+android.testOptions.unitTests.all {
+    if (project.hasProperty('robolectricDeps')) {
+        systemProperty 'robolectric.offline', 'true'
+        systemProperty 'robolectric.dependency.dir', project.property('robolectricDeps')
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core:1.12.0'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.google.android.material:material:1.11.0'
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.13'
+    testImplementation 'androidx.test:core:1.6.1'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

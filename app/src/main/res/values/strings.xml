@@ -702,4 +702,10 @@
     <string name="title_adaptive_clear">Clear learned words</string>
     <string name="summary_adaptive_clear">%d words learned</string>
     <string name="toast_adaptive_cleared">Learned words cleared</string>
+
+    <!-- Crash report shown in settings after a crash -->
+    <string name="crash_report_title">The keyboard crashed last time</string>
+    <string name="crash_report_copy">Copy</string>
+    <string name="crash_report_copied">Crash report copied</string>
+    <string name="crash_report_dismiss">Dismiss</string>
 </resources>

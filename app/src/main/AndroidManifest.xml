@@ -22,6 +22,7 @@
     </queries>
 
     <application android:label="@string/english_ime_name"
+            android:name=".CrashLog"
             android:allowBackup="true"
             android:backupAgent="LatinIMEBackupAgent"
             android:restoreAnyVersion="true"

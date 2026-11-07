@@ -46,6 +46,7 @@ public class LatinIMESettings extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        if (icicle == null) CrashLog.showIfAny(this);
         getSupportFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
