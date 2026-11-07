@@ -226,6 +226,7 @@ public class LatinIME extends InputMethodService implements
 
     public static final GlobalKeyboardSettings sKeyboardSettings = new GlobalKeyboardSettings(); 
     static LatinIME sInstance;
+    private AdaptiveKeyTargets mAdaptive;
     
     private int mHeightPortrait;
     private int mHeightLandscape;
@@ -364,6 +365,7 @@ public class LatinIME extends InputMethodService implements
         KeyboardSwitcher.init(this);
         super.onCreate();
         sInstance = this;
+        mAdaptive = AdaptiveKeyTargets.get(this);
         // setStatusIcon(R.drawable.ime_qwerty);
         mResources = getResources();
         final Configuration conf = mResources.getConfiguration();
@@ -845,6 +847,9 @@ public class LatinIME extends InputMethodService implements
         mModAlt = false;
         mModMeta = false;
         mModFn = false;
+        mAdaptive.setModifierActive(false);
+        mAdaptive.onStartInput(attribute, getCurrentInputConnection(),
+                mLanguageSwitcher.getInputLanguage());
         mEnteredText = null;
         mSuggestionForceOn = false;
         mSuggestionForceOff = false;
@@ -982,6 +987,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onFinishInput() {
         super.onFinishInput();
+        mAdaptive.onFinishInput();
         commitHangulComposing();
         mHangulComposer.reset();
 
@@ -1016,6 +1022,12 @@ public class LatinIME extends InputMethodService implements
             int candidatesEnd) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
                 candidatesStart, candidatesEnd);
+        // Typing moves the cursor by one; anything else means the word before it may not
+        // be one the keyboard typed, so it must not be learned.
+        int cursorDelta = newSelStart - oldSelStart;
+        if (newSelStart != newSelEnd || cursorDelta < -1 || cursorDelta > 1) {
+            mAdaptive.onCursorJump();
+        }
 
         // If the current selection in the text view changes, we should
         // clear whatever candidate text we have.
@@ -2029,6 +2041,12 @@ public class LatinIME extends InputMethodService implements
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
+        mAdaptive.beforeKey(primaryCode);
+        onKeyInternal(primaryCode, keyCodes, x, y);
+        mAdaptive.afterKey(primaryCode);
+    }
+
+    private void onKeyInternal(int primaryCode, int[] keyCodes, int x, int y) {
         long when = SystemClock.uptimeMillis();
         if (primaryCode != Keyboard.KEYCODE_DELETE
                 || when > mLastKeyTime + QUICK_PRESS) {
@@ -2292,22 +2310,29 @@ public class LatinIME extends InputMethodService implements
         ic.endBatchEdit();
     }
 
+    private void updateAdaptiveModifiers() {
+        mAdaptive.setModifierActive(mModCtrl || mModAlt || mModMeta);
+    }
+
     private void setModCtrl(boolean val) {
         // Log.i("LatinIME", "setModCtrl "+ mModCtrl + "->" + val + ", chording=" + mCtrlKeyState.isChording());
         mKeyboardSwitcher.setCtrlIndicator(val);
         mModCtrl = val;
+        updateAdaptiveModifiers();
     }
 
     private void setModAlt(boolean val) {
         //Log.i("LatinIME", "setModAlt "+ mModAlt + "->" + val + ", chording=" + mAltKeyState.isChording());
         mKeyboardSwitcher.setAltIndicator(val);
         mModAlt = val;
+        updateAdaptiveModifiers();
     }
 
     private void setModMeta(boolean val) {
         //Log.i("LatinIME", "setModMeta "+ mModMeta + "->" + val + ", chording=" + mMetaKeyState.isChording());
         mKeyboardSwitcher.setMetaIndicator(val);
         mModMeta = val;
+        updateAdaptiveModifiers();
     }
 
     private void setModFn(boolean val) {
@@ -3050,6 +3075,7 @@ public class LatinIME extends InputMethodService implements
         
         // Apply globally handled shared prefs
         sKeyboardSettings.sharedPreferenceChanged(sharedPreferences, key);
+        mAdaptive.loadSettings(sharedPreferences);
         if (sKeyboardSettings.hasFlag(GlobalKeyboardSettings.FLAG_PREF_NEED_RELOAD)) {
             needReload = true;
         }
@@ -3508,6 +3534,7 @@ public class LatinIME extends InputMethodService implements
         // Get the settings preferences
         SharedPreferences sp = PreferenceManager
                 .getDefaultSharedPreferences(this);
+        mAdaptive.loadSettings(sp);
         mVibrateOn = sp.getBoolean(PREF_VIBRATE_ON, false);
         mVibrateLen = getPrefInt(sp, PREF_VIBRATE_LEN, getResources().getString(R.string.vibrate_duration_ms));
         mSoundOn = sp.getBoolean(PREF_SOUND_ON, false);

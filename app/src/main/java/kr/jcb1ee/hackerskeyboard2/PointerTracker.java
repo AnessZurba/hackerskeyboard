@@ -284,9 +284,15 @@ public class PointerTracker {
         }
     }
 
+    private static void refreshAdaptivePrefix() {
+        AdaptiveKeyTargets adaptive = AdaptiveKeyTargets.peek();
+        if (adaptive != null && adaptive.isActive()) adaptive.refreshPrefix();
+    }
+
     public void onDownEvent(int x, int y, long eventTime) {
         if (DEBUG)
             debugLog("onDownEvent:", x, y);
+        refreshAdaptivePrefix();
         int keyIndex = mKeyState.onDownKey(x, y, eventTime);
         mKeyboardLayoutHasBeenChanged = false;
         mKeyAlreadyProcessed = false;
@@ -422,6 +428,8 @@ public class PointerTracker {
     public void onUpEvent(int x, int y, long eventTime) {
         if (DEBUG)
             debugLog("onUpEvent  :", x, y);
+        // Another finger may have typed a letter since this one went down.
+        refreshAdaptivePrefix();
         mHandler.cancelKeyTimers();
         mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);

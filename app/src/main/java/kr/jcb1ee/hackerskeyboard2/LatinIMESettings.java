@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.text.AutoText;
 import android.text.InputType;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.CheckBoxPreference;
@@ -65,6 +66,7 @@ public class LatinIMESettings extends AppCompatActivity {
         private static final int VOICE_INPUT_CONFIRM_DIALOG = 0;
 
         private CheckBoxPreference mQuickFixes;
+        private Preference mAdaptiveClear;
         private ListPreference mVoicePreference;
         private ListPreference mSettingsKeyPreference;
         private ListPreference mKeyboardModePortraitPreference;
@@ -107,6 +109,17 @@ public class LatinIMESettings extends AppCompatActivity {
             mInputConnectionInfo = (Preference) findPreference(INPUT_CONNECTION_INFO);
             mLabelVersion = (Preference) findPreference("label_version");
 
+            mAdaptiveClear = findPreference(AdaptiveKeyTargets.PREF_CLEAR);
+            if (mAdaptiveClear != null) {
+                mAdaptiveClear.setOnPreferenceClickListener(p -> {
+                    AdaptiveKeyTargets.get(requireContext()).clearLearnedWords();
+                    updateAdaptiveClearSummary();
+                    Toast.makeText(requireContext(), R.string.toast_adaptive_cleared,
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+            }
+
             // TODO(klausw): remove these when no longer needed
             mKeyboardModePortraitPreference = (ListPreference) findPreference("pref_keyboard_mode_portrait");
             mKeyboardModeLandscapePreference = (ListPreference) findPreference("pref_keyboard_mode_landscape");
@@ -143,6 +156,7 @@ public class LatinIMESettings extends AppCompatActivity {
             }
 
             updateSummaries();
+            updateAdaptiveClearSummary();
 
             String version = "";
             try {
@@ -154,6 +168,13 @@ public class LatinIMESettings extends AppCompatActivity {
             }
 
             mLabelVersion.setSummary(version);
+        }
+
+        private void updateAdaptiveClearSummary() {
+            if (mAdaptiveClear == null) return;
+            int count = AdaptiveKeyTargets.get(requireContext()).learnedWordCount();
+            mAdaptiveClear.setSummary(getString(R.string.summary_adaptive_clear, count));
+            mAdaptiveClear.setEnabled(count > 0);
         }
 
         @Override

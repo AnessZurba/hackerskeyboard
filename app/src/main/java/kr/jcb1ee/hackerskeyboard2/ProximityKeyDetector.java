@@ -81,6 +81,11 @@ class ProximityKeyDetector extends KeyDetector {
         if (primaryIndex == LatinKeyboardBaseView.NOT_A_KEY) {
             primaryIndex = closestKey;
         }
+        AdaptiveKeyTargets adaptive = AdaptiveKeyTargets.peek();
+        if (adaptive != null) {
+            primaryIndex = adaptive.chooseKey(keys, nearestKeyIndices, touchX, touchY,
+                    primaryIndex);
+        }
         return primaryIndex;
     }
 }

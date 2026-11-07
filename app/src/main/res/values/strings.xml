@@ -680,4 +680,26 @@
     <string name="notification_channel_name">Hacker\'s Keyboard</string>
     <string name="notification_channel_description">Hacker\'s Keyboard</string>
     <string name="notification_action_settings">Settings</string>
+
+    <!-- Adaptive key targets -->
+    <string name="adaptive_category">Adaptive key targets</string>
+    <string name="title_adaptive_targets">Adaptive key targets</string>
+    <string name="summary_adaptive_targets">Make the likely next letter of a word easier to hit, without changing how keys look. English only. Off in terminals, password fields and while Ctrl/Alt/Meta is active.</string>
+    <string name="title_adaptive_strength">Strength</string>
+    <string name="default_adaptive_strength" translatable="false">medium</string>
+    <string-array name="adaptive_strength_entries">
+        <item>Low</item>
+        <item>Medium</item>
+        <item>High</item>
+    </string-array>
+    <string-array name="adaptive_strength_values" translatable="false">
+        <item>low</item>
+        <item>medium</item>
+        <item>high</item>
+    </string-array>
+    <string name="title_adaptive_learn">Learn from my typing</string>
+    <string name="summary_adaptive_learn">Add words you type to the word list. Never learns in password, email or web address fields, or where the app asks for no learning.</string>
+    <string name="title_adaptive_clear">Clear learned words</string>
+    <string name="summary_adaptive_clear">%d words learned</string>
+    <string name="toast_adaptive_cleared">Learned words cleared</string>
 </resources>

@@ -271,6 +271,44 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+            android:title="@string/adaptive_category"
+            android:key="adaptive_settings">
+
+        <CheckBoxPreference
+            android:key="pref_adaptive_targets"
+            android:title="@string/title_adaptive_targets"
+            android:summary="@string/summary_adaptive_targets"
+            android:persistent="true"
+            android:defaultValue="@bool/default_adaptive_targets"
+            />
+
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
+            android:key="pref_adaptive_strength"
+            android:title="@string/title_adaptive_strength"
+            android:entries="@array/adaptive_strength_entries"
+            android:entryValues="@array/adaptive_strength_values"
+            android:defaultValue="@string/default_adaptive_strength"
+            android:persistent="true"
+            android:dependency="pref_adaptive_targets"
+            />
+
+        <CheckBoxPreference
+            android:key="pref_adaptive_learn"
+            android:title="@string/title_adaptive_learn"
+            android:summary="@string/summary_adaptive_learn"
+            android:persistent="true"
+            android:defaultValue="@bool/default_adaptive_learn"
+            android:dependency="pref_adaptive_targets"
+            />
+
+        <Preference
+            android:key="pref_adaptive_clear"
+            android:title="@string/title_adaptive_clear"
+            android:persistent="false"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
             android:title="@string/title_input_mode_settings"
             android:key="input_mode_settings">
 
