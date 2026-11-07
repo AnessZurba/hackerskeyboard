@@ -2431,7 +2431,9 @@ public class LatinIME extends InputMethodService implements
             abortCorrection(false);
         }
 
-        if (isAlphabet(primaryCode) && isPredictionOn()
+        // Composing text only helps when there are suggestions to replace it with; without
+        // a dictionary it just risks editors duplicating the word (see handleSeparator).
+        if (isAlphabet(primaryCode) && isPredictionOn() && hasSuggestionSource()
                 && !mModCtrl && !mModAlt && !mModMeta
                 && !isCursorTouchingWord()) {
             if (!mPredicting) {
@@ -2521,7 +2523,18 @@ public class LatinIME extends InputMethodService implements
             removeTrailingSpace();
             mJustAddedAutoSpace = false;
         }
+        // Enter becomes a key event (or an editor action) rather than text. Some editors
+        // (Chromium-based fields, many chat apps) act on it before the batch edit that
+        // committed the word is applied, and the word ends up typed twice. Close the batch
+        // first so the word is in place when Enter arrives.
+        boolean enterAfterBatch = primaryCode == ASCII_ENTER && ic != null;
+        if (enterAfterBatch) {
+            ic.endBatchEdit();
+        }
         sendModifiableKeyChar((char) primaryCode);
+        if (enterAfterBatch) {
+            ic.beginBatchEdit();
+        }
 
         // Handle the case of ". ." -> " .." with auto-space if necessary
         // before changing the TextEntryState.

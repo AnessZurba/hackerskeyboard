@@ -72,6 +72,11 @@ final class AdaptiveKeyTargets {
     private static final int MAX_USER_WORDS = 5000;
     private static final int MAX_USER_COUNT = 50;
     /**
+     * A learned word that is not in the word list only counts once it has been typed this
+     * many times, so a typo left in once or twice never starts attracting touches.
+     */
+    private static final int MIN_USES_FOR_NEW_WORD = 3;
+    /**
      * List frequencies are a 0-255 log scale; 2^(f/10) puts "the" (222) about 10^4.5
      * times above a rare word (70), close to real usage.
      */
@@ -395,8 +400,9 @@ final class AdaptiveKeyTargets {
             m = mCumWeight[lowerBound(words, end)] - mCumWeight[lowerBound(words, prefix)];
         }
         ensureUserWordsLoaded();
-        for (int count : mUserWords.subMap(prefix, prefix + Character.MAX_VALUE).values()) {
-            m += count * USER_WORD_WEIGHT;
+        for (Map.Entry<String, Integer> e
+                : mUserWords.subMap(prefix, prefix + Character.MAX_VALUE).entrySet()) {
+            m += learnedWeight(e.getKey(), e.getValue());
         }
         return m;
     }
@@ -411,8 +417,21 @@ final class AdaptiveKeyTargets {
         }
         ensureUserWordsLoaded();
         Integer count = mUserWords.get(word);
-        if (count != null) w += count * USER_WORD_WEIGHT;
+        if (count != null) w += learnedWeight(word, count);
         return w;
+    }
+
+    /** Weight of a learned word: nothing until a word outside the list is typed often enough. */
+    private double learnedWeight(String word, int count) {
+        if (count < MIN_USES_FOR_NEW_WORD && !inWordList(word)) return 0;
+        return count * USER_WORD_WEIGHT;
+    }
+
+    private boolean inWordList(String word) {
+        String[] words = mWords;
+        if (words == null) return false;
+        int i = lowerBound(words, word);
+        return i < words.length && words[i].equals(word);
     }
 
     private static int lowerBound(String[] words, String key) {

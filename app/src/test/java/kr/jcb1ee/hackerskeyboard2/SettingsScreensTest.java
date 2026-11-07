@@ -84,6 +84,8 @@ public class SettingsScreensTest {
             R.layout.input_ics, R.layout.input_gingerbread, R.layout.input_stone_bold,
             R.layout.input_trans_neon, R.layout.input_material_dark, R.layout.input_material_light,
             R.layout.input_ics_darker, R.layout.input_material_black,
+            R.layout.input_popup_ics, R.layout.input_popup_material_dark,
+            R.layout.input_popup_material_black, R.layout.input_popup_material_light,
         };
         for (int layout : layouts) {
             Context themed = new ContextThemeWrapper(app, android.R.style.Theme_DeviceDefault_InputMethod);

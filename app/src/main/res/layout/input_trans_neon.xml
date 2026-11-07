@@ -29,6 +29,7 @@
         android:verticalCorrection="0dip"
 
         latin:keyBackground="@drawable/btn_keyboard_key_ics"
+        latin:popupLayout="@layout/input_popup_ics"
         latin:keyTextColor="#FFFFFFFF"
         latin:keyHintColor="#FFAAAAAA"
         latin:keyCursorColor="#FFFFFFFF"

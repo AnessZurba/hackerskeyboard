@@ -30,6 +30,7 @@
         android:textStyle="bold"
 
         latin:keyBackground="@drawable/btn_keyboard_key_ics"
+        latin:popupLayout="@layout/input_popup_ics"
         latin:keyTextStyle="bold"
         latin:keyHintColor="#FFCCCCCC"
         />
