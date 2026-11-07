@@ -78,7 +78,7 @@
             android:title="@string/pref_screen_view_title"
             android:summary="@string/pref_screen_view_title_summary">
         <intent android:action="kr.jcb1ee.hackerskeyboard2.PREFS_VIEW"
-                android:targetPackage="kr.jcb1ee.hackerskeyboard2"
+                android:targetPackage="@string/app_package"
                 android:targetClass="kr.jcb1ee.hackerskeyboard2.PrefScreenView"/>
     </PreferenceScreen>
 
@@ -111,7 +111,7 @@
             android:summary="@string/language_selection_summary">
         <intent
                 android:action="kr.jcb1ee.hackerskeyboard2.INPUT_LANGUAGE_SELECTION"
-                android:targetPackage="kr.jcb1ee.hackerskeyboard2"
+                android:targetPackage="@string/app_package"
                 android:targetClass="kr.jcb1ee.hackerskeyboard2.InputLanguageSelection"/>
     </PreferenceScreen>
     </PreferenceCategory>
@@ -150,7 +150,7 @@
             android:summary="@string/pref_screen_feedback_title_summary">
         <intent
                 android:action="kr.jcb1ee.hackerskeyboard2.PREFS_FEEDBACK"
-                android:targetPackage="kr.jcb1ee.hackerskeyboard2"
+                android:targetPackage="@string/app_package"
                 android:targetClass="kr.jcb1ee.hackerskeyboard2.PrefScreenFeedback"/>
     </PreferenceScreen>
 
@@ -158,7 +158,7 @@
             android:title="@string/pref_screen_actions_title"
             android:summary="@string/pref_screen_actions_title_summary">
         <intent android:action="kr.jcb1ee.hackerskeyboard2.PREFS_ACTIONS"
-                android:targetPackage="kr.jcb1ee.hackerskeyboard2"
+                android:targetPackage="@string/app_package"
                 android:targetClass="kr.jcb1ee.hackerskeyboard2.PrefScreenActions"/>
     </PreferenceScreen>
 

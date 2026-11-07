@@ -31,6 +31,33 @@ public class SettingsScreensTest {
     @Test public void actionSettings() { open(PrefScreenActions.class); }
     @Test public void feedbackSettings() { open(PrefScreenFeedback.class); }
 
+    /** Every sub-screen link in the main settings must resolve to an activity of this app. */
+    @Test
+    public void subScreenLinksResolve() {
+        LatinIMESettings a = Robolectric.buildActivity(LatinIMESettings.class).setup().get();
+        androidx.preference.PreferenceFragmentCompat f = (androidx.preference.PreferenceFragmentCompat)
+                a.getSupportFragmentManager().findFragmentById(android.R.id.content);
+        java.util.ArrayList<android.content.Intent> intents = new java.util.ArrayList<>();
+        collectIntents(f.getPreferenceScreen(), intents);
+        org.junit.Assert.assertFalse("no sub-screen links found", intents.isEmpty());
+        for (android.content.Intent i : intents) {
+            org.junit.Assert.assertEquals(String.valueOf(i), a.getPackageName(), i.getComponent().getPackageName());
+            org.junit.Assert.assertNotNull("no activity for " + i,
+                    a.getPackageManager().resolveActivity(i, 0));
+        }
+    }
+
+    private static void collectIntents(androidx.preference.PreferenceGroup g,
+            java.util.List<android.content.Intent> out) {
+        for (int i = 0; i < g.getPreferenceCount(); i++) {
+            androidx.preference.Preference p = g.getPreference(i);
+            if (p.getIntent() != null && p.getIntent().getComponent() != null) out.add(p.getIntent());
+            if (p instanceof androidx.preference.PreferenceGroup) {
+                collectIntents((androidx.preference.PreferenceGroup) p, out);
+            }
+        }
+    }
+
     @Test
     public void savedCrashIsShownInSettings() throws Exception {
         Context app = ApplicationProvider.getApplicationContext();
