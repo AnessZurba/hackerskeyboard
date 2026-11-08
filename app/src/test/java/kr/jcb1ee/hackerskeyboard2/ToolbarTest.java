@@ -161,6 +161,32 @@ public class ToolbarTest {
         assertEquals(View.GONE, dismiss.getVisibility());
     }
 
+    /** The keyboard asks password managers for chips in its own style, not a white pill. */
+    @Test
+    public void autofillChipsUseTheKeyboardStyle() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        ime.onCreateInputView();
+        idle();
+        android.view.inputmethod.InlineSuggestionsRequest request =
+                ime.onCreateInlineSuggestionsRequest(new android.os.Bundle());
+        assertNotNull(request);
+        android.os.Bundle style = request.getInlinePresentationSpecs().get(0).getStyle();
+        assertTrue("a v1 style is offered",
+                androidx.autofill.inline.UiVersions.getVersions(style).contains(
+                        androidx.autofill.inline.UiVersions.INLINE_UI_VERSION_1));
+        assertTrue("with our own chip background", style.toString().length() > 0
+                && containsKey(style, "chip"));
+    }
+
+    private static boolean containsKey(android.os.Bundle b, String part) {
+        for (String k : b.keySet()) {
+            if (k.toLowerCase(java.util.Locale.ROOT).contains(part)) return true;
+            Object v = b.get(k);
+            if (v instanceof android.os.Bundle && containsKey((android.os.Bundle) v, part)) return true;
+        }
+        return false;
+    }
+
     private static void settle(View v) {
         org.robolectric.shadows.ShadowLooper.idleMainLooper(1, java.util.concurrent.TimeUnit.SECONDS);
         v.measure(View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY),

@@ -2360,7 +2360,7 @@ public class LatinIME extends InputMethodService implements
                 : Math.round(36 * getResources().getDisplayMetrics().density);
         int maxWidth = getResources().getDisplayMetrics().widthPixels * 2 / 3;
         android.os.Bundle style = androidx.autofill.inline.UiVersions.newStylesBuilder()
-                .addStyle(androidx.autofill.inline.v1.InlineSuggestionUi.newStyleBuilder().build())
+                .addStyle(autofillChipStyle(toolbar))
                 .build();
         android.widget.inline.InlinePresentationSpec spec =
                 new android.widget.inline.InlinePresentationSpec.Builder(
@@ -2369,6 +2369,55 @@ public class LatinIME extends InputMethodService implements
         return new android.view.inputmethod.InlineSuggestionsRequest.Builder(
                 java.util.Collections.singletonList(spec))
                 .setMaxSuggestionCount(6)
+                .build();
+    }
+
+    /**
+     * How password managers draw their chips, Samsung style: an outlined pill in the
+     * keyboard's colours, and the icon-only chip (the manager's own button) as just its
+     * icon, instead of the default white pill.
+     */
+    @androidx.annotation.RequiresApi(30)
+    private androidx.autofill.inline.v1.InlineSuggestionUi.Style autofillChipStyle(KeyboardToolbar toolbar) {
+        int bg = toolbar != null ? toolbar.backgroundColour() : 0xFF101010;
+        boolean light = (android.graphics.Color.red(bg) * 299 + android.graphics.Color.green(bg) * 587
+                + android.graphics.Color.blue(bg) * 114) / 1000 > 128;
+        int text = light ? 0xFF202124 : 0xFFE8EAED;
+        int subtext = light ? 0xFF5F6368 : 0xFFBDC1C6;
+        int pad = Math.round(12 * getResources().getDisplayMetrics().density);
+        int iconSize = Math.round(24 * getResources().getDisplayMetrics().density);
+        int bigIcon = Math.round(34 * getResources().getDisplayMetrics().density);
+        android.graphics.drawable.Icon chip = android.graphics.drawable.Icon.createWithResource(this,
+                light ? R.drawable.autofill_chip_light : R.drawable.autofill_chip_dark);
+        androidx.autofill.inline.common.ImageViewStyle icon =
+                new androidx.autofill.inline.common.ImageViewStyle.Builder()
+                        .setMaxWidth(iconSize).setMaxHeight(iconSize)
+                        .setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER)
+                        .setLayoutMargin(0, 0, pad / 2, 0)
+                        .build();
+        return androidx.autofill.inline.v1.InlineSuggestionUi.newStyleBuilder()
+                .setChipStyle(new androidx.autofill.inline.common.ViewStyle.Builder()
+                        .setBackground(chip)
+                        .setPadding(pad, 0, pad, 0)
+                        .build())
+                .setStartIconStyle(icon)
+                .setEndIconStyle(icon)
+                .setTitleStyle(new androidx.autofill.inline.common.TextViewStyle.Builder()
+                        .setTextColor(text).setTextSize(16)
+                        .build())
+                .setSubtitleStyle(new androidx.autofill.inline.common.TextViewStyle.Builder()
+                        .setTextColor(subtext).setTextSize(13)
+                        .setLayoutMargin(pad / 2, 0, 0, 0)
+                        .build())
+                // The password manager's own button: just its icon, as on Samsung (no pill).
+                .setSingleIconChipStyle(new androidx.autofill.inline.common.ViewStyle.Builder()
+                        .setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        .setPadding(0, 0, 0, 0)
+                        .build())
+                .setSingleIconChipIconStyle(new androidx.autofill.inline.common.ImageViewStyle.Builder()
+                        .setMaxWidth(bigIcon).setMaxHeight(bigIcon)
+                        .setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER)
+                        .build())
                 .build();
     }
 
