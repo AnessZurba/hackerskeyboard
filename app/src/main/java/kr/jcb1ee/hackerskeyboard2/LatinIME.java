@@ -2362,12 +2362,17 @@ public class LatinIME extends InputMethodService implements
         android.os.Bundle style = androidx.autofill.inline.UiVersions.newStylesBuilder()
                 .addStyle(autofillChipStyle(toolbar))
                 .build();
+        int minWidth = Math.round(48 * getResources().getDisplayMetrics().density);
         android.widget.inline.InlinePresentationSpec spec =
                 new android.widget.inline.InlinePresentationSpec.Builder(
-                        new android.util.Size(height, height), new android.util.Size(maxWidth, height))
+                        new android.util.Size(Math.min(minWidth, height), height),
+                        new android.util.Size(maxWidth, height))
                         .setStyle(style).build();
-        return new android.view.inputmethod.InlineSuggestionsRequest.Builder(
-                java.util.Collections.singletonList(spec))
+        // Three alike, as HeliBoard and Android's sample keyboard do: some password managers
+        // style their chips by position and want more than one.
+        List<android.widget.inline.InlinePresentationSpec> specs = new ArrayList<>();
+        for (int i = 0; i < 3; i++) specs.add(spec);
+        return new android.view.inputmethod.InlineSuggestionsRequest.Builder(specs)
                 .setMaxSuggestionCount(6)
                 .build();
     }
@@ -2408,11 +2413,18 @@ public class LatinIME extends InputMethodService implements
                         .setTextColor(subtext).setTextSize(13)
                         .setLayoutMargin(pad / 2, 0, 0, 0)
                         .build())
-                // The password manager's own button: just its icon, as on Samsung (no pill).
-                // Only the background changes; the icon keeps the default sizing.
+                // The password manager's own button: just its icon, as on Samsung (no pill),
+                // as in the autofill library's own example.
                 .setSingleIconChipStyle(new androidx.autofill.inline.common.ViewStyle.Builder()
-                        .setBackground(android.graphics.drawable.Icon.createWithResource(this,
-                                R.drawable.autofill_icon_clear))
+                        .setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        .setPadding(0, 0, 0, 0)
+                        .setLayoutMargin(0, 0, 0, 0)
+                        .build())
+                .setSingleIconChipIconStyle(new androidx.autofill.inline.common.ImageViewStyle.Builder()
+                        .setMaxWidth(Math.round(32 * getResources().getDisplayMetrics().density))
+                        .setMaxHeight(Math.round(32 * getResources().getDisplayMetrics().density))
+                        .setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER)
+                        .setLayoutMargin(0, 0, 0, 0)
                         .build())
                 .build();
     }
@@ -2426,11 +2438,12 @@ public class LatinIME extends InputMethodService implements
         final List<android.view.inputmethod.InlineSuggestion> suggestions =
                 response.getInlineSuggestions();
         if (suggestions.isEmpty()) {
+            mAutofillGeneration++;
             toolbar.showChips(java.util.Collections.<View>emptyList());
             return true;
         }
         final View[] views = new View[suggestions.size()];
-        final int[] remaining = {suggestions.size()};
+        final int generation = ++mAutofillGeneration;
         android.util.Size size = new android.util.Size(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         for (int i = 0; i < suggestions.size(); i++) {
@@ -2441,23 +2454,26 @@ public class LatinIME extends InputMethodService implements
                     Log.i(TAG, "Autofill chip " + index + ": " + view.getLayoutParams().width
                             + "x" + view.getLayoutParams().height);
                 }
-                if (--remaining[0] == 0) {
-                    List<View> ready = new ArrayList<>(), pinned = new ArrayList<>();
-                    for (int k = 0; k < views.length; k++) {
-                        if (views[k] == null) continue;
-                        if (suggestions.get(k).getInfo().isPinned()) pinned.add(views[k]);
-                        else ready.add(views[k]);
-                    }
-                    Log.i(TAG, "Autofill chips: " + ready.size() + " + " + pinned.size()
-                            + " pinned, of " + suggestions.size());
-                    toolbar.showChips(ready, pinned);
+                if (generation != mAutofillGeneration || view == null) return; // replaced
+                // Show each chip as it arrives: one slow chip mustn't hold back the rest.
+                List<View> ready = new ArrayList<>(), pinned = new ArrayList<>();
+                for (int k = 0; k < views.length; k++) {
+                    if (views[k] == null) continue;
+                    if (suggestions.get(k).getInfo().isPinned()) pinned.add(views[k]);
+                    else ready.add(views[k]);
                 }
+                Log.i(TAG, "Autofill chips: " + ready.size() + " + " + pinned.size()
+                        + " pinned, of " + suggestions.size());
+                toolbar.showChips(ready, pinned);
             });
         }
         return true;
     }
 
+    private int mAutofillGeneration; // latest response; older chips arriving late are dropped
+
     private void clearAutofillChips() {
+        mAutofillGeneration++;
         KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
         if (toolbar != null && toolbar.hasChips()) {
             toolbar.showChips(java.util.Collections.<View>emptyList());

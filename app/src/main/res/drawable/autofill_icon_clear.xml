@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Background of the icon-only autofill chip: none, so the password manager's icon
-     stands alone, as on Samsung's keyboard. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
-    <solid android:color="#00000000" />
-</shape>

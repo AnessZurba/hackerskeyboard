@@ -72,6 +72,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final ImageView[] mButtons = new ImageView[3];
     private final List<View> mCells = new ArrayList<>();
     private final HorizontalScrollView mChipScroll;
+    private final InlineContentClipView mChipClip; // holds mChipScroll
     private final LinearLayout mChipRow;
     private final ImageView mChipsDismiss;
     // True while the row is shown only because autofill chips are offered.
@@ -137,8 +138,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mChipRow.setPadding(dp(4), 0, dp(4), 0);
         mChipScroll.addView(mChipRow, new FrameLayout.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-        mChipScroll.setVisibility(GONE);
-        mBar.addView(mChipScroll, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        mChipClip = new InlineContentClipView(ime);
+        mChipClip.addView(mChipScroll, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        mChipClip.setVisibility(GONE);
+        mBar.addView(mChipClip, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         // ">" puts the regular toolbar back in the chips' place.
         mChipsDismiss = new ImageView(ime);
         mChipsDismiss.setImageResource(R.drawable.ic_toolbar_chips_dismiss);
@@ -266,7 +270,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         // come back once it's hidden (not during the fade).
         boolean concealing = !any && mShownForChips;
         for (View cell : mCells) cell.setVisibility(any || concealing ? GONE : VISIBLE);
-        mChipScroll.setVisibility(any ? VISIBLE : GONE);
+        mChipClip.setVisibility(any ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
         updateChipsButton();
         mChipScroll.scrollTo(0, 0);
@@ -1265,7 +1269,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         android.text.Selection.setSelection(mQuery, 0);
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
-        mChipScroll.setVisibility(GONE);
+        mChipClip.setVisibility(GONE);
         mChipsDismiss.setVisibility(GONE);
         mSearchRow.setVisibility(VISIBLE);
         ime().setSearchConnection(new SearchConnection());
@@ -1280,7 +1284,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mSearchRow.setVisibility(GONE);
         boolean chips = hasChips();
         for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
-        mChipScroll.setVisibility(chips ? VISIBLE : GONE);
+        mChipClip.setVisibility(chips ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(chips ? VISIBLE : GONE);
         if (toPanel) togglePanel(PANEL_EMOJI);
     }
