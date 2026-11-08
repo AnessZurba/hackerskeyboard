@@ -2285,7 +2285,6 @@ public class LatinIME extends InputMethodService implements
             }
         } else {
             deleteChar = true;
-            mTextBeforeBackspace = ic.getTextBeforeCursor(2, 0);
         }
         postUpdateShiftKeyState();
         TextEntryState.backspace();
@@ -2293,7 +2292,7 @@ public class LatinIME extends InputMethodService implements
             revertLastWord(deleteChar);
             ic.endBatchEdit();
             return;
-        } else if (mEnteredText != null
+        } else if (mEnteredText != null && !isLamAlef(mEnteredText)
                 && sameAsTextBeforeCursor(ic, mEnteredText)) {
             ic.deleteSurroundingText(mEnteredText.length(), 0);
         } else if (deleteChar) {
@@ -2310,8 +2309,7 @@ public class LatinIME extends InputMethodService implements
                 revertLastWord(deleteChar);
             } else {
                 sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
-                if (mDeleteCount > DELETE_ACCELERATE_AT || endsWithLamAlef(ic)) {
-                    // Lam-alef shows as one glyph, so one backspace removes both letters.
+                if (mDeleteCount > DELETE_ACCELERATE_AT) {
                     sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
                 }
             }
@@ -2320,24 +2318,12 @@ public class LatinIME extends InputMethodService implements
         ic.endBatchEdit();
     }
 
-    /**
-     * Whether, before this backspace, the text ended in lam + alef (ا أ إ آ). Called after
-     * the first delete, so it checks that a lam is now left before the cursor and that the
-     * deleted character was an alef, via the cached text from before the delete.
-     */
-    private boolean endsWithLamAlef(InputConnection ic) {
-        CharSequence before = mTextBeforeBackspace;
-        mTextBeforeBackspace = null;
-        if (before == null || before.length() < 2 || mLastSelectionStart != mLastSelectionEnd) {
-            return false;
-        }
-        char lam = before.charAt(before.length() - 2);
-        char alef = before.charAt(before.length() - 1);
-        return lam == '\u0644' && (alef == '\u0627' || alef == '\u0623' || alef == '\u0625'
-                || alef == '\u0622');
+    /** Lam + alef (ا أ إ آ): backspace removes the alef, then the lam, like other letters. */
+    private static boolean isLamAlef(CharSequence text) {
+        if (text == null || text.length() != 2 || text.charAt(0) != '\u0644') return false;
+        char alef = text.charAt(1);
+        return alef == '\u0627' || alef == '\u0623' || alef == '\u0625' || alef == '\u0622';
     }
-
-    private CharSequence mTextBeforeBackspace;
 
     // ---------------------------------------------------------------- backspace swipe
 
