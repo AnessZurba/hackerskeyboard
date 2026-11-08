@@ -162,7 +162,16 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mKeyboardView = view;
         mBody.addView(view, 0, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
-        applyColours(view.getBackground());
+        boolean plain = applyColours(view.getBackground());
+        if (plain) {
+            // The theme backgrounds have a highlight line along their top edge, meant to
+            // divide the keys from the old suggestion strip; under the toolbar it shows as
+            // a seam. Plain backgrounds become the plain colour (padding kept).
+            int l = view.getPaddingLeft(), t = view.getPaddingTop();
+            int r = view.getPaddingRight(), b = view.getPaddingBottom();
+            view.setBackgroundColor(mBackground);
+            view.setPadding(l, t, r, b);
+        }
     }
 
     // ------------------------------------------------------------------ toolbar row
@@ -829,16 +838,28 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     // ------------------------------------------------------------------ look
 
     /** Takes the toolbar's colours from the keyboard background, so every theme matches. */
-    private void applyColours(Drawable keyboardBackground) {
+    /**
+     * Takes the toolbar's colours from the keyboard background.
+     *
+     * @return whether the background is one plain, opaque colour below its top edge
+     */
+    private boolean applyColours(Drawable keyboardBackground) {
         int colour = Color.BLACK;
+        boolean plain = false;
         if (keyboardBackground != null) {
             try {
-                Bitmap bmp = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888);
+                Bitmap bmp = Bitmap.createBitmap(32, 32, Bitmap.Config.ARGB_8888);
                 Drawable d = keyboardBackground.getConstantState() != null
                         ? keyboardBackground.getConstantState().newDrawable().mutate() : keyboardBackground;
-                d.setBounds(0, 0, 16, 16);
+                d.setBounds(0, 0, 32, 32);
                 d.draw(new Canvas(bmp));
-                colour = bmp.getPixel(8, 8);
+                colour = bmp.getPixel(16, 16);
+                plain = Color.alpha(colour) == 255;
+                for (int y = 8; y < 32 && plain; y += 4) {
+                    for (int x = 2; x < 32 && plain; x += 6) {
+                        plain = similar(bmp.getPixel(x, y), colour);
+                    }
+                }
                 bmp.recycle();
             } catch (RuntimeException ignored) {
                 // keep black
@@ -853,6 +874,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mBar.setBackgroundColor(mBackground);
         mBody.setBackgroundColor(mBackground);
         updateButtons();
+        return plain;
+    }
+
+    private static boolean similar(int a, int b) {
+        return Math.abs(Color.red(a) - Color.red(b)) < 8 && Math.abs(Color.green(a) - Color.green(b)) < 8
+                && Math.abs(Color.blue(a) - Color.blue(b)) < 8 && Color.alpha(a) == Color.alpha(b);
     }
 
     private static double luminance(int c) {
