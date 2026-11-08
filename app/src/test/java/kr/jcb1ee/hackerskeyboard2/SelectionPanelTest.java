@@ -47,12 +47,13 @@ public class SelectionPanelTest {
         @Override
         public EditorInfo getCurrentInputEditorInfo() {
             EditorInfo ei = new EditorInfo();
-            ei.inputType = InputType.TYPE_CLASS_TEXT;
+            ei.inputType = sInputType;
             return ei;
         }
     }
 
     static InputConnection sConnection;
+    static int sInputType = InputType.TYPE_CLASS_TEXT;
     private EditText mField;
     private LatinIME mIme;
 
@@ -60,6 +61,7 @@ public class SelectionPanelTest {
     public void setUp() {
         mField = new EditText(ApplicationProvider.getApplicationContext());
         mField.setText("hello world");
+        sInputType = InputType.TYPE_CLASS_TEXT;
         mIme = Robolectric.buildService(TestIME.class).create().get();
     }
 
@@ -130,6 +132,132 @@ public class SelectionPanelTest {
         drag(select, 60);
         assertEquals("anchor stays", cursor, mField.getSelectionStart());
         assertTrue("selection grew", mField.getSelectionEnd() > cursor);
+    }
+
+    // ---------------------------------------------------------------- trackpad drags
+
+    private static final String LINES = "first line\nsecond line\nthird";
+
+    /**
+     * A multi-line editor like many real ones: it reports selection changes a little later
+     * (and until then, reading it back gives the old selection), and an up arrow on the
+     * first line (down on the last) jumps to the start (end) of the text.
+     */
+    private InputConnection laggy() {
+        mField.setText(LINES);
+        sInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE;
+        final int[] reported = {0, 0};
+        final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        return new InputConnectionWrapper(mField.onCreateInputConnection(new EditorInfo()), true) {
+            void select(int anchor, int focus) {
+                android.text.Selection.setSelection(mField.getText(), anchor, focus);
+                handler.postDelayed(() -> {
+                    int oldStart = reported[0], oldEnd = reported[1];
+                    reported[0] = anchor;
+                    reported[1] = focus;
+                    mIme.onUpdateSelection(oldStart, oldEnd, anchor, focus, -1, -1);
+                }, 30);
+            }
+
+            @Override
+            public boolean setSelection(int start, int end) {
+                select(start, end);
+                return true;
+            }
+
+            @Override
+            public ExtractedText getExtractedText(ExtractedTextRequest request, int flags) {
+                ExtractedText et = super.getExtractedText(request, flags);
+                et.selectionStart = reported[0];
+                et.selectionEnd = reported[1];
+                return et;
+            }
+
+            @Override
+            public boolean requestCursorUpdates(int mode) {
+                return false;
+            }
+
+            @Override
+            public boolean sendKeyEvent(android.view.KeyEvent event) {
+                if (event.getAction() != android.view.KeyEvent.ACTION_DOWN) return true;
+                boolean up = event.getKeyCode() == android.view.KeyEvent.KEYCODE_DPAD_UP;
+                int anchor = android.text.Selection.getSelectionStart(mField.getText());
+                int focus = android.text.Selection.getSelectionEnd(mField.getText());
+                int lineStart = LINES.lastIndexOf('\n', focus - 1) + 1;
+                int col = focus - lineStart;
+                int target;
+                if (up) {
+                    if (lineStart == 0) {
+                        target = 0;
+                    } else {
+                        int prev = LINES.lastIndexOf('\n', lineStart - 2) + 1;
+                        target = Math.min(prev + col, lineStart - 1);
+                    }
+                } else {
+                    int next = LINES.indexOf('\n', focus);
+                    if (next < 0) {
+                        target = LINES.length();
+                    } else {
+                        int nextEnd = LINES.indexOf('\n', next + 1);
+                        if (nextEnd < 0) nextEnd = LINES.length();
+                        target = Math.min(next + 1 + col, nextEnd);
+                    }
+                }
+                select(event.isShiftPressed() ? anchor : target, target);
+                return true;
+            }
+        };
+    }
+
+    private static void settle() {
+        ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
+    }
+
+    private void assertSelection(int anchor, int focus) {
+        assertEquals("anchor", anchor, android.text.Selection.getSelectionStart(mField.getText()));
+        assertEquals("moving end", focus, android.text.Selection.getSelectionEnd(mField.getText()));
+    }
+
+    /** Lines and characters mix smoothly, and dragging past the top doesn't jump. */
+    @Test
+    public void spaceDragMovesByLinesWithoutJumping() {
+        sConnection = laggy();
+        sConnection.setSelection(15, 15); // "second line", after "seco"
+        settle();
+        assertTrue(mIme.beginCursorDrag(false));
+        mIme.mCursorDrag.lines(-1);   // up to "firs|t"
+        mIme.mCursorDrag.chars(2);    // while the editor is still busy
+        settle();
+        assertSelection(6, 6);
+        mIme.mCursorDrag.lines(-1);   // first line: would jump to the start
+        settle();
+        assertSelection(6, 6);
+        mIme.mCursorDrag.chars(-1);
+        settle();
+        assertSelection(5, 5);
+        mIme.mCursorDrag.end();
+    }
+
+    /** Dragging with Select on keeps the anchor through line moves. */
+    @Test
+    public void selectDragKeepsTheSelection() {
+        sConnection = laggy();
+        sConnection.setSelection(15, 15);
+        settle();
+        assertTrue(mIme.beginCursorDrag(true));
+        mIme.mCursorDrag.chars(2);    // 15..17
+        mIme.mCursorDrag.lines(1);    // third line, column 6 -> its end (28)
+        mIme.mCursorDrag.chars(-1);
+        settle();
+        assertSelection(15, 27);
+        mIme.mCursorDrag.lines(1);    // last line: would jump to the end
+        settle();
+        assertSelection(15, 27);
+        mIme.mCursorDrag.chars(-3);
+        settle();
+        assertSelection(15, 24);
+        mIme.mCursorDrag.end();
     }
 
     private static void idle() {

@@ -991,6 +991,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onFinishInput() {
         super.onFinishInput();
+        mCursorDrag.end();
         mAdaptive.onFinishInput();
         commitHangulComposing();
         mHangulComposer.reset();
@@ -1035,6 +1036,12 @@ public class LatinIME extends InputMethodService implements
         int cursorDelta = newSelStart - oldSelStart;
         if (newSelStart != newSelEnd || cursorDelta < -1 || cursorDelta > 1) {
             mAdaptive.onCursorJump();
+        }
+        if (mCursorDrag.onUpdateSelection(newSelStart, newSelEnd)) {
+            // A trackpad drag: skip the suggestion work for every step.
+            mLastSelectionStart = newSelStart;
+            mLastSelectionEnd = newSelEnd;
+            return;
         }
 
         // If the current selection in the text view changes, we should
@@ -2434,6 +2441,29 @@ public class LatinIME extends InputMethodService implements
         ic.setSelection(anchor, focus);
     }
 
+    /** Remembers a selection the keyboard set (see {@link #selectionToExtend}). */
+    void rememberSelection(int anchor, int focus) {
+        mSetAnchor = anchor;
+        mSetFocus = focus;
+    }
+
+    /** Commits the word being typed before the cursor moves away from it. */
+    void commitTypedForCursor(InputConnection ic) {
+        commitTyped(ic, true);
+    }
+
+    final CursorDrag mCursorDrag = new CursorDrag(this);
+
+    /** Starts a trackpad drag; false when the editor hides its text (send arrow keys). */
+    boolean beginCursorDrag(boolean select) {
+        return mCursorDrag.begin(select || isShiftMod());
+    }
+
+    @Override
+    public void onUpdateCursorAnchorInfo(android.view.inputmethod.CursorAnchorInfo info) {
+        mCursorDrag.onUpdateCursorAnchorInfo(info);
+    }
+
     /** Forgets the remembered selection (Select turned off, or the selection dropped). */
     void forgetSelection() {
         mSetAnchor = mSetFocus = -1;
@@ -2444,7 +2474,7 @@ public class LatinIME extends InputMethodService implements
      * selection the keyboard set itself, and the editor reports that same span in another
      * order, or collapsed onto one of its ends, the remembered anchor and moving end win.
      */
-    private int[] selectionToExtend(android.view.inputmethod.ExtractedText et, boolean select) {
+    int[] selectionToExtend(android.view.inputmethod.ExtractedText et, boolean select) {
         int s = et.selectionStart, e = et.selectionEnd;
         if (!select || mSetAnchor < 0) {
             forgetSelection();
@@ -2460,7 +2490,7 @@ public class LatinIME extends InputMethodService implements
         return new int[] {s, e};
     }
 
-    private android.view.inputmethod.ExtractedText extractText(InputConnection ic) {
+    android.view.inputmethod.ExtractedText extractText(InputConnection ic) {
         EditorInfo ei = getCurrentInputEditorInfo();
         if (ic == null || ei == null
                 || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_NULL) {
@@ -2561,43 +2591,6 @@ public class LatinIME extends InputMethodService implements
         }
         setSelectionRemembered(ic, et.startOffset + (select ? anchor : target),
                 et.startOffset + target);
-        return true;
-    }
-
-    /**
-     * One line up or down for the space-bar trackpad, only in multi-line text fields: a
-     * single-line field has no lines (an arrow key there jumps to an end or leaves the
-     * field), and in a terminal a stray vertical drift would recall shell history.
-     *
-     * @return whether the cursor moved
-     */
-    boolean moveCursorLine(boolean up) {
-        return moveCursorLine(up, false);
-    }
-
-    /** {@link #moveCursorLine(boolean)}, extending the selection when {@code select}. */
-    boolean moveCursorLine(boolean up, boolean select) {
-        InputConnection ic = getCurrentInputConnection();
-        EditorInfo ei = getCurrentInputEditorInfo();
-        if (ic == null || ei == null
-                || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) != EditorInfo.TYPE_CLASS_TEXT
-                || (ei.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
-            return false;
-        }
-        android.view.inputmethod.ExtractedText et = extractText(ic);
-        if (et != null) {
-            int end = et.selectionEnd;
-            if (up ? end == 0 : end == et.text.length()) return false; // nowhere to go
-        }
-        commitTyped(ic, true);
-        int code = up ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN;
-        long now = SystemClock.uptimeMillis();
-        forgetSelection(); // the field moves the selection itself
-        int meta = select || isShiftMod() ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
-        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta,
-                -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
-        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta,
-                -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
         return true;
     }
 

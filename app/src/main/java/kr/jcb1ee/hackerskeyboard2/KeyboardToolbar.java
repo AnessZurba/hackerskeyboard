@@ -408,16 +408,18 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
         final boolean[] active = new boolean[1];
         final float[] down = new float[2];
+        final boolean[] dragging = new boolean[1];
         final Runnable start = () -> {
             active[0] = true;
+            dragging[0] = ime().getCurrentInputConnection() != null && ime().beginCursorDrag(mSelecting);
             cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             cell.setAlpha(0.6f);
         };
         final CursorTrackpad.Mover mover = new CursorTrackpad.Mover() {
             @Override
             public boolean chars(int n) {
+                if (dragging[0]) return ime().mCursorDrag.chars(n);
                 if (connection() == null) return false;
-                if (ime().moveCursor(n, mSelecting, false)) return true;
                 int code = n < 0 ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT;
                 for (int i = Math.abs(n); i > 0; i--) {
                     sendKey(code, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
@@ -427,10 +429,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
             @Override
             public boolean lines(int n) {
-                if (connection() == null) return false;
-                boolean any = false;
-                for (int i = Math.abs(n); i > 0; i--) any |= ime().moveCursorLine(n < 0, mSelecting);
-                return any;
+                return dragging[0] && ime().mCursorDrag.lines(n);
             }
         };
         cell.setOnTouchListener((view, e) -> {
@@ -458,6 +457,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     mHandler.removeCallbacks(start);
                     view.setPressed(false);
                     cell.setAlpha(1f);
+                    if (dragging[0]) ime().mCursorDrag.end();
+                    dragging[0] = false;
                     if (!active[0] && e.getActionMasked() == MotionEvent.ACTION_UP) {
                         view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                         toggleSelecting();

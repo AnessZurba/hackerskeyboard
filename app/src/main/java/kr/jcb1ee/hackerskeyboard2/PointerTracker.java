@@ -64,6 +64,7 @@ public class PointerTracker {
     // cursor one character per step by sending the arrow keys.
     private boolean mCursorSlide;
     private final CursorTrackpad mTrackpad;
+    private boolean mCursorDragging; // the editor's text is exposed: LatinIME tracks the cursor
     private int mDownX;
     private final int mCursorSlop;
 
@@ -536,6 +537,7 @@ public class PointerTracker {
         int x = mKeyState.getLastX();
         if (Math.abs(x - mDownX) > mCursorSlop) return false;
         mCursorSlide = true;
+        mCursorDragging = LatinIME.sInstance != null && LatinIME.sInstance.beginCursorDrag(false);
         mTrackpad.start(x, mKeyState.getLastY(), android.os.SystemClock.uptimeMillis());
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(true);
@@ -560,6 +562,8 @@ public class PointerTracker {
     private void endCursorSlide() {
         if (!mCursorSlide) return;
         mCursorSlide = false;
+        if (mCursorDragging && LatinIME.sInstance != null) LatinIME.sInstance.mCursorDrag.end();
+        mCursorDragging = false;
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(false);
         }
@@ -578,26 +582,22 @@ public class PointerTracker {
                 new CursorTrackpad.Mover() {
                     @Override
                     public boolean chars(int n) {
-                        // Move within the text, stopping at its ends: an arrow key at the
-                        // start or end of a field moves focus to another view and closes the
+                        // Within the text, stopping at its ends: an arrow key at the start
+                        // or end of a field moves focus to another view and closes the
                         // keyboard. Terminals don't expose their text, so they get arrow
                         // keys (Shift/Ctrl on other keys apply).
-                        if (!LatinIME.sInstance.moveCursor(n, false, false)) {
-                            int code = n < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT
-                                    : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
-                            for (int i = Math.abs(n); i > 0; i--) mListener.onKey(code, null, x, y);
-                        }
+                        if (mCursorDragging) return LatinIME.sInstance.mCursorDrag.chars(n);
+                        int code = n < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT
+                                : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
+                        for (int i = Math.abs(n); i > 0; i--) mListener.onKey(code, null, x, y);
                         return true;
                     }
 
                     @Override
                     public boolean lines(int n) {
-                        // Lines only in multi-line fields (see LatinIME.moveCursorLine).
-                        boolean any = false;
-                        for (int i = Math.abs(n); i > 0; i--) {
-                            any |= LatinIME.sInstance.moveCursorLine(n < 0);
-                        }
-                        return any;
+                        // Lines only in multi-line text fields: in a terminal a stray
+                        // vertical drift would recall shell history.
+                        return mCursorDragging && LatinIME.sInstance.mCursorDrag.lines(n);
                     }
                 });
         if (moved) {
