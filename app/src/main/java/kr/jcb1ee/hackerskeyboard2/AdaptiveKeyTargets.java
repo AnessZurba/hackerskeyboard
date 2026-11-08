@@ -70,7 +70,13 @@ final class AdaptiveKeyTargets {
     private static final String USER_WORDS_FILE = "adaptive_user_words.tsv";
     private static final int MAX_PREFIX = 24;
     private static final int MAX_USER_WORDS = 5000;
-    private static final int MAX_USER_COUNT = 50;
+    /**
+     * Privacy: a learned word's count is capped this low, so the saved file only says
+     * "typed 1, 2, ... or MAX_USES+ times" and never ranks how often words are used.
+     * No timestamps are kept, and the file is in alphabetical order.
+     */
+    private static final int MAX_USES = 5;
+    private static final int MAX_CORRECTIONS = 3;
     /**
      * A learned word that is not in the word list only counts once it has been typed this
      * many times, so a typo left in once or twice never starts attracting touches.
@@ -562,7 +568,7 @@ final class AdaptiveKeyTargets {
     private void recordCorrection(String word) {
         ensureUserWordsLoaded();
         Integer count = mCorrections.get(word);
-        mCorrections.put(word, Math.min(MAX_USER_COUNT, count == null ? 1 : count + 1));
+        mCorrections.put(word, Math.min(MAX_CORRECTIONS, count == null ? 1 : count + 1));
         if (mCorrections.size() > MAX_USER_WORDS) mCorrections.remove(mCorrections.firstKey());
         markDirty();
     }
@@ -570,7 +576,7 @@ final class AdaptiveKeyTargets {
     private void learn(String word) {
         ensureUserWordsLoaded();
         Integer count = mUserWords.get(word);
-        mUserWords.put(word, Math.min(MAX_USER_COUNT, count == null ? 1 : count + 1));
+        mUserWords.put(word, Math.min(MAX_USES, count == null ? 1 : count + 1));
         if (mUserWords.size() > MAX_USER_WORDS) evictRarest();
         markDirty();
     }
@@ -627,12 +633,14 @@ final class AdaptiveKeyTargets {
                 int tab = line.indexOf('\t');
                 if (tab <= 0) continue;
                 try {
-                    int count = Math.min(MAX_USER_COUNT, Integer.parseInt(line.substring(tab + 1)));
+                    int count = Integer.parseInt(line.substring(tab + 1));
                     if (line.startsWith(CORRECTION_PREFIX)) {
-                        mCorrections.put(line.substring(CORRECTION_PREFIX.length(), tab), count);
+                        mCorrections.put(line.substring(CORRECTION_PREFIX.length(), tab),
+                                Math.min(MAX_CORRECTIONS, count));
                     } else {
-                        mUserWords.put(line.substring(0, tab), count);
+                        mUserWords.put(line.substring(0, tab), Math.min(MAX_USES, count));
                     }
+                    if (count > MAX_USES) mUserWordsDirty = true; // rewrite older, finer counts
                 } catch (NumberFormatException ignored) {
                     // skip a damaged line
                 }

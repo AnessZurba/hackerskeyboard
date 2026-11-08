@@ -514,8 +514,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private String[] recents() {
-        String saved = PreferenceManager.getDefaultSharedPreferences(getContext())
-                .getString(PREF_EMOJI_RECENTS, "");
+        String saved = privatePrefs().getString(PREF_EMOJI_RECENTS, "");
         return saved.isEmpty() ? new String[0] : saved.split(" ");
     }
 
@@ -524,8 +523,18 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         list.remove(emoji);
         list.add(0, emoji);
         while (list.size() > MAX_RECENTS) list.remove(list.size() - 1);
-        PreferenceManager.getDefaultSharedPreferences(getContext()).edit()
-                .putString(PREF_EMOJI_RECENTS, TextUtils.join(" ", list)).apply();
+        privatePrefs().edit().putString(PREF_EMOJI_RECENTS, TextUtils.join(" ", list)).apply();
+    }
+
+    /** Not the default preferences file, which the backup agent sends to the cloud. */
+    private SharedPreferences privatePrefs() {
+        SharedPreferences prefs = getContext().getSharedPreferences("toolbar_private", Context.MODE_PRIVATE);
+        SharedPreferences old = PreferenceManager.getDefaultSharedPreferences(getContext());
+        if (old.contains(PREF_EMOJI_RECENTS)) { // moved out of the backed-up file
+            prefs.edit().putString(PREF_EMOJI_RECENTS, old.getString(PREF_EMOJI_RECENTS, "")).apply();
+            old.edit().remove(PREF_EMOJI_RECENTS).apply();
+        }
+        return prefs;
     }
 
     // ------------------------------------------------------------------ look

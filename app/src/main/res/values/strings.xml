@@ -698,7 +698,7 @@
         <item>high</item>
     </string-array>
     <string name="title_adaptive_learn">Learn from my typing</string>
-    <string name="summary_adaptive_learn">Add words you type to the word list. A word is learned a few seconds after you finish it, unless you backspace into it first; corrected words count against themselves. A word that is not in the list counts only after you have typed it three times. Never learns in password, email or web address fields, or where the app asks for no learning.</string>
+    <string name="summary_adaptive_learn">Add words you type to the word list. A word is learned a few seconds after you finish it, unless you backspace into it first; corrected words count against themselves. A word that is not in the list counts only after you have typed it three times. For privacy, counts stop at 5, so the keyboard never records how often you use a word; learned words stay on the device and are not backed up. Never learns in password, email or web address fields, or where the app asks for no learning.</string>
     <string name="title_adaptive_clear">Clear learned words</string>
     <string name="summary_adaptive_clear">%d words learned</string>
     <string name="toast_adaptive_cleared">Learned words cleared</string>
