@@ -76,6 +76,12 @@ final class AdaptiveKeyTargets {
      * many times, so a typo left in once or twice never starts attracting touches.
      */
     private static final int MIN_USES_FOR_NEW_WORD = 3;
+    /** A finished word waits this long (or until the next word) before it is learned. */
+    private static final long LEARN_DELAY_MS = 8000;
+    /** Each correction of a word cancels this many uses of it. */
+    private static final int CORRECTION_PENALTY = 2;
+    /** Learned-words file lines starting with this hold corrections, not uses. */
+    private static final String CORRECTION_PREFIX = "!";
     /**
      * List frequencies are a 0-255 log scale; 2^(f/10) puts "the" (222) about 10^4.5
      * times above a rare word (70), close to real usage.
@@ -134,6 +140,10 @@ final class AdaptiveKeyTargets {
 
     // Learned words (word -> count), all languages in one map; main thread only.
     private final TreeMap<String, Integer> mUserWords = new TreeMap<>();
+    // Words the user backspaced into right after finishing them (word -> times).
+    private final TreeMap<String, Integer> mCorrections = new TreeMap<>();
+    // The last finished word, learned after LEARN_DELAY_MS unless it is corrected first.
+    private String mPendingWord;
     private boolean mUserWordsLoaded;
     private boolean mUserWordsDirty;
 
@@ -216,6 +226,7 @@ final class AdaptiveKeyTargets {
     }
 
     void onFinishInput() {
+        commitPendingWord();
         mInputConnection = null;
         flushUserWords();
     }
@@ -257,7 +268,15 @@ final class AdaptiveKeyTargets {
         if (code > 0 && isWordChar(code)) {
             mTypedRun += normalise(new String(Character.toChars(code))).length();
         } else if (code == Keyboard.KEYCODE_DELETE) {
-            if (mTypedRun > 0) mTypedRun--;
+            if (mTypedRun > 0) {
+                mTypedRun--;
+            } else if (mPendingWord != null) {
+                // Backspacing over the separator into the word just finished: it was
+                // probably a typo. Don't learn it, and remember the correction.
+                recordCorrection(mPendingWord);
+                mPendingWord = null;
+                mMainHandler.removeCallbacks(mCommitPendingRunnable);
+            }
         }
     }
 
@@ -274,7 +293,10 @@ final class AdaptiveKeyTargets {
         if (mEnabledPref && mLearnPref && mFieldAllowsLearning && !mModifierActive) {
             String word = wordBeforeCursor();
             if (word.length() >= 2 && word.length() <= mTypedRun && word.length() < MAX_PREFIX) {
-                learn(word);
+                commitPendingWord(); // the previous word survived: the user moved on
+                mPendingWord = word;
+                mMainHandler.removeCallbacks(mCommitPendingRunnable);
+                mMainHandler.postDelayed(mCommitPendingRunnable, LEARN_DELAY_MS);
             }
         }
         mTypedRun = 0;
@@ -404,7 +426,7 @@ final class AdaptiveKeyTargets {
                 : mUserWords.subMap(prefix, prefix + Character.MAX_VALUE).entrySet()) {
             m += learnedWeight(e.getKey(), e.getValue());
         }
-        return m;
+        return Math.max(0, m - correctionPenalty(prefix));
     }
 
     /** Weight of the prefix itself as a whole word. */
@@ -418,13 +440,39 @@ final class AdaptiveKeyTargets {
         ensureUserWordsLoaded();
         Integer count = mUserWords.get(word);
         if (count != null) w += learnedWeight(word, count);
-        return w;
+        Integer corrections = mCorrections.get(word);
+        if (corrections != null) w -= listWeight(word) * (1 - 1.0 / (1 + corrections));
+        return Math.max(0, w);
     }
 
-    /** Weight of a learned word: nothing until a word outside the list is typed often enough. */
+    /**
+     * Weight of a learned word. Corrections cancel uses; a word outside the list counts
+     * only once it has enough uses left.
+     */
     private double learnedWeight(String word, int count) {
-        if (count < MIN_USES_FOR_NEW_WORD && !inWordList(word)) return 0;
-        return count * USER_WORD_WEIGHT;
+        Integer corrections = mCorrections.get(word);
+        int uses = count - CORRECTION_PENALTY * (corrections == null ? 0 : corrections);
+        if (uses <= 0) return 0;
+        if (uses < MIN_USES_FOR_NEW_WORD && !inWordList(word)) return 0;
+        return uses * USER_WORD_WEIGHT;
+    }
+
+    /** Weight taken away from list words the user keeps correcting, within a prefix. */
+    private double correctionPenalty(String prefix) {
+        double penalty = 0;
+        for (Map.Entry<String, Integer> e
+                : mCorrections.subMap(prefix, prefix + Character.MAX_VALUE).entrySet()) {
+            double w = listWeight(e.getKey());
+            if (w > 0) penalty += w * (1 - 1.0 / (1 + e.getValue()));
+        }
+        return penalty;
+    }
+
+    private double listWeight(String word) {
+        String[] words = mWords;
+        if (words == null) return 0;
+        int i = lowerBound(words, word);
+        return i < words.length && words[i].equals(word) ? mCumWeight[i + 1] - mCumWeight[i] : 0;
     }
 
     private boolean inWordList(String word) {
@@ -501,11 +549,33 @@ final class AdaptiveKeyTargets {
 
     // ---------------------------------------------------------------- learned words
 
+    private final Runnable mCommitPendingRunnable = this::commitPendingWord;
+
+    private void commitPendingWord() {
+        mMainHandler.removeCallbacks(mCommitPendingRunnable);
+        if (mPendingWord == null) return;
+        String word = mPendingWord;
+        mPendingWord = null;
+        learn(word);
+    }
+
+    private void recordCorrection(String word) {
+        ensureUserWordsLoaded();
+        Integer count = mCorrections.get(word);
+        mCorrections.put(word, Math.min(MAX_USER_COUNT, count == null ? 1 : count + 1));
+        if (mCorrections.size() > MAX_USER_WORDS) mCorrections.remove(mCorrections.firstKey());
+        markDirty();
+    }
+
     private void learn(String word) {
         ensureUserWordsLoaded();
         Integer count = mUserWords.get(word);
         mUserWords.put(word, Math.min(MAX_USER_COUNT, count == null ? 1 : count + 1));
         if (mUserWords.size() > MAX_USER_WORDS) evictRarest();
+        markDirty();
+    }
+
+    private void markDirty() {
         mUserWordsDirty = true;
         mCachedPrefix = null;
         mMainHandler.removeCallbacks(mFlushRunnable);
@@ -527,6 +597,9 @@ final class AdaptiveKeyTargets {
     /** Forgets every learned word. */
     void clearLearnedWords() {
         mUserWords.clear();
+        mCorrections.clear();
+        mPendingWord = null;
+        mMainHandler.removeCallbacks(mCommitPendingRunnable);
         mUserWordsLoaded = true;
         mUserWordsDirty = false;
         mCachedPrefix = null;
@@ -554,8 +627,12 @@ final class AdaptiveKeyTargets {
                 int tab = line.indexOf('\t');
                 if (tab <= 0) continue;
                 try {
-                    mUserWords.put(line.substring(0, tab),
-                            Math.min(MAX_USER_COUNT, Integer.parseInt(line.substring(tab + 1))));
+                    int count = Math.min(MAX_USER_COUNT, Integer.parseInt(line.substring(tab + 1)));
+                    if (line.startsWith(CORRECTION_PREFIX)) {
+                        mCorrections.put(line.substring(CORRECTION_PREFIX.length(), tab), count);
+                    } else {
+                        mUserWords.put(line.substring(0, tab), count);
+                    }
                 } catch (NumberFormatException ignored) {
                     // skip a damaged line
                 }
@@ -572,6 +649,13 @@ final class AdaptiveKeyTargets {
         File tmp = new File(mContext.getFilesDir(), USER_WORDS_FILE + ".tmp");
         try (Writer out = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.UTF_8)) {
             for (Map.Entry<String, Integer> e : mUserWords.entrySet()) {
+                out.write(e.getKey());
+                out.write('\t');
+                out.write(Integer.toString(e.getValue()));
+                out.write('\n');
+            }
+            for (Map.Entry<String, Integer> e : mCorrections.entrySet()) {
+                out.write(CORRECTION_PREFIX);
                 out.write(e.getKey());
                 out.write('\t');
                 out.write(Integer.toString(e.getValue()));

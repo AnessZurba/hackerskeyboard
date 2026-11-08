@@ -1201,6 +1201,9 @@ public class Keyboard {
                           if (prevKey != null) {
                               prevKey.width += key.width;
                           }
+                        } else if (key.codes[0] == LatinKeyboardView.KEYCODE_DPAD_CENTER
+                                && LatinIME.sKeyboardSettings.hideDpadCenter) {
+                          giveWidthToSpace(key, y);
                         } else {
                           mKeys.add(key);
                           prevKey = key;
@@ -1245,6 +1248,28 @@ public class Keyboard {
             e.printStackTrace();
         }
         mTotalHeight = y - mDefaultVerticalGap;
+    }
+
+    /**
+     * Drops a key from its row: the space bar of the same row (if any) grows by the key's
+     * width and gap, and the keys between the space bar and the dropped key move over.
+     * Keys after the dropped one keep their places.
+     */
+    private void giveWidthToSpace(Key dropped, int rowY) {
+        Key space = null;
+        for (Key k : mKeys) {
+            if (k.y == rowY && k.codes != null && k.codes.length > 0 && k.codes[0] == ' ') space = k;
+        }
+        if (space == null || space.x > dropped.x) return; // leave the gap rather than guess
+        float extra = dropped.realGap + dropped.realWidth;
+        for (Key k : mKeys) {
+            if (k.y == rowY && k.x > space.x) {
+                k.realX += extra;
+                k.x = Math.round(k.realX);
+            }
+        }
+        space.realWidth += extra;
+        space.width = Math.round(space.realWidth);
     }
 
     public void setKeyboardWidth(int newWidth) {

@@ -121,6 +121,14 @@
             android:key="key_settings">
 
     <CheckBoxPreference
+            android:key="pref_hide_dpad_center"
+            android:title="@string/title_hide_dpad_center"
+            android:summary="@string/summary_hide_dpad_center"
+            android:persistent="true"
+            android:defaultValue="false"
+            />
+
+    <CheckBoxPreference
             android:key="auto_cap"
             android:title="@string/auto_cap"
             android:persistent="true"

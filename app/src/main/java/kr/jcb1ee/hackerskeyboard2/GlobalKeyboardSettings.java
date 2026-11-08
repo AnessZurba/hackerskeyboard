@@ -68,6 +68,7 @@ public final class GlobalKeyboardSettings {
     // Read by KeyboardSwitcher
     public int keyboardMode = 0;
     public boolean useExtension = false;
+    public boolean hideDpadCenter = false;
     //
     // Read by LatinKeyboardView and KeyboardSwitcher
     public float keyboardHeightPercent = 40.0f; // percent of screen height
@@ -209,6 +210,12 @@ public final class GlobalKeyboardSettings {
             public void set(String val) { keyClickMethod = Integer.valueOf(val); }
             public String getDefault() { return res.getString(R.string.default_click_method); }
             public int getFlags() { return FLAG_PREF_NONE; }
+        });
+
+        addBooleanPref("pref_hide_dpad_center", new BooleanPref() {
+            public void set(boolean val) { hideDpadCenter = val; }
+            public boolean getDefault() { return false; }
+            public int getFlags() { return FLAG_PREF_RESET_KEYBOARDS; }
         });
 
         addBooleanPref("pref_caps_lock", new BooleanPref() {
