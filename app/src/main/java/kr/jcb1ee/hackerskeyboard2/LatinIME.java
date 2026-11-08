@@ -368,6 +368,7 @@ public class LatinIME extends InputMethodService implements
         mAdaptive = AdaptiveKeyTargets.get(this);
         ClipboardHistory.get(this).setEnabled(PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean(ClipboardHistory.PREF_ENABLED, true));
+        ClipboardHistory.get(this).catchUp(); // copies made while the keyboard wasn't running
         // setStatusIcon(R.drawable.ime_qwerty);
         mResources = getResources();
         final Configuration conf = mResources.getConfiguration();
@@ -1011,6 +1012,12 @@ public class LatinIME extends InputMethodService implements
             mAutoDictionary.flushPendingWrites();
         if (mUserBigramDictionary != null)
             mUserBigramDictionary.flushPendingWrites();
+    }
+
+    @Override
+    public void onWindowShown() {
+        super.onWindowShown();
+        ClipboardHistory.get(this).catchUp(); // cheap: reads the clip only when it's new
     }
 
     @Override

@@ -747,6 +747,24 @@ public class SelectionPanelTest {
         assertEquals(2, history.clips().size());
     }
 
+    /** The history keeps many texts but fewer images (they take space). */
+    @Test
+    public void clipboardKeepsFewerImagesThanTexts() throws Exception {
+        ClipboardHistory history = ClipboardHistory.get(mIme);
+        for (int i = 0; i < 60; i++) history.add("text " + i);
+        for (int i = 0; i < 25; i++) {
+            java.io.File f = new java.io.File(ClipboardHistory.imageDir(mIme), "img" + i + ".png");
+            new java.io.FileOutputStream(f).close();
+            history.addImage(f.getName(), "image/png");
+        }
+        int texts = 0, images = 0;
+        for (ClipboardHistory.Clip c : history.clips()) if (c.isImage()) images++; else texts++;
+        assertEquals("all 60 texts kept (more than the old 50)", 60, texts);
+        assertEquals("20 images at most", 20, images);
+        assertTrue("oldest image files removed",
+                !new java.io.File(ClipboardHistory.imageDir(mIme), "img0.png").exists());
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }

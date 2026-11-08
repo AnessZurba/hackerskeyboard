@@ -42,7 +42,8 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     private static final String TAG = "HK/ClipboardHistory";
     static final String PREF_ENABLED = "pref_clipboard_history";
     private static final String FILE = "clipboard_history.json";
-    private static final int MAX_UNPINNED = 50;
+    private static final int MAX_UNPINNED = 200;
+    private static final int MAX_UNPINNED_IMAGES = 20; // images take space: fewer of them
     private static final int MAX_LENGTH = 20000;
 
     static final class Clip {
@@ -159,8 +160,9 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
             ClipboardManager cm = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
             if (cm == null) return;
             if (catchingUp && android.os.Build.VERSION.SDK_INT >= 26) {
-                // Look at the clip's description first (no "pasted from your clipboard" notice
-                // on Android 12+), and read the clip itself only when it is new to us.
+                // Look at the clip's description first, and read the clip itself only when it
+                // is new to us (cheap even for large clips; the default keyboard gets no
+                // "pasted from your clipboard" notice either way).
                 ClipDescription peek = cm.getPrimaryClipDescription();
                 if (peek == null || peek.getTimestamp() <= mContext.getSharedPreferences(
                         STATE, Context.MODE_PRIVATE).getLong(LAST_SEEN, 0)) {
@@ -327,10 +329,13 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     }
 
     private void trim() {
-        int unpinned = 0;
+        int unpinned = 0, images = 0;
         for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
             Clip c = it.next();
-            if (!c.pinned && ++unpinned > MAX_UNPINNED) {
+            if (c.pinned) continue;
+            boolean tooMany = ++unpinned > MAX_UNPINNED
+                    || (c.isImage() && ++images > MAX_UNPINNED_IMAGES);
+            if (tooMany) {
                 it.remove();
                 deleteImage(c);
             }
