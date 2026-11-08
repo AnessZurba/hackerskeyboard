@@ -2417,10 +2417,47 @@ public class LatinIME extends InputMethodService implements
         commitTyped(ic, true);
         select |= isShiftMod();
         byWord |= mModCtrl;
-        int[] sel = newSelection(et.text.toString(), et.selectionStart, et.selectionEnd,
-                steps, select, byWord);
-        ic.setSelection(et.startOffset + sel[0], et.startOffset + sel[1]);
+        int[] from = selectionToExtend(et, select);
+        int[] sel = newSelection(et.text.toString(), from[0], from[1], steps, select, byWord);
+        setSelectionRemembered(ic, et.startOffset + sel[0], et.startOffset + sel[1]);
         return true;
+    }
+
+    // The last selection the keyboard set (absolute anchor and moving end), or -1. Some
+    // editors report a selection back normalised (start before end) or not at all, which
+    // would make the next Select-arrow press extend from the wrong end.
+    private int mSetAnchor = -1, mSetFocus = -1;
+
+    private void setSelectionRemembered(InputConnection ic, int anchor, int focus) {
+        mSetAnchor = anchor;
+        mSetFocus = focus;
+        ic.setSelection(anchor, focus);
+    }
+
+    /** Forgets the remembered selection (Select turned off, or the selection dropped). */
+    void forgetSelection() {
+        mSetAnchor = mSetFocus = -1;
+    }
+
+    /**
+     * The {anchor, end} (relative to the extracted text) to move from. When extending a
+     * selection the keyboard set itself, and the editor reports that same span in another
+     * order, or collapsed onto one of its ends, the remembered anchor and moving end win.
+     */
+    private int[] selectionToExtend(android.view.inputmethod.ExtractedText et, boolean select) {
+        int s = et.selectionStart, e = et.selectionEnd;
+        if (!select || mSetAnchor < 0) {
+            forgetSelection();
+            return new int[] {s, e};
+        }
+        int a = mSetAnchor - et.startOffset, f = mSetFocus - et.startOffset;
+        int len = et.text.length();
+        boolean known = a >= 0 && f >= 0 && a <= len && f <= len
+                && ((Math.min(s, e) == Math.min(a, f) && Math.max(s, e) == Math.max(a, f))
+                        || (s == e && (s == f || s == a)));
+        if (known) return new int[] {a, f};
+        forgetSelection();
+        return new int[] {s, e};
     }
 
     private android.view.inputmethod.ExtractedText extractText(InputConnection ic) {
@@ -2445,7 +2482,9 @@ public class LatinIME extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
         android.view.inputmethod.ExtractedText et = extractText(ic);
         if (et == null || et.selectionStart == et.selectionEnd) return false;
-        ic.setSelection(et.startOffset + et.selectionEnd, et.startOffset + et.selectionStart);
+        int[] cur = selectionToExtend(et, true);
+        if (cur[0] == cur[1]) return false;
+        setSelectionRemembered(ic, et.startOffset + cur[1], et.startOffset + cur[0]);
         return true;
     }
 
@@ -2458,7 +2497,7 @@ public class LatinIME extends InputMethodService implements
         String text = et.text.toString();
         int[] range = line ? lineAt(text, et.selectionEnd) : wordAt(text, et.selectionEnd);
         if (range[0] == range[1]) return false;
-        ic.setSelection(et.startOffset + range[0], et.startOffset + range[1]);
+        setSelectionRemembered(ic, et.startOffset + range[0], et.startOffset + range[1]);
         return true;
     }
 
@@ -2467,7 +2506,9 @@ public class LatinIME extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
         android.view.inputmethod.ExtractedText et = extractText(ic);
         if (et == null) return false;
-        ic.setSelection(et.startOffset + et.selectionEnd, et.startOffset + et.selectionEnd);
+        int end = selectionToExtend(et, true)[1];
+        forgetSelection();
+        ic.setSelection(et.startOffset + end, et.startOffset + end);
         return true;
     }
 
@@ -2509,12 +2550,17 @@ public class LatinIME extends InputMethodService implements
         commitTyped(ic, true);
         select |= isShiftMod();
         int len = et.text.length();
-        int anchor = et.selectionStart, end = et.selectionEnd;
+        int[] from = selectionToExtend(et, select);
+        int anchor = from[0], end = from[1];
         int target = up ? 0 : len;
         boolean multiLine = (ei.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0;
         if (end == target) return true; // already there: nowhere to go
-        if (multiLine) return false;     // the field moves between its lines itself
-        ic.setSelection(et.startOffset + (select ? anchor : target), et.startOffset + target);
+        if (multiLine) {         // the field moves between its lines itself
+            forgetSelection();
+            return false;
+        }
+        setSelectionRemembered(ic, et.startOffset + (select ? anchor : target),
+                et.startOffset + target);
         return true;
     }
 
@@ -2526,6 +2572,11 @@ public class LatinIME extends InputMethodService implements
      * @return whether the cursor moved
      */
     boolean moveCursorLine(boolean up) {
+        return moveCursorLine(up, false);
+    }
+
+    /** {@link #moveCursorLine(boolean)}, extending the selection when {@code select}. */
+    boolean moveCursorLine(boolean up, boolean select) {
         InputConnection ic = getCurrentInputConnection();
         EditorInfo ei = getCurrentInputEditorInfo();
         if (ic == null || ei == null
@@ -2541,7 +2592,8 @@ public class LatinIME extends InputMethodService implements
         commitTyped(ic, true);
         int code = up ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN;
         long now = SystemClock.uptimeMillis();
-        int meta = isShiftMod() ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
+        forgetSelection(); // the field moves the selection itself
+        int meta = select || isShiftMod() ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
         ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta,
                 -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
         ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta,

@@ -373,6 +373,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         || label.equals("▲") || label.equals("▼") || label.equals("⌫");
                 if (repeats) {
                     setRepeating(cell, action);
+                } else if (label.equals(mIme.getString(R.string.toolbar_select))) {
+                    setTrackpad(cell);
                 } else {
                     cell.setOnClickListener(v -> {
                         v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
@@ -392,7 +394,80 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private void toggleSelecting() {
         mSelecting = !mSelecting;
+        if (!mSelecting) ime().forgetSelection();
         updateSelectButton();
+    }
+
+    /**
+     * The Select button: a tap toggles Select; holding it (or dragging off it) turns it into
+     * a trackpad, like the space bar's, that moves the cursor, or the selection's moving end
+     * while Select is on.
+     */
+    private void setTrackpad(final TextView cell) {
+        final CursorTrackpad trackpad = new CursorTrackpad(getResources().getDisplayMetrics().density);
+        final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
+        final boolean[] active = new boolean[1];
+        final float[] down = new float[2];
+        final Runnable start = () -> {
+            active[0] = true;
+            cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            cell.setAlpha(0.6f);
+        };
+        final CursorTrackpad.Mover mover = new CursorTrackpad.Mover() {
+            @Override
+            public boolean chars(int n) {
+                if (connection() == null) return false;
+                if (ime().moveCursor(n, mSelecting, false)) return true;
+                int code = n < 0 ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT;
+                for (int i = Math.abs(n); i > 0; i--) {
+                    sendKey(code, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean lines(int n) {
+                if (connection() == null) return false;
+                boolean any = false;
+                for (int i = Math.abs(n); i > 0; i--) any |= ime().moveCursorLine(n < 0, mSelecting);
+                return any;
+            }
+        };
+        cell.setOnTouchListener((view, e) -> {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    view.setPressed(true);
+                    active[0] = false;
+                    down[0] = e.getRawX();
+                    down[1] = e.getRawY();
+                    trackpad.start(e.getRawX(), e.getRawY(), e.getEventTime());
+                    mHandler.postDelayed(start, android.view.ViewConfiguration.getLongPressTimeout());
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    if (!active[0] && Math.hypot(e.getRawX() - down[0], e.getRawY() - down[1]) > slop) {
+                        mHandler.removeCallbacks(start);
+                        start.run();
+                        trackpad.start(e.getRawX(), e.getRawY(), e.getEventTime());
+                    }
+                    if (active[0] && trackpad.move(e.getRawX(), e.getRawY(), e.getEventTime(), mover)) {
+                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    mHandler.removeCallbacks(start);
+                    view.setPressed(false);
+                    cell.setAlpha(1f);
+                    if (!active[0] && e.getActionMasked() == MotionEvent.ACTION_UP) {
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                        toggleSelecting();
+                    }
+                    active[0] = false;
+                    return true;
+                default:
+                    return true;
+            }
+        });
     }
 
     /** Selects the word/line at the cursor and turns Select on, so arrows extend it. */
