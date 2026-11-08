@@ -139,12 +139,48 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
 
     @Override
     public void onPrimaryClipChanged() {
+        capture(false);
+    }
+
+    /**
+     * Picks up what was copied while the keyboard wasn't running (Android stops it in the
+     * background now and then, and only the running keyboard hears about new copies):
+     * the current clip, if it is newer than the last one seen. Called when typing starts.
+     */
+    void catchUp() {
+        capture(true);
+    }
+
+    private static final String STATE = "clipboard_state", LAST_SEEN = "last_seen";
+
+    private void capture(boolean catchingUp) {
         if (!mEnabled) return;
         try {
             ClipboardManager cm = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = cm == null ? null : cm.getPrimaryClip();
+            if (cm == null) return;
+            if (catchingUp && android.os.Build.VERSION.SDK_INT >= 26) {
+                // Look at the clip's description first (no "pasted from your clipboard" notice
+                // on Android 12+), and read the clip itself only when it is new to us.
+                ClipDescription peek = cm.getPrimaryClipDescription();
+                if (peek == null || peek.getTimestamp() <= mContext.getSharedPreferences(
+                        STATE, Context.MODE_PRIVATE).getLong(LAST_SEEN, 0)) {
+                    return;
+                }
+            }
+            ClipData clip = cm.getPrimaryClip();
             if (clip == null || clip.getItemCount() == 0) return;
             ClipDescription description = clip.getDescription();
+            if (description != null && android.os.Build.VERSION.SDK_INT >= 26) {
+                long when = description.getTimestamp();
+                android.content.SharedPreferences state =
+                        mContext.getSharedPreferences(STATE, Context.MODE_PRIVATE);
+                if (catchingUp && when <= state.getLong(LAST_SEEN, 0)) return; // seen it
+                state.edit().putLong(LAST_SEEN, when).apply();
+            } else if (catchingUp) {
+                CharSequence text = clip.getItemAt(0).coerceToText(mContext);
+                ensureLoaded();
+                for (Clip c : mClips) if (text != null && c.text.equals(text.toString())) return;
+            }
             if (description != null) {
                 PersistableBundle extras = description.getExtras();
                 if (extras != null && extras.getBoolean(ClipDescription.EXTRA_IS_SENSITIVE, false)) return;

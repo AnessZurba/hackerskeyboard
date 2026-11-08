@@ -806,6 +806,8 @@ public class LatinIME extends InputMethodService implements
             mKeyboardSwitcher.getInputContainer().closePanel(); // ends the emoji search
         }
         if (sPendingImage != null) mHandler.post(this::insertPendingImage);
+        // Anything copied while the keyboard wasn't running (it only hears new copies then).
+        ClipboardHistory.get(this).catchUp();
         sKeyboardSettings.editorPackageName = attribute.packageName;
         sKeyboardSettings.editorFieldName = attribute.fieldName;
         sKeyboardSettings.editorFieldId = attribute.fieldId;

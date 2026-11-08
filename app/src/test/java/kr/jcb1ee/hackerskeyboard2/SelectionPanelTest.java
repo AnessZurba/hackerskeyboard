@@ -731,6 +731,22 @@ public class SelectionPanelTest {
                 || mField.getText().toString().length() == 12);
     }
 
+    /** A copy made while the keyboard wasn't running is picked up once typing starts. */
+    @Test
+    public void clipboardCatchesUpWithCopiesMadeMeanwhile() {
+        android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                mIme.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        ClipboardHistory.forget();
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("", "copied while away"));
+        ClipboardHistory history = ClipboardHistory.get(mIme); // not listening yet
+        history.catchUp();
+        assertEquals("copied while away", history.clips().get(0).text);
+        history.add("later");
+        history.catchUp(); // nothing new: no duplicate, no reordering
+        assertEquals("later", history.clips().get(0).text);
+        assertEquals(2, history.clips().size());
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }
