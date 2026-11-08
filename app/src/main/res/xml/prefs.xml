@@ -121,6 +121,14 @@
             android:key="key_settings">
 
     <CheckBoxPreference
+            android:key="pref_delete_swipe"
+            android:title="@string/title_delete_swipe"
+            android:summary="@string/summary_delete_swipe"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+    <CheckBoxPreference
             android:key="pref_hide_dpad_center"
             android:title="@string/title_hide_dpad_center"
             android:summary="@string/summary_hide_dpad_center"

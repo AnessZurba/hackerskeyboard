@@ -75,7 +75,7 @@ final class AdaptiveKeyTargets {
      * "typed 1, 2, ... or MAX_USES+ times" and never ranks how often words are used.
      * No timestamps are kept, and the file is in alphabetical order.
      */
-    private static final int MAX_USES = 5;
+    private static final int MAX_USES = 10;
     private static final int MAX_CORRECTIONS = 3;
     /**
      * A learned word that is not in the word list only counts once it has been typed this
@@ -351,8 +351,16 @@ final class AdaptiveKeyTargets {
     private static String keyText(Keyboard.Key key) {
         if (key == null || key.codes == null || key.codes.length == 0) return null;
         int code = key.codes[0];
-        if (code <= 0 || !Character.isLetter(code)) return null;
-        String text = normalise(new String(Character.toChars(code)));
+        String text;
+        if (code == 0 && key.text != null) {
+            text = normalise(key.text); // e.g. the Arabic lam-alef key types two letters
+            for (int i = 0; i < text.length(); i++) {
+                if (!Character.isLetter(text.charAt(i))) return null;
+            }
+        } else {
+            if (code <= 0 || !Character.isLetter(code)) return null;
+            text = normalise(new String(Character.toChars(code)));
+        }
         return text.isEmpty() ? null : text;
     }
 

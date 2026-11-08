@@ -94,7 +94,7 @@
     <string name="key_ad04_alt"></string>
     
     <string name="key_ad05_main">ف</string>
-    <string name="key_ad05_shift">ﻹ</string>
+    <string name="key_ad05_shift">لإ</string>
     <string name="key_ad05_alt"></string>
     
     <string name="key_ad06_main">غ</string>
@@ -147,7 +147,7 @@
     <string name="key_ac04_alt"></string>
 
     <string name="key_ac05_main">ل</string>
-    <string name="key_ac05_shift">ﻷ</string>
+    <string name="key_ac05_shift">لأ</string>
     <string name="key_ac05_alt"></string>
 
     <string name="key_ac06_main">ا</string>
@@ -195,8 +195,8 @@
     <string name="key_ab04_shift">{</string>
     <string name="key_ab04_alt"></string>
 
-    <string name="key_ab05_main">ﻻ</string>
-    <string name="key_ab05_shift">ﻵ</string>
+    <string name="key_ab05_main">لا</string>
+    <string name="key_ab05_shift">لآ</string>
     <string name="key_ab05_alt"></string>
 
     <string name="key_ab06_main">ى</string>

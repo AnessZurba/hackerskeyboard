@@ -521,6 +521,21 @@ public class Keyboard {
             return getPrimaryCode(keyboard.isShiftCaps(), keyboard.isShifted(isSimpleUppercase));
         }
 
+        /**
+         * Text this key types instead of a single code, or null: its multi-character label
+         * (e.g. Arabic lam + alef), or when shifted its multi-character shift label (lam +
+         * alef-with-madda). A shifted single-character shift label goes through the code.
+         */
+        public CharSequence getOutputText() {
+            if (shiftLabel != null && keyboard.isShifted(isSimpleUppercase)) {
+                if (shiftLabel.length() >= 2 && shiftLabel.charAt(0) != DEAD_KEY_PLACEHOLDER) {
+                    return shiftLabel;
+                }
+                return null;
+            }
+            return text;
+        }
+
         public boolean isDeadKey() {
             if (codes == null || codes.length < 1) return false;
             return Character.getType(codes[0]) == Character.NON_SPACING_MARK;

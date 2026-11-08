@@ -698,7 +698,7 @@
         <item>high</item>
     </string-array>
     <string name="title_adaptive_learn">Learn from my typing</string>
-    <string name="summary_adaptive_learn">Add words you type to the word list. A word is learned a few seconds after you finish it, unless you backspace into it first; corrected words count against themselves. A word that is not in the list counts only after you have typed it three times. For privacy, counts stop at 5, so the keyboard never records how often you use a word; learned words stay on the device and are not backed up. Never learns in password, email or web address fields, or where the app asks for no learning.</string>
+    <string name="summary_adaptive_learn">Add words you type to the word list. A word is learned a few seconds after you finish it, unless you backspace into it first; corrected words count against themselves. A word that is not in the list counts only after you have typed it three times. For privacy, counts stop at 10, so the keyboard never records how often you use a word; learned words stay on the device and are not backed up. Never learns in password, email or web address fields, or where the app asks for no learning.</string>
     <string name="title_adaptive_clear">Clear learned words</string>
     <string name="summary_adaptive_clear">%d words learned</string>
     <string name="toast_adaptive_cleared">Learned words cleared</string>
@@ -728,4 +728,7 @@
     <string name="toolbar_clipboard_clear">Clear (keeps pinned)</string>
     <string name="title_clipboard_history">Clipboard history</string>
     <string name="summary_clipboard_history">Keep the last 50 copied texts for the toolbar\'s clipboard panel. Texts apps mark as sensitive (passwords) are never kept. Swipe up on the keyboard to show or hide the toolbar.</string>
+
+    <string name="title_delete_swipe">Backspace swipe</string>
+    <string name="summary_delete_swipe">Slide left from backspace to select whole words back from the cursor; slide back to select fewer, release to delete, return to backspace to cancel. A tap deletes when you lift your finger. Off in terminals.</string>
 </resources>

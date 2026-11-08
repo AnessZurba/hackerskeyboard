@@ -1661,7 +1661,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         if (mHandler.isInKeyRepeat()) {
             // It will keep being in the key repeating mode while the key is being pressed.
             if (action == MotionEvent.ACTION_MOVE) {
-                return true;
+                boolean wanted = false;
+                for (int i = 0; i < pointerCount; i++) {
+                    if (getPointerTracker(me.getPointerId(i)).wantsMovesDuringRepeat()) wanted = true;
+                }
+                if (!wanted) return true;
             }
             final PointerTracker tracker = getPointerTracker(id);
             // Key repeating timer will be canceled if 2 or more keys are in action, and current

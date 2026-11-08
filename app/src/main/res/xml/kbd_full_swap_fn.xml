@@ -56,13 +56,16 @@
             android:keyLabel="F4" />
         <Key
             android:keyWidth="8.035714%p"            
-            android:keyLabel="7" />
+            android:keyLabel="7"
+            android:shiftLabel="٧" />
         <Key
             android:keyWidth="8.035714%p"            
-            android:keyLabel="8" />
+            android:keyLabel="8"
+            android:shiftLabel="٨" />
         <Key
             android:keyWidth="8.035714%p"            
-            android:keyLabel="9" />
+            android:keyLabel="9"
+            android:shiftLabel="٩" />
         <Key
             android:keyWidth="8.035714%p"            
             android:keyLabel="/" />
@@ -112,13 +115,16 @@
 
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="4" />
+            android:keyLabel="4"
+            android:shiftLabel="٤" />
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="5" />
+            android:keyLabel="5"
+            android:shiftLabel="٥" />
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="6" />
+            android:keyLabel="6"
+            android:shiftLabel="٦" />
         <Key
             android:keyWidth="8.035714%p"
             android:keyLabel="*" />
@@ -173,13 +179,16 @@
 
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="1" />
+            android:keyLabel="1"
+            android:shiftLabel="١" />
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="2" />
+            android:keyLabel="2"
+            android:shiftLabel="٢" />
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="3" />
+            android:keyLabel="3"
+            android:shiftLabel="٣" />
         <Key
             android:keyWidth="8.035714%p"
             android:keyLabel="-" />
@@ -232,7 +241,8 @@
 
         <Key
             android:keyWidth="8.035714%p"
-            android:keyLabel="0" />
+            android:keyLabel="0"
+            android:shiftLabel="٠" />
         <Key
             android:keyWidth="8.035714%p"
             android:keyLabel="," />

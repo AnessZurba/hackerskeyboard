@@ -68,6 +68,14 @@ public class PointerTracker {
     private final int mCursorStep;
     private final int mCursorSlop;
 
+    // Backspace swipe: sliding left from backspace selects words back from the cursor,
+    // releasing deletes them. With it on, the first delete waits for release (or for the
+    // key repeat) so a slide never costs a stray character.
+    private boolean mDownOnDelete;
+    private boolean mDeleteDeferred;
+    private boolean mDeleteSlide;
+    private final int mDeleteStep;
+
     private final KeyState mKeyState;
 
     // true if keyboard layout has been changed.
@@ -196,6 +204,7 @@ public class PointerTracker {
         float density = res.getDisplayMetrics().density;
         mCursorStep = Math.max(1, Math.round(10 * density));
         mCursorSlop = Math.round(12 * density);
+        mDeleteStep = Math.round(16 * density);
         sSlideKeyHack = slideKeyHack;
         resetMultiTap();
     }
@@ -312,6 +321,9 @@ public class PointerTracker {
         mIsRepeatableKey = false;
         mIsInSlidingKeyInput = false;
         endCursorSlide();
+        mDeleteSlide = false;
+        mDeleteDeferred = false;
+        mDownOnDelete = false;
         mDownX = x;
         checkMultiTap(eventTime, keyIndex);
         if (mListener != null) {
@@ -328,8 +340,15 @@ public class PointerTracker {
             }
         }
         if (isValidKeyIndex(keyIndex)) {
-            if (mKeys[keyIndex].repeatable) {
-                repeatKey(keyIndex);
+            Key downKey = mKeys[keyIndex];
+            mDownOnDelete = downKey.codes != null && downKey.codes.length > 0
+                    && downKey.codes[0] == Keyboard.KEYCODE_DELETE && LatinIME.deleteSwipeAvailable();
+            if (downKey.repeatable) {
+                if (mDownOnDelete) {
+                    mDeleteDeferred = true; // sent on release unless the repeat or a slide starts
+                } else {
+                    repeatKey(keyIndex);
+                }
                 mHandler.startKeyRepeatTimer(mDelayBeforeKeyRepeatStart, keyIndex, this);
                 mIsRepeatableKey = true;
             }
@@ -382,6 +401,11 @@ public class PointerTracker {
             return;
         if (mCursorSlide) {
             moveCursor(x);
+            return;
+        }
+        if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide())) {
+            int words = Math.max(0, (mDownX - x) / mDeleteStep);
+            LatinIME.sInstance.setDeleteSwipeWords(words);
             return;
         }
         final KeyState keyState = mKeyState;
@@ -458,6 +482,17 @@ public class PointerTracker {
             clearSlideKeys();
             return; // the hold-and-slide typed nothing
         }
+        if (mDeleteSlide) {
+            mDeleteSlide = false;
+            LatinIME.sInstance.finishDeleteSwipe(true);
+            return;
+        }
+        if (mDeleteDeferred && !mKeyAlreadyProcessed) {
+            mDeleteDeferred = false;
+            int index = mKeyState.getKeyIndex();
+            if (isValidKeyIndex(index)) detectAndSendKey(index, x, y, eventTime);
+            return;
+        }
         sendSlideKeys();
         if (mKeyAlreadyProcessed)
             return;
@@ -480,6 +515,11 @@ public class PointerTracker {
         if (DEBUG)
             debugLog("onCancelEvt:", x, y);
         endCursorSlide();
+        if (mDeleteSlide) {
+            mDeleteSlide = false;
+            LatinIME.sInstance.finishDeleteSwipe(false);
+        }
+        mDeleteDeferred = false;
         mHandler.cancelKeyTimers();
         mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);
@@ -532,7 +572,26 @@ public class PointerTracker {
         if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
     }
 
+    /** True while the key repeat must still see finger movement (backspace swipe). */
+    boolean wantsMovesDuringRepeat() {
+        return mDownOnDelete;
+    }
+
+    private boolean startDeleteSlide() {
+        if (!LatinIME.sInstance.startDeleteSwipe()) {
+            mDownOnDelete = false;
+            return false;
+        }
+        mHandler.cancelKeyTimers();
+        mDeleteDeferred = false;
+        mDeleteSlide = true;
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        return true;
+    }
+
     public void repeatKey(int keyIndex) {
+        mDeleteDeferred = false; // the repeat has started deleting
         Key key = getKey(keyIndex);
         if (key != null) {
             // While key is repeating, because there is no need to handle multi-tap key, we can
@@ -621,9 +680,10 @@ public class PointerTracker {
             if (listener != null)
                 listener.onCancel();
         } else {
-            if (key.text != null) {
+            CharSequence text = key.getOutputText();
+            if (text != null) {
                 if (listener != null) {
-                    listener.onText(key.text);
+                    listener.onText(text);
                     listener.onRelease(0); // dummy key code
                 }
             } else {

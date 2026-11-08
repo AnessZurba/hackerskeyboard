@@ -850,6 +850,8 @@ public class LatinIME extends InputMethodService implements
         mModMeta = false;
         mModFn = false;
         mAdaptive.setModifierActive(false);
+        // Terminals report no input type and don't expose their text: plain backspace there.
+        mDeleteSwipeField = (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) != EditorInfo.TYPE_NULL;
         mAdaptive.onStartInput(attribute, getCurrentInputConnection(),
                 mLanguageSwitcher.getInputLanguage());
         mEnteredText = null;
@@ -2316,6 +2318,93 @@ public class LatinIME extends InputMethodService implements
         ic.endBatchEdit();
     }
 
+    // ---------------------------------------------------------------- backspace swipe
+
+    static final String PREF_DELETE_SWIPE = "pref_delete_swipe";
+    private boolean mDeleteSwipePref = true;
+    private boolean mDeleteSwipeField;
+    private CharSequence mDeleteSwipeText;
+    private int mDeleteSwipeAnchor;
+    private int mDeleteSwipeChars;
+    private int mDeleteSwipeWords;
+
+    /** Whether a slide from backspace can select text in the current field. */
+    static boolean deleteSwipeAvailable() {
+        LatinIME ime = sInstance;
+        return ime != null && ime.mDeleteSwipePref && ime.mDeleteSwipeField;
+    }
+
+    /** Starts selecting back from the cursor; false if the editor can't support it. */
+    boolean startDeleteSwipe() {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return false;
+        commitTyped(ic, true);
+        android.view.inputmethod.ExtractedText et =
+                ic.getExtractedText(new android.view.inputmethod.ExtractedTextRequest(), 0);
+        int start, end;
+        if (et != null && et.selectionStart >= 0) {
+            start = et.startOffset + et.selectionStart;
+            end = et.startOffset + et.selectionEnd;
+        } else {
+            start = mLastSelectionStart;
+            end = mLastSelectionEnd;
+        }
+        if (start != end || end <= 0) return false; // existing selection, or nothing to delete
+        CharSequence before = ic.getTextBeforeCursor(2000, 0);
+        if (before == null || before.length() == 0) return false;
+        mDeleteSwipeText = before;
+        mDeleteSwipeAnchor = end;
+        mDeleteSwipeChars = 0;
+        mDeleteSwipeWords = 0;
+        return true;
+    }
+
+    /** Selects the given number of words back from where the swipe started. */
+    void setDeleteSwipeWords(int words) {
+        if (mDeleteSwipeText == null || words == mDeleteSwipeWords) return;
+        mDeleteSwipeWords = words;
+        CharSequence t = mDeleteSwipeText;
+        int i = t.length();
+        for (int w = 0; w < words && i > 0; w++) {
+            while (i > 0 && Character.isWhitespace(t.charAt(i - 1))) i--;
+            if (i > 0 && isSwipeWordChar(t.charAt(i - 1))) {
+                while (i > 0 && isSwipeWordChar(t.charAt(i - 1))) i--;
+            } else {
+                while (i > 0 && !Character.isWhitespace(t.charAt(i - 1))
+                        && !isSwipeWordChar(t.charAt(i - 1))) i--;
+            }
+        }
+        int chars = Math.min(t.length() - i, mDeleteSwipeAnchor);
+        if (chars == mDeleteSwipeChars) return;
+        mDeleteSwipeChars = chars;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) ic.setSelection(mDeleteSwipeAnchor - chars, mDeleteSwipeAnchor);
+        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+    private static boolean isSwipeWordChar(char c) {
+        return Character.isLetterOrDigit(c) || c == '\'' || c == '\u0640'
+                || Character.getType(c) == Character.NON_SPACING_MARK;
+    }
+
+    /** Deletes the selection on release, or puts the cursor back when cancelled/empty. */
+    void finishDeleteSwipe(boolean delete) {
+        if (mDeleteSwipeText == null) return;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            if (delete && mDeleteSwipeChars > 0) {
+                ic.commitText("", 1);
+            } else {
+                ic.setSelection(mDeleteSwipeAnchor, mDeleteSwipeAnchor);
+            }
+        }
+        mDeleteSwipeText = null;
+        mDeleteSwipeChars = 0;
+        mDeleteSwipeWords = 0;
+        updateShiftKeyState(getCurrentInputEditorInfo());
+    }
+
     private void updateAdaptiveModifiers() {
         mAdaptive.setModifierActive(mModCtrl || mModAlt || mModMeta);
     }
@@ -3106,6 +3195,7 @@ public class LatinIME extends InputMethodService implements
         // Apply globally handled shared prefs
         sKeyboardSettings.sharedPreferenceChanged(sharedPreferences, key);
         mAdaptive.loadSettings(sharedPreferences);
+        mDeleteSwipePref = sharedPreferences.getBoolean(PREF_DELETE_SWIPE, true);
         if (ClipboardHistory.PREF_ENABLED.equals(key)) {
             ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
         }
@@ -3569,6 +3659,7 @@ public class LatinIME extends InputMethodService implements
         SharedPreferences sp = PreferenceManager
                 .getDefaultSharedPreferences(this);
         mAdaptive.loadSettings(sp);
+        mDeleteSwipePref = sp.getBoolean(PREF_DELETE_SWIPE, true);
         mVibrateOn = sp.getBoolean(PREF_VIBRATE_ON, false);
         mVibrateLen = getPrefInt(sp, PREF_VIBRATE_LEN, getResources().getString(R.string.vibrate_duration_ms));
         mSoundOn = sp.getBoolean(PREF_SOUND_ON, false);
