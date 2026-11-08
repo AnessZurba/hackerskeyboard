@@ -35,7 +35,7 @@ public class ToolbarTest {
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
         assertEquals("three buttons, the (hidden) autofill chip rows and their > button",
-                6, bar.getChildCount());
+                5, bar.getChildCount());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());
 
@@ -139,6 +139,7 @@ public class ToolbarTest {
         chip.setText("Open 1Password");
         android.widget.TextView icon = new android.widget.TextView(ime);
         icon.setText("1P");
+        icon.setMinWidth(5000); // a chip that reports a huge size must not crowd out ">"
         toolbar.showChips(java.util.Collections.<View>singletonList(chip),
                 java.util.Collections.<View>singletonList(icon));
         settle(toolbar);
@@ -151,6 +152,7 @@ public class ToolbarTest {
         }
         assertNotNull(dismiss);
         assertEquals(View.VISIBLE, dismiss.getVisibility());
+        assertTrue("> on screen", dismiss.getWidth() > 0 && dismiss.getRight() <= bar.getWidth());
         assertEquals("pinned chip shown", View.VISIBLE, ((View) icon.getParent()).getVisibility());
         dismiss.performClick();
         settle(toolbar);

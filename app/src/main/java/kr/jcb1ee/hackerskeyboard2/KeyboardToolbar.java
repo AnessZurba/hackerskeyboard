@@ -73,7 +73,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final List<View> mCells = new ArrayList<>();
     private final HorizontalScrollView mChipScroll;
     private final LinearLayout mChipRow;
-    private final LinearLayout mPinnedRow;
     private final ImageView mChipsDismiss;
     // True while the row is shown only because autofill chips are offered.
     private boolean mShownForChips;
@@ -139,13 +138,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mChipScroll.addView(mChipRow, new FrameLayout.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         mChipScroll.setVisibility(GONE);
-        // Pinned chips (the password manager's own icon) stay put at the start, Samsung style.
-        mPinnedRow = new LinearLayout(ime);
-        mPinnedRow.setOrientation(HORIZONTAL);
-        mPinnedRow.setGravity(Gravity.CENTER_VERTICAL);
-        mPinnedRow.setPadding(dp(4), 0, 0, 0);
-        mPinnedRow.setVisibility(GONE);
-        mBar.addView(mPinnedRow, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         mBar.addView(mChipScroll, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         // ">" puts the regular toolbar back in the chips' place.
         mChipsDismiss = new ImageView(ime);
@@ -244,7 +236,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     boolean hasChips() {
-        return mChipRow.getChildCount() > 0 || mPinnedRow.getChildCount() > 0;
+        return mChipRow.getChildCount() > 0;
     }
 
     void showChips(List<View> chips) {
@@ -253,21 +245,21 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /**
      * Shows a password manager's inline suggestion chips in place of the buttons (or puts
-     * the buttons back for empty lists): pinned ones (its icon) fixed at the start, the rest
-     * scrolling, and a ">" button that brings the regular toolbar back. A hidden toolbar
+     * the buttons back for empty lists): pinned ones (its icon) first, then the rest, and a
+     * ">" button that brings the regular toolbar back. A hidden toolbar
      * slides in for them and hides again when they are gone; the swipe-up setting is left
      * alone.
      */
     void showChips(List<View> chips, List<View> pinned) {
         mChipRow.removeAllViews();
-        mPinnedRow.removeAllViews();
+        // Pinned chips (the password manager's own icon) first, then the rest; all in the
+        // one scrolling row, so a chip that reports a large size can't crowd out ">".
+        addChips(mChipRow, pinned);
         addChips(mChipRow, chips);
-        addChips(mPinnedRow, pinned);
         boolean any = hasChips();
         if (mSearching) return; // the search bar has the row; chips come back after it
         for (View cell : mCells) cell.setVisibility(any ? GONE : VISIBLE);
         mChipScroll.setVisibility(any ? VISIBLE : GONE);
-        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
         mChipScroll.scrollTo(0, 0);
         if (any && !mToolbarShown && !mShownForChips) {
@@ -1250,7 +1242,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
         mChipScroll.setVisibility(GONE);
-        mPinnedRow.setVisibility(GONE);
         mChipsDismiss.setVisibility(GONE);
         mSearchRow.setVisibility(VISIBLE);
         ime().setSearchConnection(new SearchConnection());
@@ -1266,7 +1257,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean chips = hasChips();
         for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
         mChipScroll.setVisibility(chips ? VISIBLE : GONE);
-        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(chips ? VISIBLE : GONE);
         if (toPanel) togglePanel(PANEL_EMOJI);
     }

@@ -2399,6 +2399,8 @@ public class LatinIME extends InputMethodService implements
                         if (suggestions.get(k).getInfo().isPinned()) pinned.add(views[k]);
                         else ready.add(views[k]);
                     }
+                    Log.i(TAG, "Autofill chips: " + ready.size() + " + " + pinned.size()
+                            + " pinned, of " + suggestions.size());
                     toolbar.showChips(ready, pinned);
                 }
             });
