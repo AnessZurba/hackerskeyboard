@@ -80,6 +80,8 @@
         <attr name="shiftLabel" format="string" />
         <!-- The label to display on the caps-shifted key. -->
         <attr name="capsLabel" format="string" />
+        <!-- Corner hint for a key whose popup is a keyboard resource rather than characters. -->
+        <attr name="hintLabel" format="string" />
         <!-- The icon to display on the key instead of the label. -->
         <attr name="keyIcon" format="reference" />
         <!-- Mode of the keyboard. If the mode doesn't match the

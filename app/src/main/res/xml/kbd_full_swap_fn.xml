@@ -228,12 +228,14 @@
             android:keyWidth="8.035714%p"
             android:isModifier="true"
             android:keyLabel="Brk" />
-        <!-- Num Lock; long press for Scroll Lock (see LatinKeyboardView.onLongPress). -->
+        <!-- Num Lock; Scroll Lock in its long-press popup. -->
         <Key
             android:codes="@integer/key_num_lock"
             android:keyWidth="8.035714%p"
             android:isModifier="true"
-            android:keyLabel="Num\nScrL" />
+            android:keyLabel="NumL"
+            android:popupKeyboard="@xml/popup_scroll_lock"
+            android:hintLabel="ScrL" />
         <Key
             android:keyWidth="8.035714%p"
             android:keyLabel="," />

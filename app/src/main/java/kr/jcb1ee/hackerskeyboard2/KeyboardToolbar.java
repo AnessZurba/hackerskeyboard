@@ -14,7 +14,6 @@
 
 package kr.jcb1ee.hackerskeyboard2;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -75,7 +74,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private int mOpenPanel = PANEL_NONE;
     private final int mBarHeight;
     private boolean mToolbarShown;
-    private ValueAnimator mAnimator;
 
     // Colours sampled from the keyboard's background.
     private int mBackground = Color.BLACK;
@@ -150,23 +148,35 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         return mToolbarShown;
     }
 
-    /** Shows or hides the toolbar row, animating its height; remembered across restarts. */
+    /**
+     * Shows or hides the toolbar row; remembered across restarts. The row's space opens
+     * or closes in one step and only the row itself fades and slides, because resizing
+     * the input window on every animation frame makes the keys jitter.
+     */
     void toggleToolbar() {
         mToolbarShown = !mToolbarShown;
         PreferenceManager.getDefaultSharedPreferences(mIme).edit()
                 .putBoolean(PREF_SHOW_TOOLBAR, mToolbarShown).apply();
         if (!mToolbarShown) closePanel();
-        if (mAnimator != null) mAnimator.cancel();
+        mBar.animate().cancel();
         final ViewGroup.LayoutParams lp = mBar.getLayoutParams();
-        mBar.setVisibility(VISIBLE);
-        mAnimator = ValueAnimator.ofInt(lp.height, mToolbarShown ? mBarHeight : 0);
-        mAnimator.setDuration(160);
-        mAnimator.addUpdateListener(a -> {
-            lp.height = (Integer) a.getAnimatedValue();
+        float offset = mBarHeight / 2f;
+        if (mToolbarShown) {
+            lp.height = mBarHeight;
+            mBar.setVisibility(VISIBLE);
+            mBar.setAlpha(0f);
+            mBar.setTranslationY(offset);
             mBar.requestLayout();
-            if (lp.height == 0 && !mToolbarShown) mBar.setVisibility(GONE);
-        });
-        mAnimator.start();
+            mBar.animate().alpha(1f).translationY(0f).setDuration(180).withEndAction(null).start();
+        } else {
+            mBar.animate().alpha(0f).translationY(offset).setDuration(150).withEndAction(() -> {
+                lp.height = 0;
+                mBar.setVisibility(GONE);
+                mBar.setAlpha(1f);
+                mBar.setTranslationY(0f);
+                mBar.requestLayout();
+            }).start();
+        }
     }
 
     // ------------------------------------------------------------------ panels

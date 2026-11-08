@@ -238,8 +238,6 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
             return invokeOnKey(KEYCODE_OPTIONS_LONGPRESS);
         } else if (primaryCode == KEYCODE_DPAD_CENTER) {
             return invokeOnKey(KEYCODE_COMPOSE);
-        } else if (primaryCode == KEYCODE_NUM_LOCK) {
-            return invokeOnKey(KEYCODE_SCROLL_LOCK); // the Fn layer merges the two keys
         } else if (primaryCode == '0' && getKeyboard() == mPhoneKeyboard) {
             // Long pressing on 0 in phone number keypad gives you a '+'.
             return invokeOnKey('+');

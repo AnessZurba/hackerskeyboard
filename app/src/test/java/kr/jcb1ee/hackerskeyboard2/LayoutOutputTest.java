@@ -36,7 +36,7 @@ public class LayoutOutputTest {
         }
     }
 
-    /** The Fn numpad's 0 is double width; Num Lock and Scroll Lock share a key. */
+    /** The Fn numpad's 0 is double width; Scroll Lock is in Num Lock's popup. */
     @Test
     public void fnNumpadBottomRow() {
         Context c = ApplicationProvider.getApplicationContext();
@@ -47,8 +47,13 @@ public class LayoutOutputTest {
             assertEquals(2.0 * dot.width + dot.gap, zero.width + 0.0, 3);
             org.junit.Assert.assertTrue("comma left of 0", comma.x < zero.x);
             assertEquals(zero.y, comma.y);
-            assertNotNull(withLabel(kb, "Num\nScrL"));
+            Keyboard.Key num = withLabel(kb, "NumL");
+            assertNotNull(num);
             assertNull(withLabel(kb, "ScrL"));
+            assertEquals("ScrL", num.getAltHintLabel(true, true));
+            Keyboard popup = num.getPopupKeyboard(c, 0);
+            assertNotNull("Scroll Lock popup", popup);
+            assertEquals(LatinKeyboardView.KEYCODE_SCROLL_LOCK, popup.getKeys().get(0).codes[0]);
         }
     }
 

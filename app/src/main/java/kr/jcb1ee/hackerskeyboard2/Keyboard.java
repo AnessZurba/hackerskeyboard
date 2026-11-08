@@ -432,6 +432,8 @@ public class Keyboard {
                     R.styleable.Keyboard_Key_popupCharacters);
             popupResId = a.getResourceId(
                     R.styleable.Keyboard_Key_popupKeyboard, 0);
+            CharSequence hintAttr = a.getText(R.styleable.Keyboard_Key_hintLabel);
+            if (hintAttr != null) altHint = hintAttr.toString();
             repeatable = a.getBoolean(
                     R.styleable.Keyboard_Key_isRepeatable, false);
             modifier = a.getBoolean(

@@ -555,6 +555,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         final Resources res = getResources();
 
         mShowPreview = false;
+        // Lift key previews above the key so the finger doesn't cover them.
+        mPreviewOffset = -res.getDimensionPixelSize(R.dimen.key_popup_lift);
         mDelayBeforePreview = res.getInteger(R.integer.config_delay_before_preview);
         mDelayBeforeSpacePreview = res.getInteger(R.integer.config_delay_before_space_preview);
         mDelayAfterPreview = res.getInteger(R.integer.config_delay_after_preview);
@@ -1071,13 +1073,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 final int centerY = (key.height + padding.top - padding.bottom) / 2;
                 final float baseline = centerY
                         + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
-                int newline = label.indexOf('\n');
-                if (newline > 0) {
-                    // Two-line label, e.g. a key that merges two functions.
-                    float half = labelHeight * 0.65f;
-                    canvas.drawText(label.substring(0, newline), centerX, baseline - half, paint);
-                    canvas.drawText(label.substring(newline + 1), centerX, baseline + half, paint);
-                } else if (key.isDeadKey()) {
+                if (key.isDeadKey()) {
                     drawDeadKeyLabel(canvas, label, centerX, baseline, paint);
                 } else {
                     canvas.drawText(label, centerX, baseline, paint);
@@ -1492,6 +1488,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         popupY += getPaddingTop();
         popupY -= mMiniKeyboardContainer.getMeasuredHeight();
         popupY += mMiniKeyboardContainer.getPaddingBottom();
+        popupY -= getResources().getDimensionPixelSize(R.dimen.key_popup_lift);
         final int x = popupX;
         final int y = mShowPreview && isOneRowKeys(miniKeys) ? mPopupPreviewDisplayedY : popupY;
 
