@@ -197,6 +197,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean wasShown = mBar.getVisibility() == VISIBLE && mBar.getAlpha() > 0;
         // Hidden while chips are offered: keep them, and hide the row when they go.
         mShownForChips = !mToolbarShown && hasChips();
+        updateChipsButton();
         if (mToolbarShown && !wasShown) {
             revealBar();
         } else if (!mToolbarShown && !hasChips()) {
@@ -261,6 +262,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         for (View cell : mCells) cell.setVisibility(any ? GONE : VISIBLE);
         mChipScroll.setVisibility(any ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
+        updateChipsButton();
         mChipScroll.scrollTo(0, 0);
         if (any && !mToolbarShown && !mShownForChips) {
             mShownForChips = true;
@@ -269,6 +271,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             mShownForChips = false;
             concealBar();
         }
+    }
+
+    /**
+     * ">" brings the toolbar's buttons back; with the toolbar kept hidden there are none to
+     * bring back, so it's "v": hide the strip.
+     */
+    private void updateChipsButton() {
+        mChipsDismiss.setImageResource(mToolbarShown ? R.drawable.ic_toolbar_chips_dismiss
+                : R.drawable.ic_toolbar_chips_hide);
+        mChipsDismiss.setContentDescription(mIme.getString(mToolbarShown
+                ? R.string.toolbar_show_buttons : R.string.toolbar_hide_chips));
     }
 
     private void addChips(LinearLayout row, List<View> chips) {

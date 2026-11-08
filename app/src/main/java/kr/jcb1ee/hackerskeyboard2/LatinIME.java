@@ -2386,7 +2386,6 @@ public class LatinIME extends InputMethodService implements
         int subtext = light ? 0xFF5F6368 : 0xFFBDC1C6;
         int pad = Math.round(12 * getResources().getDisplayMetrics().density);
         int iconSize = Math.round(24 * getResources().getDisplayMetrics().density);
-        int bigIcon = Math.round(34 * getResources().getDisplayMetrics().density);
         android.graphics.drawable.Icon chip = android.graphics.drawable.Icon.createWithResource(this,
                 light ? R.drawable.autofill_chip_light : R.drawable.autofill_chip_dark);
         androidx.autofill.inline.common.ImageViewStyle icon =
@@ -2410,13 +2409,10 @@ public class LatinIME extends InputMethodService implements
                         .setLayoutMargin(pad / 2, 0, 0, 0)
                         .build())
                 // The password manager's own button: just its icon, as on Samsung (no pill).
+                // Only the background changes; the icon keeps the default sizing.
                 .setSingleIconChipStyle(new androidx.autofill.inline.common.ViewStyle.Builder()
-                        .setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                        .setPadding(0, 0, 0, 0)
-                        .build())
-                .setSingleIconChipIconStyle(new androidx.autofill.inline.common.ImageViewStyle.Builder()
-                        .setMaxWidth(bigIcon).setMaxHeight(bigIcon)
-                        .setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER)
+                        .setBackground(android.graphics.drawable.Icon.createWithResource(this,
+                                R.drawable.autofill_icon_clear))
                         .build())
                 .build();
     }

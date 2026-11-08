@@ -120,6 +120,19 @@ public class ToolbarTest {
         assertEquals("space taken back for the chips", 0, toolbar.spaceGivenToApp());
         assertEquals(View.GONE, bar.getChildAt(0).getVisibility()); // buttons make way
         assertFalse("the setting is not changed", toolbar.isToolbarShown());
+        View hide = null;
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            if (ime.getString(R.string.toolbar_hide_chips).contentEquals(
+                    bar.getChildAt(i).getContentDescription() == null ? "" : bar.getChildAt(i).getContentDescription())) {
+                hide = bar.getChildAt(i);
+            }
+        }
+        assertNotNull("toolbar kept hidden: the button hides the strip (v, not >)", hide);
+        hide.performClick();
+        settle(toolbar);
+        assertTrue("strip hidden again", toolbar.spaceGivenToApp() > 0);
+        toolbar.showChips(java.util.Collections.<View>singletonList(chip));
+        settle(toolbar);
 
         toolbar.showChips(java.util.Collections.<View>emptyList());
         settle(toolbar);
