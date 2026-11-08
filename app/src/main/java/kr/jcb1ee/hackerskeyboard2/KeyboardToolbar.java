@@ -521,61 +521,230 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     // ------------------------------------------------------------------ clipboard panel
 
+    // Samsung Keyboard's clipboard layout: a header ("< Clipboard", pin, delete) over a
+    // three-column grid of cards; long press (or pin/delete) starts selecting cards, with
+    // "All", a count and pin/delete for the selection in the header.
+    private boolean mClipSelecting;
+    private final java.util.Set<ClipboardHistory.Clip> mClipSelected = new java.util.HashSet<>();
+    private LinearLayout mClipHeader;
+    private ClipAdapter mClipAdapter;
+    private TextView mClipMessage;
+
     private View buildClipboardPanel() {
-        ScrollView scroll = new ScrollView(getContext());
-        LinearLayout list = column();
-        list.setPadding(dp(6), dp(4), dp(6), dp(6));
-        scroll.addView(list);
-        fillClipboardList(list);
-        scroll.setTag(list);
-        return scroll;
+        mClipSelecting = false;
+        mClipSelected.clear();
+        LinearLayout panel = column();
+        mClipHeader = row();
+        mClipHeader.setGravity(Gravity.CENTER_VERTICAL);
+        mClipHeader.setPadding(dp(4), 0, dp(4), 0);
+        panel.addView(mClipHeader, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(44)));
+
+        FrameLayout body = new FrameLayout(getContext());
+        GridView grid = new GridView(getContext());
+        grid.setNumColumns(3);
+        grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
+        grid.setHorizontalSpacing(dp(6));
+        grid.setVerticalSpacing(dp(6));
+        grid.setPadding(dp(6), 0, dp(6), dp(6));
+        grid.setClipToPadding(false);
+        grid.setSelector(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        mClipAdapter = new ClipAdapter();
+        grid.setAdapter(mClipAdapter);
+        grid.setOnItemClickListener((parent, view, position, id) -> {
+            ClipboardHistory.Clip clip = mClipAdapter.getItem(position);
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            if (mClipSelecting) {
+                if (!mClipSelected.remove(clip)) mClipSelected.add(clip);
+                refreshClipboard();
+            } else if (connection() != null) {
+                ime().onText(clip.text);
+            }
+        });
+        grid.setOnItemLongClickListener((parent, view, position, id) -> {
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            mClipSelecting = true;
+            mClipSelected.add(mClipAdapter.getItem(position));
+            refreshClipboard();
+            return true;
+        });
+        body.addView(grid);
+        mClipMessage = message(R.string.toolbar_clipboard_empty);
+        body.addView(mClipMessage);
+        panel.addView(body, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
+        refreshClipboard();
+        return panel;
     }
 
-    private void fillClipboardList(LinearLayout list) {
-        list.removeAllViews();
+    private void refreshClipboard() {
+        if (mClipAdapter == null) return;
+        ClipboardHistory history = ClipboardHistory.get(getContext());
+        List<ClipboardHistory.Clip> clips = new ArrayList<>();
+        if (history.isEnabled()) {
+            for (ClipboardHistory.Clip c : history.clips()) if (c.pinned) clips.add(c); // pinned first
+            for (ClipboardHistory.Clip c : history.clips()) if (!c.pinned) clips.add(c);
+        }
+        mClipSelected.retainAll(clips);
+        mClipAdapter.setClips(clips);
+        mClipMessage.setText(history.isEnabled() ? R.string.toolbar_clipboard_empty
+                : R.string.toolbar_clipboard_off);
+        mClipMessage.setVisibility(clips.isEmpty() ? VISIBLE : GONE);
+        buildClipHeader(clips);
+    }
+
+    private void buildClipHeader(final List<ClipboardHistory.Clip> clips) {
+        mClipHeader.removeAllViews();
         final ClipboardHistory history = ClipboardHistory.get(getContext());
-        if (!history.isEnabled()) {
-            list.addView(message(R.string.toolbar_clipboard_off));
-            return;
-        }
-        List<ClipboardHistory.Clip> clips = history.clips();
-        if (clips.isEmpty()) {
-            list.addView(message(R.string.toolbar_clipboard_empty));
-            return;
-        }
-        for (final ClipboardHistory.Clip clip : new ArrayList<>(clips)) {
-            TextView row = cell((clip.pinned ? "📌 " : "") + clip.text.trim(), 14);
-            row.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-            row.setMaxLines(2);
-            row.setEllipsize(TextUtils.TruncateAt.END);
-            row.setPadding(dp(12), dp(8), dp(12), dp(8));
-            row.setOnClickListener(v -> {
-                v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                if (connection() == null) return;
-                ime().onText(clip.text);
+        mClipHeader.addView(headerIcon(R.drawable.ic_clip_back, v -> {
+            if (mClipSelecting) {
+                mClipSelecting = false;
+                mClipSelected.clear();
+                refreshClipboard();
+            } else {
+                closePanel();
+            }
+        }));
+        if (mClipSelecting) {
+            final boolean all = !clips.isEmpty() && mClipSelected.size() == clips.size();
+            LinearLayout allToggle = row();
+            allToggle.setGravity(Gravity.CENTER_VERTICAL);
+            ImageView box = new ImageView(getContext());
+            box.setImageResource(all ? R.drawable.ic_clip_checked : R.drawable.ic_clip_unchecked);
+            box.setImageTintList(ColorStateList.valueOf(all ? mAccent : mForeground));
+            allToggle.addView(box, new LinearLayout.LayoutParams(dp(24), dp(24)));
+            TextView allLabel = headerText(mIme.getString(R.string.toolbar_clipboard_all));
+            allLabel.setPadding(dp(6), 0, dp(6), 0);
+            allToggle.addView(allLabel);
+            allToggle.setPadding(dp(6), 0, dp(6), 0);
+            allToggle.setOnClickListener(v -> {
+                if (all) mClipSelected.clear(); else mClipSelected.addAll(clips);
+                refreshClipboard();
             });
-            row.setOnLongClickListener(v -> {
-                history.togglePin(clip);
-                return true;
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            lp.setMargins(0, dp(3), 0, dp(3));
-            list.addView(row, lp);
+            mClipHeader.addView(allToggle, new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+            mClipHeader.addView(new View(getContext()), new LinearLayout.LayoutParams(0, 1, 1));
+            mClipHeader.addView(headerText(Integer.toString(mClipSelected.size())));
+            mClipHeader.addView(headerIcon(R.drawable.ic_clip_pin, v -> {
+                if (mClipSelected.isEmpty()) return;
+                boolean allPinned = true;
+                for (ClipboardHistory.Clip c : mClipSelected) allPinned &= c.pinned;
+                history.setPinned(new ArrayList<>(mClipSelected), !allPinned);
+                mClipSelecting = false;
+                mClipSelected.clear();
+                refreshClipboard();
+            }));
+            mClipHeader.addView(headerIcon(R.drawable.ic_clip_delete, v -> {
+                if (mClipSelected.isEmpty()) return;
+                history.removeAll(new ArrayList<>(mClipSelected));
+                mClipSelecting = false;
+                mClipSelected.clear();
+                refreshClipboard();
+            }));
+        } else {
+            TextView title = headerText(mIme.getString(R.string.toolbar_clipboard));
+            mClipHeader.addView(title, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1));
+            View.OnClickListener select = v -> {
+                if (clips.isEmpty()) return;
+                mClipSelecting = true;
+                refreshClipboard();
+            };
+            mClipHeader.addView(headerIcon(R.drawable.ic_clip_pin, select));
+            mClipHeader.addView(headerIcon(R.drawable.ic_clip_delete, select));
         }
-        TextView clear = cell(mIme.getString(R.string.toolbar_clipboard_clear), 14);
-        clear.setOnClickListener(v -> history.clearUnpinned());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(40));
-        lp.setMargins(0, dp(8), 0, 0);
-        list.addView(clear, lp);
+    }
+
+    private ImageView headerIcon(int icon, View.OnClickListener onClick) {
+        ImageView v = new ImageView(getContext());
+        v.setImageResource(icon);
+        v.setImageTintList(ColorStateList.valueOf(mForeground));
+        v.setScaleType(ImageView.ScaleType.CENTER);
+        GradientDrawable pressed = new GradientDrawable();
+        pressed.setShape(GradientDrawable.OVAL);
+        pressed.setColor(blend(mBackground, mForeground, 0.2f));
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[] {android.R.attr.state_pressed}, pressed);
+        v.setBackground(states);
+        v.setClickable(true);
+        v.setOnClickListener(onClick);
+        v.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
+        return v;
+    }
+
+    private TextView headerText(String text) {
+        TextView v = new TextView(getContext());
+        v.setText(text);
+        v.setTextColor(mForeground);
+        v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        v.setPadding(dp(8), 0, dp(8), 0);
+        v.setGravity(Gravity.CENTER_VERTICAL);
+        return v;
+    }
+
+    private final class ClipAdapter extends BaseAdapter {
+        private List<ClipboardHistory.Clip> mClips = new ArrayList<>();
+
+        void setClips(List<ClipboardHistory.Clip> clips) {
+            mClips = clips;
+            notifyDataSetChanged();
+        }
+
+        @Override public int getCount() { return mClips.size(); }
+        @Override public ClipboardHistory.Clip getItem(int position) { return mClips.get(position); }
+        @Override public long getItemId(int position) { return position; }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            FrameLayout card = convertView instanceof FrameLayout ? (FrameLayout) convertView : null;
+            TextView text;
+            ImageView pin, check;
+            if (card == null) {
+                card = new FrameLayout(getContext());
+                card.setLayoutParams(new GridView.LayoutParams(GridView.LayoutParams.MATCH_PARENT, dp(88)));
+                GradientDrawable bg = new GradientDrawable();
+                bg.setCornerRadius(dp(12));
+                bg.setColor(blend(mBackground, mForeground, 0.10f));
+                card.setBackground(bg);
+                text = new TextView(getContext());
+                text.setTextColor(mForeground);
+                text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+                text.setMaxLines(4);
+                text.setEllipsize(TextUtils.TruncateAt.END);
+                text.setPadding(dp(10), dp(8), dp(10), dp(8));
+                card.addView(text, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+                pin = new ImageView(getContext());
+                pin.setImageResource(R.drawable.ic_clip_pinned);
+                pin.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
+                card.addView(pin, new FrameLayout.LayoutParams(dp(16), dp(16), Gravity.TOP | Gravity.END));
+                check = new ImageView(getContext());
+                card.addView(check, new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.TOP | Gravity.START));
+                card.setTag(new View[] {text, pin, check});
+            }
+            View[] parts = (View[]) card.getTag();
+            text = (TextView) parts[0];
+            pin = (ImageView) parts[1];
+            check = (ImageView) parts[2];
+            ClipboardHistory.Clip clip = mClips.get(position);
+            text.setText(clip.text.trim());
+            pin.setVisibility(clip.pinned ? VISIBLE : GONE);
+            ((FrameLayout.LayoutParams) pin.getLayoutParams()).setMargins(0, dp(6), dp(6), 0);
+            if (mClipSelecting) {
+                boolean selected = mClipSelected.contains(clip);
+                check.setVisibility(VISIBLE);
+                check.setImageResource(selected ? R.drawable.ic_clip_checked : R.drawable.ic_clip_unchecked);
+                check.setImageTintList(ColorStateList.valueOf(selected ? mAccent : mForeground));
+                ((FrameLayout.LayoutParams) check.getLayoutParams()).setMargins(dp(4), dp(4), 0, 0);
+                text.setPadding(dp(10), dp(26), dp(10), dp(8));
+            } else {
+                check.setVisibility(GONE);
+                text.setPadding(dp(10), dp(8), dp(10), dp(8));
+            }
+            return card;
+        }
     }
 
     @Override
     public void onClipboardHistoryChanged() {
-        if (mOpenPanel == PANEL_CLIPBOARD && mPanel != null) {
-            fillClipboardList((LinearLayout) mPanel.getTag());
-        }
+        if (mOpenPanel == PANEL_CLIPBOARD && mPanel != null) refreshClipboard();
     }
 
     // ------------------------------------------------------------------ emoji panel

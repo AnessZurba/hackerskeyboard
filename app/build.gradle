@@ -79,6 +79,7 @@ android.testOptions.unitTests.all {
         systemProperty 'robolectric.dependency.dir', project.property('robolectricDeps')
     }
     if (project.hasProperty('renderOut')) systemProperty 'renderOut', project.property('renderOut')
+    if (project.hasProperty('renderPanel')) systemProperty 'renderPanel', project.property('renderPanel')
 }
 
 dependencies {

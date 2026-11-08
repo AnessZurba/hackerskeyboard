@@ -142,7 +142,11 @@ public class ToolbarTest {
                 && ((android.widget.TextView) v).getText().toString().contains(text)) return true;
         if (v instanceof android.widget.AdapterView) {
             android.widget.Adapter a = ((android.widget.AdapterView<?>) v).getAdapter();
-            for (int i = 0; i < a.getCount(); i++) if (text.equals(a.getItem(i))) return true;
+            for (int i = 0; i < a.getCount(); i++) {
+                Object item = a.getItem(i);
+                if (text.equals(item) || (item instanceof ClipboardHistory.Clip
+                        && text.equals(((ClipboardHistory.Clip) item).text))) return true;
+            }
         }
         if (v instanceof ViewGroup) {
             ViewGroup g = (ViewGroup) v;

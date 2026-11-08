@@ -151,6 +151,16 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
         changed();
     }
 
+    void setPinned(java.util.Collection<Clip> clips, boolean pinned) {
+        for (Clip c : clips) c.pinned = pinned;
+        changed();
+    }
+
+    void removeAll(java.util.Collection<Clip> clips) {
+        mClips.removeAll(clips);
+        changed();
+    }
+
     /** Removes every clip that is not pinned. */
     void clearUnpinned() {
         ensureLoaded();

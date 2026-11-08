@@ -723,7 +723,7 @@
     <string name="toolbar_paste">Paste</string>
     <string name="toolbar_undo">Undo</string>
     <string name="toolbar_redo">Redo</string>
-    <string name="toolbar_clipboard_empty">Text you copy appears here. Tap to paste, long-press to pin.</string>
+    <string name="toolbar_clipboard_empty">Text you copy appears here. Tap to paste; long-press to select, pin or delete.</string>
     <string name="toolbar_clipboard_off">Clipboard history is turned off in settings.</string>
     <string name="toolbar_clipboard_clear">Clear (keeps pinned)</string>
     <string name="title_clipboard_history">Clipboard history</string>
@@ -736,4 +736,5 @@
     <string name="toolbar_line">Line</string>
     <string name="toolbar_unselect">Unselect</string>
     <string name="toolbar_nothing_selected">Nothing selected</string>
+    <string name="toolbar_clipboard_all">All</string>
 </resources>
