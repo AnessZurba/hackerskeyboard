@@ -1009,6 +1009,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onFinishInputView(boolean finishingInput) {
         super.onFinishInputView(finishingInput);
+        clearAutofillChips();
         if (mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel();
         }
@@ -2323,6 +2324,71 @@ public class LatinIME extends InputMethodService implements
         }
         mJustRevertedSeparator = null;
         ic.endBatchEdit();
+    }
+
+    // ---------------------------------------------------------------- autofill chips
+
+    /**
+     * Asks autofill services (password managers) to offer their suggestions as chips for
+     * the toolbar row instead of a dropdown under the field. The chips are views the
+     * service draws; the keyboard only places them and never sees what they fill in.
+     */
+    @Override
+    @androidx.annotation.RequiresApi(30)
+    public android.view.inputmethod.InlineSuggestionsRequest onCreateInlineSuggestionsRequest(
+            android.os.Bundle uiExtras) {
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        int height = toolbar != null ? toolbar.chipHeight()
+                : Math.round(36 * getResources().getDisplayMetrics().density);
+        int maxWidth = getResources().getDisplayMetrics().widthPixels * 2 / 3;
+        android.os.Bundle style = androidx.autofill.inline.UiVersions.newStylesBuilder()
+                .addStyle(androidx.autofill.inline.v1.InlineSuggestionUi.newStyleBuilder().build())
+                .build();
+        android.widget.inline.InlinePresentationSpec spec =
+                new android.widget.inline.InlinePresentationSpec.Builder(
+                        new android.util.Size(height, height), new android.util.Size(maxWidth, height))
+                        .setStyle(style).build();
+        return new android.view.inputmethod.InlineSuggestionsRequest.Builder(
+                java.util.Collections.singletonList(spec))
+                .setMaxSuggestionCount(6)
+                .build();
+    }
+
+    @Override
+    @androidx.annotation.RequiresApi(30)
+    public boolean onInlineSuggestionsResponse(
+            android.view.inputmethod.InlineSuggestionsResponse response) {
+        final KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar == null) return false;
+        final List<android.view.inputmethod.InlineSuggestion> suggestions =
+                response.getInlineSuggestions();
+        if (suggestions.isEmpty()) {
+            toolbar.showChips(java.util.Collections.<View>emptyList());
+            return true;
+        }
+        final View[] views = new View[suggestions.size()];
+        final int[] remaining = {suggestions.size()};
+        android.util.Size size = new android.util.Size(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        for (int i = 0; i < suggestions.size(); i++) {
+            final int index = i;
+            suggestions.get(i).inflate(this, size, getMainExecutor(), view -> {
+                views[index] = view;
+                if (--remaining[0] == 0) {
+                    List<View> ready = new ArrayList<>();
+                    for (View v : views) if (v != null) ready.add(v);
+                    toolbar.showChips(ready);
+                }
+            });
+        }
+        return true;
+    }
+
+    private void clearAutofillChips() {
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar != null && toolbar.hasChips()) {
+            toolbar.showChips(java.util.Collections.<View>emptyList());
+        }
     }
 
     // ---------------------------------------------------------------- cursor movement

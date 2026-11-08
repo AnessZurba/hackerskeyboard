@@ -69,6 +69,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final LinearLayout mBar;
     private final FrameLayout mBody;
     private final ImageView[] mButtons = new ImageView[3];
+    private final List<View> mCells = new ArrayList<>();
+    private final HorizontalScrollView mChipScroll;
+    private final LinearLayout mChipRow;
+    // True while the row is shown only because autofill chips are offered.
+    private boolean mShownForChips;
     private LatinKeyboardView mKeyboardView;
     private View mPanel;
     private int mOpenPanel = PANEL_NONE;
@@ -119,7 +124,19 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             FrameLayout cell = new FrameLayout(ime);
             cell.addView(b, new FrameLayout.LayoutParams(dp(38), dp(38), Gravity.CENTER));
             mBar.addView(cell, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+            mCells.add(cell);
         }
+        // Autofill chips (password managers) take the buttons' place while offered.
+        mChipScroll = new HorizontalScrollView(ime);
+        mChipScroll.setHorizontalScrollBarEnabled(false);
+        mChipRow = new LinearLayout(ime);
+        mChipRow.setOrientation(HORIZONTAL);
+        mChipRow.setGravity(Gravity.CENTER_VERTICAL);
+        mChipRow.setPadding(dp(4), 0, dp(4), 0);
+        mChipScroll.addView(mChipRow, new FrameLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+        mChipScroll.setVisibility(GONE);
+        mBar.addView(mChipScroll, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight));
 
         mBody = new FrameLayout(ime);
@@ -164,21 +181,71 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         PreferenceManager.getDefaultSharedPreferences(mIme).edit()
                 .putBoolean(PREF_SHOW_TOOLBAR, mToolbarShown).apply();
         if (!mToolbarShown) closePanel();
+        boolean wasShown = mBar.getVisibility() == VISIBLE && mBar.getAlpha() > 0;
+        // Hidden while chips are offered: keep them, and hide the row when they go.
+        mShownForChips = !mToolbarShown && hasChips();
+        if (mToolbarShown && !wasShown) {
+            revealBar();
+        } else if (!mToolbarShown && !hasChips()) {
+            concealBar();
+        }
+    }
+
+    private void revealBar() {
         mBar.animate().cancel();
-        float offset = mBarHeight / 2f;
-        if (mToolbarShown) {
-            setBarSpaceGiven(false); // take the space back first, then fade in
-            mBar.setVisibility(VISIBLE);
-            mBar.setAlpha(0f);
-            mBar.setTranslationY(offset);
-            mBar.animate().alpha(1f).translationY(0f).setDuration(180).withEndAction(null).start();
-        } else {
-            mBar.animate().alpha(0f).translationY(offset).setDuration(150).withEndAction(() -> {
-                mBar.setVisibility(INVISIBLE);
-                mBar.setAlpha(1f);
-                mBar.setTranslationY(0f);
-                setBarSpaceGiven(true);
-            }).start();
+        setBarSpaceGiven(false); // take the space back first, then fade in
+        mBar.setVisibility(VISIBLE);
+        mBar.setAlpha(0f);
+        mBar.setTranslationY(mBarHeight / 2f);
+        mBar.animate().alpha(1f).translationY(0f).setDuration(180).withEndAction(null).start();
+    }
+
+    private void concealBar() {
+        mBar.animate().cancel();
+        mBar.animate().alpha(0f).translationY(mBarHeight / 2f).setDuration(150).withEndAction(() -> {
+            mBar.setVisibility(INVISIBLE);
+            mBar.setAlpha(1f);
+            mBar.setTranslationY(0f);
+            setBarSpaceGiven(true);
+        }).start();
+    }
+
+    // ------------------------------------------------------------------ autofill chips
+
+    /** Chip height, for LatinIME's inline-suggestions request. */
+    int chipHeight() {
+        return mBarHeight - dp(6);
+    }
+
+    boolean hasChips() {
+        return mChipRow.getChildCount() > 0;
+    }
+
+    /**
+     * Shows a password manager's inline suggestion chips in place of the buttons (or puts
+     * the buttons back for an empty list). A hidden toolbar slides in for them and hides
+     * again when they are gone; the swipe-up setting is left alone.
+     */
+    void showChips(List<View> chips) {
+        mChipRow.removeAllViews();
+        for (View chip : chips) {
+            if (chip.getParent() instanceof ViewGroup) ((ViewGroup) chip.getParent()).removeView(chip);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            lp.setMargins(dp(3), 0, dp(3), 0);
+            lp.gravity = Gravity.CENTER_VERTICAL;
+            mChipRow.addView(chip, lp);
+        }
+        boolean any = hasChips();
+        for (View cell : mCells) cell.setVisibility(any ? GONE : VISIBLE);
+        mChipScroll.setVisibility(any ? VISIBLE : GONE);
+        mChipScroll.scrollTo(0, 0);
+        if (any && !mToolbarShown && !mShownForChips) {
+            mShownForChips = true;
+            revealBar();
+        } else if (!any && mShownForChips) {
+            mShownForChips = false;
+            concealBar();
         }
     }
 

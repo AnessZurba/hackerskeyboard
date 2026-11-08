@@ -34,7 +34,7 @@ public class ToolbarTest {
         KeyboardToolbar toolbar = (KeyboardToolbar) input;
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
-        assertEquals(3, bar.getChildCount());
+        assertEquals("three buttons and the (hidden) autofill chip row", 4, bar.getChildCount());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());
 
@@ -98,6 +98,32 @@ public class ToolbarTest {
         settle(toolbar);
         assertEquals(height, toolbar.getMeasuredHeight());
         assertEquals(0, toolbar.spaceGivenToApp());
+    }
+
+    /** Autofill chips show in place of the buttons, revealing a hidden toolbar meanwhile. */
+    @Test
+    public void autofillChipsRevealHiddenToolbar() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        if (toolbar.isToolbarShown()) toolbar.toggleToolbar(); // user keeps it hidden
+        settle(toolbar);
+        assertTrue("hidden row's space is the app's", toolbar.spaceGivenToApp() > 0);
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+
+        android.widget.TextView chip = new android.widget.TextView(ime);
+        chip.setText("user@example.com");
+        toolbar.showChips(java.util.Collections.<View>singletonList(chip));
+        settle(toolbar);
+        assertEquals(View.VISIBLE, bar.getVisibility());
+        assertEquals("space taken back for the chips", 0, toolbar.spaceGivenToApp());
+        assertEquals(View.GONE, bar.getChildAt(0).getVisibility()); // buttons make way
+        assertFalse("the setting is not changed", toolbar.isToolbarShown());
+
+        toolbar.showChips(java.util.Collections.<View>emptyList());
+        settle(toolbar);
+        assertEquals(View.VISIBLE, bar.getChildAt(0).getVisibility());
+        assertTrue("hidden again", toolbar.spaceGivenToApp() > 0);
     }
 
     private static void settle(View v) {
