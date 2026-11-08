@@ -233,14 +233,31 @@ final class CursorDrag {
         mWaitFrom = mFocus;
         mWaitTop = mMarkerPos == mFocus ? mMarkerTop : Float.NaN;
         int code = up ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN;
-        int meta = mSelect ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
-        long now = SystemClock.uptimeMillis();
-        int flags = KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE;
-        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta, -1, 0, flags));
-        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta, -1, 0, flags));
+        sendKey(ic, code, mSelect ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
         mHandler.removeCallbacks(mKeyTimeout);
         mHandler.postDelayed(mKeyTimeout, KEY_TIMEOUT_MS);
         return true;
+    }
+
+    /**
+     * Sends a key with modifiers the way a PC keyboard does: the modifier keys go down
+     * first and up after. Text fields extend the selection on an arrow key only while Shift
+     * is held (tracked from the Shift key's own events); an arrow merely flagged with Shift
+     * collapses the selection instead.
+     */
+    static void sendKey(InputConnection ic, int code, int meta) {
+        long now = SystemClock.uptimeMillis();
+        int flags = KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE;
+        boolean shift = (meta & KeyEvent.META_SHIFT_ON) != 0;
+        boolean ctrl = (meta & KeyEvent.META_CTRL_ON) != 0;
+        int shiftMeta = KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON;
+        int ctrlMeta = KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON;
+        if (ctrl) ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CTRL_LEFT, 0, ctrlMeta, -1, 0, flags));
+        if (shift) ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT, 0, meta & (shiftMeta | ctrlMeta), -1, 0, flags));
+        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta, -1, 0, flags));
+        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta, -1, 0, flags));
+        if (shift) ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_SHIFT_LEFT, 0, meta & ctrlMeta, -1, 0, flags));
+        if (ctrl) ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_CTRL_LEFT, 0, 0, -1, 0, flags));
     }
 
     /**
@@ -262,14 +279,14 @@ final class CursorDrag {
         int focus;
         if (!mSelect) {
             focus = e;
-        } else if (s == mAnchor) {
-            focus = e;
-        } else if (e == mAnchor) {
-            focus = s;
         } else if (s == e) {
             // Some editors drop the selection on Shift+arrow: keep it, put it back.
             focus = s;
             mRestore = true;
+        } else if (s == mAnchor) {
+            focus = e;
+        } else if (e == mAnchor) {
+            focus = s;
         } else {
             // The editor normalised the order, or chose its own anchor.
             focus = Math.abs(s - mWaitFrom) < Math.abs(e - mWaitFrom) ? s : e;

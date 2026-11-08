@@ -193,6 +193,10 @@ public class SelectionPanelTest {
             @Override
             public boolean sendKeyEvent(android.view.KeyEvent event) {
                 if (event.getAction() != android.view.KeyEvent.ACTION_DOWN) return true;
+                if (event.getKeyCode() != android.view.KeyEvent.KEYCODE_DPAD_UP
+                        && event.getKeyCode() != android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                    return true; // Shift/Ctrl going down around the arrow
+                }
                 boolean up = event.getKeyCode() == android.view.KeyEvent.KEYCODE_DPAD_UP;
                 int anchor = android.text.Selection.getSelectionStart(mField.getText());
                 int focus = android.text.Selection.getSelectionEnd(mField.getText());
@@ -569,6 +573,70 @@ public class SelectionPanelTest {
     public void backspaceSwipeFastGoesFurther() throws Exception {
         int fast = backspaceSwipe(64, 40);
         assertTrue("fast flick selects more than 4 words: " + fast, fast > 11);
+    }
+
+    /**
+     * A real text field extends the selection on an arrow only while Shift is held (its own
+     * key events), not for an arrow merely flagged with Shift: up/down keep the selection.
+     */
+    @Test
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    public void upDownExtendTheSelectionInARealTextField() {
+        sInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE;
+        android.app.Activity a = Robolectric.buildActivity(android.app.Activity.class).setup().get();
+        final EditText f = new EditText(a);
+        f.setInputType(sInputType);
+        a.setContentView(f);
+        f.setText("first line\nsecond line\nthird");
+        f.requestFocus();
+        f.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        f.layout(0, 0, 1000, f.getMeasuredHeight());
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        final int[] last = {0, 0};
+        final Runnable report = () -> {
+            int s = f.getSelectionStart(), e = f.getSelectionEnd();
+            if (s != last[0] || e != last[1]) {
+                mIme.onUpdateSelection(last[0], last[1], s, e, -1, -1);
+                last[0] = s;
+                last[1] = e;
+            }
+        };
+        // Keys go to the field as the app's window would deliver them; reports come later.
+        sConnection = new InputConnectionWrapper(f.onCreateInputConnection(new EditorInfo()), true) {
+            @Override
+            public boolean setSelection(int s, int e) {
+                boolean r = super.setSelection(s, e);
+                h.postDelayed(report, 20);
+                return r;
+            }
+
+            @Override
+            public boolean sendKeyEvent(android.view.KeyEvent ev) {
+                boolean r = f.dispatchKeyEvent(ev);
+                h.postDelayed(report, 20);
+                return r;
+            }
+        };
+        sConnection.setSelection(15, 15);
+        settle();
+        mIme.moveCursor(2, true, false); // Select on, right twice: 15..17
+        settle();
+        assertTrue(mIme.beginQuietCursorDrag(true));
+        mIme.mCursorDrag.lines(-1);      // the toolbar's up arrow
+        mIme.mCursorDrag.end();
+        settle();
+        assertEquals("anchor kept", 15, f.getSelectionStart());
+        assertTrue("moved up a line: " + f.getSelectionEnd(), f.getSelectionEnd() < 11);
+        assertTrue(mIme.beginQuietCursorDrag(true));
+        mIme.mCursorDrag.lines(1);
+        mIme.mCursorDrag.end();
+        assertTrue(mIme.beginQuietCursorDrag(true));
+        mIme.mCursorDrag.lines(1);
+        mIme.mCursorDrag.end();
+        settle();
+        assertEquals("anchor kept", 15, f.getSelectionStart());
+        assertTrue("two lines down: " + f.getSelectionEnd(), f.getSelectionEnd() > 23);
     }
 
     private static void idle() {

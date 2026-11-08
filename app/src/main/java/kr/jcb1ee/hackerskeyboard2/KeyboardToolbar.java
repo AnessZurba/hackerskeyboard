@@ -602,11 +602,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void sendKey(int keyCode, int meta) {
         InputConnection ic = connection();
         if (ic == null) return;
-        long now = SystemClock.uptimeMillis();
-        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0, meta,
-                -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
-        ic.sendKeyEvent(new KeyEvent(now, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, keyCode, 0,
-                meta, -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
+        CursorDrag.sendKey(ic, keyCode, meta); // Shift/Ctrl pressed around the key, as on a PC
     }
 
     // Press-and-hold repeat for arrows and backspace
