@@ -715,7 +715,7 @@
     <string name="crash_report_dismiss">Dismiss</string>
 
     <string name="title_hide_dpad_center">Hide the ○ key</string>
-    <string name="summary_hide_dpad_center">Remove the D-pad Center key next to Fn (it also opens Compose on long press); the space bar takes its room.</string>
+    <string name="summary_hide_dpad_center">Remove the D-pad Center key next to Fn (a long press on it opens Compose). Its room is shared between the space bar, which stays centred, and Fn.</string>
 
     <!-- Toolbar above the keyboard (swipe up to show or hide) -->
     <string name="toolbar_category">Toolbar</string>

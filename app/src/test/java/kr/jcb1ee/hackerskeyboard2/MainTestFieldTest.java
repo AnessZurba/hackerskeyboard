@@ -33,8 +33,14 @@ public class MainTestFieldTest {
                 field.getInputType() & InputType.TYPE_MASK_VARIATION);
         assertEquals(0, field.getInputType() & InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
+        assertEquals("password mode: a password field for autofill",
+                android.view.View.IMPORTANT_FOR_AUTOFILL_YES, field.getImportantForAutofill());
+        assertEquals(android.view.View.AUTOFILL_HINT_PASSWORD, field.getAutofillHints()[0]);
+
         main.findViewById(R.id.main_test_type_text).performClick();
         assertEquals(InputType.TYPE_CLASS_TEXT, field.getInputType());
+        assertEquals("other modes: not for password managers",
+                android.view.View.IMPORTANT_FOR_AUTOFILL_NO, field.getImportantForAutofill());
     }
 
     /** The screen makes room for the keyboard and keeps the focused test field above it. */

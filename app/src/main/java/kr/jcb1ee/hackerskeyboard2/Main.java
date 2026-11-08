@@ -63,6 +63,7 @@ public class Main extends AppCompatActivity {
         final EditText test = findViewById(R.id.main_setup_edit_test);
         com.google.android.material.button.MaterialButtonToggleGroup type =
                 findViewById(R.id.main_test_type);
+        setAutofill(test, false); // starts as a plain text field
         type.addOnButtonCheckedListener((group, id, checked) -> {
             if (!checked) return;
             int inputType = InputType.TYPE_CLASS_TEXT;
@@ -77,6 +78,7 @@ public class Main extends AppCompatActivity {
             int start = test.getSelectionStart(), end = test.getSelectionEnd();
             test.setInputType(inputType); // also sets single/multi-line and password dots
             test.setMinLines(id == R.id.main_test_type_lines ? 3 : 1);
+            setAutofill(test, id == R.id.main_test_type_password);
             String text = test.getText().toString();
             if (start >= 0 && end <= text.length()) test.setSelection(start, end);
             test.requestFocus();
@@ -171,6 +173,25 @@ public class Main extends AppCompatActivity {
         int visibleBottom = root.getScrollY() + root.getHeight() - root.getPaddingBottom();
         if (r.bottom + margin > visibleBottom) {
             root.scrollTo(0, r.bottom + margin - (root.getHeight() - root.getPaddingBottom()));
+        }
+    }
+
+    /**
+     * Only Password mode is a password field for autofill (password managers); the other
+     * modes opt out, like ordinary text fields. Autofill asks about a field once, when it is
+     * entered, and keeps the answer: so after a switch, its session ends and the field is
+     * entered afresh, or the password chips stayed in the other modes too.
+     */
+    private static void setAutofill(EditText field, boolean password) {
+        if (android.os.Build.VERSION.SDK_INT < 26) return;
+        field.setAutofillHints(password ? new String[] {android.view.View.AUTOFILL_HINT_PASSWORD} : null);
+        field.setImportantForAutofill(password ? android.view.View.IMPORTANT_FOR_AUTOFILL_YES
+                : android.view.View.IMPORTANT_FOR_AUTOFILL_NO);
+        android.view.autofill.AutofillManager autofill =
+                field.getContext().getSystemService(android.view.autofill.AutofillManager.class);
+        if (autofill != null && field.hasFocus()) {
+            autofill.cancel();
+            field.clearFocus();
         }
     }
 }
