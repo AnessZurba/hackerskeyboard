@@ -60,6 +60,7 @@
 
         <activity android:name="Main"
                 android:label="Hacker's Keyboard 2 AZ"
+                android:windowSoftInputMode="adjustResize"
                 android:hardwareAccelerated="true"
                 android:theme="@style/Theme.HackersKeyboard.Main"
                 android:exported="true">

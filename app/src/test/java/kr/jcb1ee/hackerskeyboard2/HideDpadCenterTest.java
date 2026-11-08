@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-/** "Hide the ○ key" drops D-pad Center and gives its room to the space bar. */
+/** "Hide the ○ key" drops D-pad Center; its room goes to the space bar (centred) and Fn. */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34)
 public class HideDpadCenterTest {
@@ -45,9 +45,13 @@ public class HideDpadCenterTest {
             assertNull(find(hidden, LatinKeyboardView.KEYCODE_DPAD_CENTER));
             Keyboard.Key space2 = find(hidden, ' ');
             Keyboard.Key left2 = find(hidden, LatinKeyboardView.KEYCODE_DPAD_LEFT);
+            Keyboard.Key fn = find(normal, LatinKeyboardView.KEYCODE_FN);
+            Keyboard.Key fn2 = find(hidden, LatinKeyboardView.KEYCODE_FN);
             assertEquals("space x unchanged", space.x, space2.x);
-            int grown = space2.width - space.width;
-            assertEquals("space grows by the key and its gap", center.width + center.gap, grown, 2);
+            int grown = (space2.width - space.width) + (fn2.width - fn.width);
+            assertEquals("space and Fn share the key and its gap", center.width + center.gap, grown, 2);
+            assertEquals("space centred", hidden.getMinWidth() / 2f, space2.x + space2.width / 2f, 3);
+            assertEquals("Fn right after space", space2.x + space2.width, fn2.x - fn2.gap, 3);
             assertEquals("arrows stay put", left.x, left2.x);
             assertEquals(normal.getKeys().size() - 1, hidden.getKeys().size());
         }

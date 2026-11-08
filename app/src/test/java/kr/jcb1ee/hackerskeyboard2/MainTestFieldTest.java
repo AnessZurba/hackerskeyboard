@@ -36,4 +36,32 @@ public class MainTestFieldTest {
         main.findViewById(R.id.main_test_type_text).performClick();
         assertEquals(InputType.TYPE_CLASS_TEXT, field.getInputType());
     }
+
+    /** The screen makes room for the keyboard and keeps the focused test field above it. */
+    @Test
+    public void screenFollowsTheKeyboard() {
+        Main main = Robolectric.buildActivity(Main.class).setup().get();
+        android.widget.ScrollView root = main.findViewById(R.id.main_root);
+        EditText field = main.findViewById(R.id.main_setup_edit_test);
+        root.measure(android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(2000, android.view.View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, 1080, 2000);
+        field.requestFocus();
+        for (int keyboard : new int[] {300, 900}) { // two frames of the slide
+            androidx.core.view.WindowInsetsCompat insets = new androidx.core.view.WindowInsetsCompat.Builder()
+                    .setInsets(androidx.core.view.WindowInsetsCompat.Type.ime(),
+                            androidx.core.graphics.Insets.of(0, 0, 0, keyboard))
+                    .setInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars(),
+                            androidx.core.graphics.Insets.of(0, 60, 0, 40))
+                    .build();
+            Main.applyInsets(root, insets);
+            assertEquals("room for the keyboard", keyboard, root.getPaddingBottom());
+            assertEquals("clear of the status bar", 60, root.getPaddingTop());
+            android.graphics.Rect r = new android.graphics.Rect();
+            field.getDrawingRect(r);
+            root.offsetDescendantRectToMyCoords(field, r);
+            org.junit.Assert.assertTrue("field above the keyboard at " + keyboard,
+                    r.bottom <= root.getScrollY() + 2000 - keyboard);
+        }
+    }
 }

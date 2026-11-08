@@ -1196,6 +1196,7 @@ public class Keyboard {
                     if (TAG_ROW.equals(tag)) {
                         inRow = true;
                         x = 0;
+                        mRowStart = mKeys.size();
                         currentRow = createRowFromXml(res, parser);
                         skipRow = currentRow.mode != 0 && currentRow.mode != mKeyboardMode;
                         if (currentRow.extension) {
@@ -1268,26 +1269,38 @@ public class Keyboard {
     }
 
     /**
-     * Drops a key from its row: the space bar of the same row (if any) grows by the key's
-     * width and gap, and the keys between the space bar and the dropped key move over.
-     * Keys after the dropped one keep their places.
+     * Drops a key from its row (the hidden ○), sharing its room between the space bar and
+     * the key just before the dropped one (Fn) so that the space bar ends up centred on the
+     * keyboard: all to the space bar would push its centre right of the middle. Keys after
+     * the dropped one keep their places.
      */
+    private int mRowStart; // index in mKeys of the row being parsed
+
     private void giveWidthToSpace(Key dropped) {
-        Key space = null;
-        for (Key k : mKeys) {
-            if (k.y == dropped.y && k.codes != null && k.codes.length > 0 && k.codes[0] == ' ') space = k;
+        List<Key> row = mKeys.subList(mRowStart, mKeys.size());
+        Key space = null, before = null;
+        for (Key k : row) {
+            if (k.x >= dropped.x) continue;
+            if (k.codes != null && k.codes.length > 0 && k.codes[0] == ' ') space = k;
+            if (before == null || k.x > before.x) before = k;
         }
-        if (space == null || space.x > dropped.x) return; // leave the gap rather than guess
+        if (space == null) return; // leave the gap rather than guess
         float extra = dropped.realGap + dropped.realWidth;
-        int shift = Math.round(extra);
-        for (Key k : mKeys) {
-            if (k.y == dropped.y && k.x > space.x) {
-                k.realX += extra;
-                k.x += shift;
+        // How much the space bar grows (rightwards) to be centred, within what's available.
+        float toSpace = before == space ? extra
+                : Math.max(0f, Math.min(extra, mDisplayWidth - 2 * space.realX - space.realWidth));
+        for (Key k : row) {
+            if (k.x > space.x) {
+                k.realX += toSpace;
+                k.x = Math.round(k.realX);
             }
         }
-        space.realWidth += extra;
+        space.realWidth += toSpace;
         space.width = Math.round(space.realWidth);
+        if (before != space) {
+            before.realWidth += extra - toSpace;
+            before.width = Math.round(before.realWidth);
+        }
     }
 
     public void setKeyboardWidth(int newWidth) {

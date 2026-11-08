@@ -33,6 +33,7 @@ public class Main extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        followKeyboard();
         if (savedInstanceState == null) CrashLog.showIfAny(this);
 
         TextView version = findViewById(R.id.main_version);
@@ -109,5 +110,67 @@ public class Main extends AppCompatActivity {
         setup5.setOnClickListener(v ->
             startActivity(new Intent(this, LatinIMESettings.class))
         );
+    }
+
+    /**
+     * The screen follows the keyboard as it slides, frame by frame (Android 11+ reports the
+     * keyboard's position on every frame of its animation; AndroidX approximates it before
+     * that): the space at the bottom grows with the keyboard and the focused field rides
+     * up just above it, instead of the layout jumping once the keyboard has arrived.
+     */
+    private void followKeyboard() {
+        final android.widget.ScrollView root = findViewById(R.id.main_root);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        final boolean[] animating = new boolean[1];
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            if (!animating[0]) applyInsets(root, insets);
+            return androidx.core.view.WindowInsetsCompat.CONSUMED;
+        });
+        androidx.core.view.ViewCompat.setWindowInsetsAnimationCallback(root,
+                new androidx.core.view.WindowInsetsAnimationCompat.Callback(
+                        androidx.core.view.WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_STOP) {
+                    @Override
+                    public void onPrepare(androidx.core.view.WindowInsetsAnimationCompat animation) {
+                        if (isIme(animation)) animating[0] = true;
+                    }
+
+                    @Override
+                    public androidx.core.view.WindowInsetsCompat onProgress(
+                            androidx.core.view.WindowInsetsCompat insets,
+                            java.util.List<androidx.core.view.WindowInsetsAnimationCompat> running) {
+                        if (animating[0]) applyInsets(root, insets); // every frame of the slide
+                        return insets;
+                    }
+
+                    @Override
+                    public void onEnd(androidx.core.view.WindowInsetsAnimationCompat animation) {
+                        if (!isIme(animation)) return;
+                        animating[0] = false;
+                        androidx.core.view.ViewCompat.requestApplyInsets(root);
+                    }
+
+                    private boolean isIme(androidx.core.view.WindowInsetsAnimationCompat a) {
+                        return (a.getTypeMask() & androidx.core.view.WindowInsetsCompat.Type.ime()) != 0;
+                    }
+                });
+    }
+
+    /** Pads the screen clear of the system bars and the keyboard; keeps the focus in view. */
+    static void applyInsets(android.widget.ScrollView root, androidx.core.view.WindowInsetsCompat insets) {
+        androidx.core.graphics.Insets bars = insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars());
+        androidx.core.graphics.Insets ime = insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.ime());
+        root.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+        android.view.View focus = root.findFocus();
+        if (focus == null || ime.bottom == 0) return;
+        android.graphics.Rect r = new android.graphics.Rect();
+        focus.getDrawingRect(r);
+        root.offsetDescendantRectToMyCoords(focus, r);
+        int margin = Math.round(16 * root.getResources().getDisplayMetrics().density);
+        int visibleBottom = root.getScrollY() + root.getHeight() - root.getPaddingBottom();
+        if (r.bottom + margin > visibleBottom) {
+            root.scrollTo(0, r.bottom + margin - (root.getHeight() - root.getPaddingBottom()));
+        }
     }
 }

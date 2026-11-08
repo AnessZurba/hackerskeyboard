@@ -23,10 +23,7 @@
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
         android:settingsActivity="kr.jcb1ee.hackerskeyboard2.LatinIMESettings"
         android:isDefault="@bool/im_is_default"
-        android:supportsSwitchingToNextInputMethod="true"
         android:supportsInlineSuggestions="true"
 />
 <!-- supportsInlineSuggestions: autofill services (password managers) send their chips to
-     the keyboard only when it says it can show them (Android 11+).
-     supportsSwitchingToNextInputMethod: the keyboard offers a switch to the next keyboard
-     (its switch key), so the system knows it may leave that to us. -->
+     the keyboard only when it says it can show them (Android 11+). -->
