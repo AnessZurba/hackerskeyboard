@@ -306,13 +306,24 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /** A cursor key; extends the selection while Select is on. */
     private Runnable act(final int keyCode) {
-        return () -> sendKey(keyCode, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
+        return () -> {
+            int steps = keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1
+                    : keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
+            // Left/right move within the text (an arrow key at its ends would move focus
+            // away and close the keyboard); arrow keys only where the text isn't exposed.
+            if (steps != 0 && mIme.moveCursor(steps, mSelecting, false)) return;
+            sendKey(keyCode, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
+        };
     }
 
     /** A word jump (Ctrl+arrow); extends the selection while Select is on. */
     private Runnable word(final int keyCode) {
-        return () -> sendKey(keyCode, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON
-                | (mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0));
+        return () -> {
+            int steps = keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1;
+            if (mIme.moveCursor(steps, mSelecting, true)) return;
+            sendKey(keyCode, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON
+                    | (mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0));
+        };
     }
 
     private Runnable ctrl(final int keyCode, final boolean shift) {

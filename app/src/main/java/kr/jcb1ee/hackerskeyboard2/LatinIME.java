@@ -2325,6 +2325,87 @@ public class LatinIME extends InputMethodService implements
         ic.endBatchEdit();
     }
 
+    // ---------------------------------------------------------------- cursor movement
+
+    /**
+     * Moves the cursor by whole characters (or words), in the visual direction of the text
+     * at the cursor (negative = left), stopping at the ends of the text. Used by the
+     * space-bar slider and the toolbar's arrows instead of arrow keys, because an arrow key
+     * at the start or end of a field moves focus to another view and closes the keyboard.
+     *
+     * @param select extend the selection instead of moving the cursor (also when Shift is on)
+     * @param byWord move by words (also when Ctrl is on)
+     * @return false when the editor doesn't expose its text (terminals): send arrow keys
+     */
+    boolean moveCursor(int steps, boolean select, boolean byWord) {
+        if (steps == 0) return true;
+        InputConnection ic = getCurrentInputConnection();
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ic == null || ei == null
+                || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_NULL) {
+            return false;
+        }
+        android.view.inputmethod.ExtractedText et =
+                ic.getExtractedText(new android.view.inputmethod.ExtractedTextRequest(), 0);
+        if (et == null || et.text == null || et.selectionStart < 0) return false;
+        commitTyped(ic, true);
+        select |= isShiftMod();
+        byWord |= mModCtrl;
+        int[] sel = newSelection(et.text.toString(), et.selectionStart, et.selectionEnd,
+                steps, select, byWord);
+        ic.setSelection(et.startOffset + sel[0], et.startOffset + sel[1]);
+        return true;
+    }
+
+    /**
+     * The selection {anchor, end} after moving {@code steps} visually (negative = left) from
+     * the given selection, by characters (graphemes) or words, clamped to the text.
+     */
+    static int[] newSelection(String text, int anchor, int end, int steps, boolean select,
+            boolean byWord) {
+        // Visual direction: in right-to-left text, dragging right moves back in the text.
+        if (isRightToLeftAt(text, end)) steps = -steps;
+        java.text.BreakIterator it = byWord ? java.text.BreakIterator.getWordInstance()
+                : java.text.BreakIterator.getCharacterInstance();
+        it.setText(text);
+        int len = text.length();
+        int pos = select ? end : (steps < 0 ? Math.min(anchor, end) : Math.max(anchor, end));
+        if (!select && anchor != end) steps -= Integer.signum(steps); // first step collapses
+        pos = Math.max(0, Math.min(pos, len));
+        for (int i = Math.abs(steps); i > 0; i--) {
+            int next = steps < 0 ? (pos == 0 ? java.text.BreakIterator.DONE : it.preceding(pos))
+                    : (pos == len ? java.text.BreakIterator.DONE : it.following(pos));
+            if (next == java.text.BreakIterator.DONE) break; // at the end of the text: stop
+            if (byWord) { // land on word boundaries, skipping spaces and punctuation
+                while (next > 0 && next < len
+                        && !Character.isLetterOrDigit(text.charAt(steps < 0 ? next : next - 1))) {
+                    int further = steps < 0 ? it.preceding(next) : it.following(next);
+                    if (further == java.text.BreakIterator.DONE) break;
+                    next = further;
+                }
+            }
+            pos = next;
+        }
+        return select ? new int[] {anchor, pos} : new int[] {pos, pos};
+    }
+
+    /** Whether the text around the cursor runs right to left (Arabic, Hebrew...). */
+    private static boolean isRightToLeftAt(String text, int cursor) {
+        for (int i = Math.min(cursor, text.length()) - 1; i >= 0; i--) {
+            byte d = Character.getDirectionality(text.charAt(i));
+            if (d == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+                    || d == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) return true;
+            if (d == Character.DIRECTIONALITY_LEFT_TO_RIGHT) return false;
+        }
+        for (int i = cursor; i < text.length(); i++) {
+            byte d = Character.getDirectionality(text.charAt(i));
+            if (d == Character.DIRECTIONALITY_RIGHT_TO_LEFT
+                    || d == Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC) return true;
+            if (d == Character.DIRECTIONALITY_LEFT_TO_RIGHT) return false;
+        }
+        return false;
+    }
+
     // ---------------------------------------------------------------- backspace swipe
 
     static final String PREF_DELETE_SWIPE = "pref_delete_swipe";

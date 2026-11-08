@@ -567,11 +567,14 @@ public class PointerTracker {
         int steps = (x - mCursorLastX) / mCursorStep;
         if (steps == 0 || mListener == null) return;
         mCursorLastX += steps * mCursorStep;
-        // Arrow keys rather than setSelection: they work in terminals, apply Shift/Ctrl
-        // held on other keys (select, word jumps), and follow the text visually in RTL.
-        int code = steps < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
-        for (int i = Math.abs(steps); i > 0; i--) {
-            mListener.onKey(code, null, x, mKeyState.getLastY());
+        // Move within the text, stopping at its ends: an arrow key at the start or end of a
+        // field moves focus to another view and closes the keyboard. Terminals don't expose
+        // their text, so they get arrow keys (Shift/Ctrl held on other keys still apply).
+        if (!LatinIME.sInstance.moveCursor(steps, false, false)) {
+            int code = steps < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
+            for (int i = Math.abs(steps); i > 0; i--) {
+                mListener.onKey(code, null, x, mKeyState.getLastY());
+            }
         }
         View view = mKeyboardSwitcher.getInputView();
         if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
