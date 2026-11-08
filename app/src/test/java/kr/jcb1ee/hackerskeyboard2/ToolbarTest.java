@@ -34,7 +34,8 @@ public class ToolbarTest {
         KeyboardToolbar toolbar = (KeyboardToolbar) input;
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
-        assertEquals("three buttons and the (hidden) autofill chip row", 4, bar.getChildCount());
+        assertEquals("three buttons, the (hidden) autofill chip rows and their > button",
+                6, bar.getChildCount());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());
 
@@ -124,6 +125,38 @@ public class ToolbarTest {
         settle(toolbar);
         assertEquals(View.VISIBLE, bar.getChildAt(0).getVisibility());
         assertTrue("hidden again", toolbar.spaceGivenToApp() > 0);
+    }
+
+    /** Pinned chips stay at the start; ">" brings the regular buttons back. */
+    @Test
+    public void pinnedChipsAndShowButtons() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        if (!toolbar.isToolbarShown()) toolbar.toggleToolbar();
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+        android.widget.TextView chip = new android.widget.TextView(ime);
+        chip.setText("Open 1Password");
+        android.widget.TextView icon = new android.widget.TextView(ime);
+        icon.setText("1P");
+        toolbar.showChips(java.util.Collections.<View>singletonList(chip),
+                java.util.Collections.<View>singletonList(icon));
+        settle(toolbar);
+        assertEquals(View.GONE, bar.getChildAt(0).getVisibility());
+        View dismiss = null;
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            View c = bar.getChildAt(i);
+            if (ime.getString(R.string.toolbar_show_buttons).contentEquals(
+                    c.getContentDescription() == null ? "" : c.getContentDescription())) dismiss = c;
+        }
+        assertNotNull(dismiss);
+        assertEquals(View.VISIBLE, dismiss.getVisibility());
+        assertEquals("pinned chip shown", View.VISIBLE, ((View) icon.getParent()).getVisibility());
+        dismiss.performClick();
+        settle(toolbar);
+        assertFalse(toolbar.hasChips());
+        assertEquals(View.VISIBLE, bar.getChildAt(0).getVisibility());
+        assertEquals(View.GONE, dismiss.getVisibility());
     }
 
     private static void settle(View v) {

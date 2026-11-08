@@ -724,6 +724,9 @@
     <string name="toolbar_emoji_recent">Recently used</string>
     <string name="toolbar_emoji_search">Search emoji</string>
     <string name="toolbar_emoji_space">Space</string>
+    <string name="toolbar_show_buttons">Show toolbar</string>
+    <string name="toolbar_gallery">Gallery</string>
+    <string name="image_not_accepted">This field doesn\'t take images</string>
     <string name="toolbar_select_all">All</string>
     <string name="toolbar_copy">Copy</string>
     <string name="toolbar_cut">Cut</string>

@@ -36,24 +36,39 @@ public class LayoutOutputTest {
         }
     }
 
-    /** The Fn numpad's 0 is double width; Scroll Lock is in Num Lock's popup. */
+    /** The Fn numpad: comma under 1, 0 under 2; Num Lock and Scroll Lock keys of their own. */
     @Test
     public void fnNumpadBottomRow() {
         Context c = ApplicationProvider.getApplicationContext();
         for (int layout : new int[] {R.xml.kbd_full_fn, R.xml.kbd_full_swap_fn}) {
             Keyboard kb = new LatinKeyboard(c, layout);
-            Keyboard.Key zero = withLabel(kb, "0"), dot = withLabel(kb, "."), comma = withLabel(kb, ",");
-            assertNotNull(zero);
-            assertEquals(2.0 * dot.width + dot.gap, zero.width + 0.0, 3);
-            org.junit.Assert.assertTrue("comma left of 0", comma.x < zero.x);
+            Keyboard.Key zero = withLabel(kb, "0"), one = withLabel(kb, "1"), two = withLabel(kb, "2"),
+                    comma = withLabel(kb, ",");
+            assertEquals("0 under 2", two.x, zero.x);
+            assertEquals(two.width, zero.width);
+            assertEquals("comma under 1", one.x, comma.x);
             assertEquals(zero.y, comma.y);
-            Keyboard.Key num = withLabel(kb, "NumL");
-            assertNotNull(num);
-            assertNull(withLabel(kb, "ScrL"));
-            assertEquals("ScrL", num.getAltHintLabel(true, true));
-            Keyboard popup = num.getPopupKeyboard(c, 0);
-            assertNotNull("Scroll Lock popup", popup);
-            assertEquals(LatinKeyboardView.KEYCODE_SCROLL_LOCK, popup.getKeys().get(0).codes[0]);
+            assertNotNull(withLabel(kb, "NumL"));
+            assertNotNull(withLabel(kb, "ScrL"));
+        }
+    }
+
+    /** The numpad (number and phone fields) has backspace at the top right. */
+    @Test
+    public void phoneBackspaceTopRight() {
+        Context c = ApplicationProvider.getApplicationContext();
+        for (int layout : new int[] {R.xml.kbd_phone, R.xml.kbd_phone_symbols}) {
+            Keyboard kb = new LatinKeyboard(c, layout);
+            Keyboard.Key del = null;
+            int right = 0, top = Integer.MAX_VALUE;
+            for (Keyboard.Key k : kb.getKeys()) {
+                right = Math.max(right, k.x + k.width);
+                top = Math.min(top, k.y);
+                if (k.codes != null && k.codes[0] == Keyboard.KEYCODE_DELETE) del = k;
+            }
+            assertNotNull(del);
+            assertEquals("top row", top, del.y);
+            assertEquals("right edge", right, del.x + del.width);
         }
     }
 

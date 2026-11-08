@@ -225,25 +225,27 @@
             android:isModifier="true"
             android:keyLabel="SyRq" />
         <Key
+            android:codes="@integer/key_scroll_lock"
+            android:keyWidth="8.035714%p"
+            android:isModifier="true"
+            android:keyLabel="ScrL" />
+        <Key
             android:codes="@integer/key_break"
             android:keyWidth="8.035714%p"
             android:isModifier="true"
             android:keyLabel="Brk" />
-        <!-- Num Lock; Scroll Lock in its long-press popup. -->
         <Key
             android:codes="@integer/key_num_lock"
             android:keyWidth="8.035714%p"
             android:isModifier="true"
-            android:keyLabel="NumL"
-            android:popupKeyboard="@xml/popup_scroll_lock"
-            android:hintLabel="ScrL" />
+            android:keyLabel="NumL" />
+
+        <!-- Numpad bottom row: comma under 1, 0 under 2. -->
         <Key
             android:keyWidth="8.035714%p"
             android:keyLabel="," />
-
-        <!-- Numpad bottom row: a double-width 0, as on a PC numpad. -->
         <Key
-            android:keyWidth="16.071428%p"
+            android:keyWidth="8.035714%p"
             android:keyLabel="0"
             android:shiftLabel="٠" />
         <Key

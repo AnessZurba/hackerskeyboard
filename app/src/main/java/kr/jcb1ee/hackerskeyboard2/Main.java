@@ -84,6 +84,20 @@ public class Main extends AppCompatActivity {
             mgr.showSoftInput(test, 0);
         });
 
+        // Like a chat app, the test field takes images: try the clipboard and gallery images.
+        final android.widget.ImageView image = findViewById(R.id.main_test_image);
+        androidx.core.view.ViewCompat.setOnReceiveContentListener(test, new String[] {"image/*"},
+                (view, payload) -> {
+                    android.util.Pair<androidx.core.view.ContentInfoCompat, androidx.core.view.ContentInfoCompat> split =
+                            payload.partition(item -> item.getUri() != null);
+                    if (split.first != null) {
+                        image.setImageURI(null);
+                        image.setImageURI(split.first.getClip().getItemAt(0).getUri());
+                        image.setVisibility(android.view.View.VISIBLE);
+                    }
+                    return split.second;
+                });
+
         final Button setup5 = findViewById(R.id.main_setup_btn_settings);
         setup5.setOnClickListener(v ->
             startActivity(new Intent(this, LatinIMESettings.class))

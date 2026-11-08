@@ -41,6 +41,23 @@
             <meta-data android:name="android.view.im" android:resource="@xml/method" />
         </service>
 
+        <!-- Shares the keyboard's images (clipboard history, gallery picks) with the app
+             being typed into, one image at a time (commitContent grants the access). -->
+        <provider android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.images"
+                android:exported="false"
+                android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/image_paths" />
+        </provider>
+
+        <!-- Gallery button in the emoji panel: the system photo picker, then back. -->
+        <activity android:name="ImagePickActivity"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:excludeFromRecents="true"
+                android:noHistory="true"
+                android:exported="false" />
+
         <activity android:name="Main"
                 android:label="Hacker's Keyboard 2 AZ"
                 android:hardwareAccelerated="true"

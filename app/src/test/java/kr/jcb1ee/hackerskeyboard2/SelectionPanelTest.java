@@ -48,12 +48,17 @@ public class SelectionPanelTest {
         public EditorInfo getCurrentInputEditorInfo() {
             EditorInfo ei = new EditorInfo();
             ei.inputType = sInputType;
+            ei.packageName = "com.example.chat";
+            if (sImages) {
+                androidx.core.view.inputmethod.EditorInfoCompat.setContentMimeTypes(ei, new String[] {"image/*"});
+            }
             return ei;
         }
     }
 
     static InputConnection sConnection;
     static int sInputType = InputType.TYPE_CLASS_TEXT;
+    static boolean sImages;
     private EditText mField;
     private LatinIME mIme;
 
@@ -62,6 +67,8 @@ public class SelectionPanelTest {
         mField = new EditText(ApplicationProvider.getApplicationContext());
         mField.setText("hello world");
         sInputType = InputType.TYPE_CLASS_TEXT;
+        sImages = false;
+        ClipboardHistory.forget();
         mIme = Robolectric.buildService(TestIME.class).create().get();
     }
 
@@ -367,6 +374,57 @@ public class SelectionPanelTest {
             }
         }
         return null;
+    }
+
+    // ---------------------------------------------------------------- images
+
+    private java.io.File imageClip() throws Exception {
+        java.io.File file = new java.io.File(ClipboardHistory.imageDir(mIme), "abc.png");
+        try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+            android.graphics.Bitmap.createBitmap(4, 4, android.graphics.Bitmap.Config.ARGB_8888)
+                    .compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+        }
+        return file;
+    }
+
+    /** Fields that take images (chat apps) get them as content, shared one by one. */
+    @Test
+    public void imagesGoInAsContentWhereAccepted() throws Exception {
+        java.io.File file = imageClip();
+        final android.net.Uri[] got = new android.net.Uri[1];
+        sConnection = new InputConnectionWrapper(mField.onCreateInputConnection(new EditorInfo()), true) {
+            @Override
+            public boolean commitContent(android.view.inputmethod.InputContentInfo info, int flags,
+                    android.os.Bundle opts) {
+                got[0] = info.getContentUri();
+                assertTrue("app may read it", (flags & InputConnection.INPUT_CONTENT_GRANT_READ_URI_PERMISSION) != 0);
+                return true;
+            }
+        };
+        sImages = false;
+        assertTrue("a plain text field doesn't take it", !mIme.commitImage(file, "image/png"));
+        assertEquals(null, got[0]);
+        sImages = true;
+        assertTrue(mIme.commitImage(file, "image/png"));
+        assertEquals("content", got[0].getScheme());
+        assertEquals(mIme.getPackageName() + ".images", got[0].getAuthority());
+    }
+
+    /** Image clips are kept as files, and removing the clip removes its file. */
+    @Test
+    public void imageClipsKeepAndDropTheirFiles() throws Exception {
+        java.io.File file = imageClip();
+        ClipboardHistory history = ClipboardHistory.get(mIme);
+        history.addImage(file.getName(), "image/png");
+        ClipboardHistory.Clip clip = history.clips().get(0);
+        assertTrue(clip.isImage());
+        assertEquals(file, history.imageFile(clip));
+        history.addImage(file.getName(), "image/png"); // copied again: no duplicate
+        int images = 0;
+        for (ClipboardHistory.Clip c : history.clips()) if (c.isImage()) images++;
+        assertEquals(1, images);
+        history.remove(history.clips().get(0));
+        assertTrue("file removed", !file.exists());
     }
 
     private static void idle() {

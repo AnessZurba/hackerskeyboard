@@ -406,6 +406,16 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Images the keyboard inserts (clipboard images, gallery) show here. -->
+            <ImageView
+                android:id="@+id/main_test_image"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_marginTop="8dp"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                android:importantForAccessibility="no" />
+
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>

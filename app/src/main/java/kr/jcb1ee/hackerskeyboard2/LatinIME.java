@@ -805,6 +805,7 @@ public class LatinIME extends InputMethodService implements
         if (mSearchConnection != null && mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel(); // ends the emoji search
         }
+        if (sPendingImage != null) mHandler.post(this::insertPendingImage);
         sKeyboardSettings.editorPackageName = attribute.packageName;
         sKeyboardSettings.editorFieldName = attribute.fieldName;
         sKeyboardSettings.editorFieldId = attribute.fieldId;
@@ -2392,9 +2393,13 @@ public class LatinIME extends InputMethodService implements
             suggestions.get(i).inflate(this, size, getMainExecutor(), view -> {
                 views[index] = view;
                 if (--remaining[0] == 0) {
-                    List<View> ready = new ArrayList<>();
-                    for (View v : views) if (v != null) ready.add(v);
-                    toolbar.showChips(ready);
+                    List<View> ready = new ArrayList<>(), pinned = new ArrayList<>();
+                    for (int k = 0; k < views.length; k++) {
+                        if (views[k] == null) continue;
+                        if (suggestions.get(k).getInfo().isPinned()) pinned.add(views[k]);
+                        else ready.add(views[k]);
+                    }
+                    toolbar.showChips(ready, pinned);
                 }
             });
         }
@@ -2483,6 +2488,73 @@ public class LatinIME extends InputMethodService implements
         if (current != null) commitTyped(current, true); // a word in progress stays where it is
         mSearchConnection = search;
         TextEntryState.reset();
+    }
+
+    // ---------------------------------------------------------------- images
+
+    private static java.io.File sPendingImage;
+    private static String sPendingImageType;
+    private static long sPendingImageTime;
+
+    /** An image picked in the gallery, to insert when the app being typed into is back. */
+    static void setPendingImage(java.io.File file, String type) {
+        sPendingImage = file;
+        sPendingImageType = type;
+        sPendingImageTime = SystemClock.uptimeMillis();
+    }
+
+    private void insertPendingImage() {
+        if (sPendingImage == null) return;
+        java.io.File file = sPendingImage;
+        String type = sPendingImageType;
+        boolean fresh = SystemClock.uptimeMillis() - sPendingImageTime < 120000;
+        sPendingImage = null;
+        if (fresh && !commitImage(file, type)) imageNotAccepted();
+    }
+
+    /** Whether the field being typed into takes images of this type (rich content). */
+    boolean acceptsImage(String type) {
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ei == null) return false;
+        for (String accepted : androidx.core.view.inputmethod.EditorInfoCompat.getContentMimeTypes(ei)) {
+            if (android.content.ClipDescription.compareMimeTypes(type, accepted)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Inserts an image (a file of the keyboard's) into the app, as Gboard and Samsung do for
+     * stickers and GIFs; the app gets read access to it alone.
+     *
+     * @return false if the field doesn't take images (most text fields and terminals)
+     */
+    boolean commitImage(java.io.File file, String type) {
+        InputConnection ic = appConnection();
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ic == null || ei == null || !acceptsImage(type) || !file.exists()) return false;
+        android.net.Uri uri;
+        try {
+            uri = androidx.core.content.FileProvider.getUriForFile(this,
+                    getPackageName() + ".images", file);
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "Not a shareable image: " + file, e);
+            return false;
+        }
+        commitTyped(ic, true);
+        androidx.core.view.inputmethod.InputContentInfoCompat info =
+                new androidx.core.view.inputmethod.InputContentInfoCompat(uri,
+                        new android.content.ClipDescription(file.getName(), new String[] {type}), null);
+        int flags = 0;
+        if (android.os.Build.VERSION.SDK_INT >= 25) {
+            flags = androidx.core.view.inputmethod.InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION;
+        } else {
+            grantUriPermission(ei.packageName, uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }
+        return androidx.core.view.inputmethod.InputConnectionCompat.commitContent(ic, ei, info, flags, null);
+    }
+
+    void imageNotAccepted() {
+        android.widget.Toast.makeText(this, R.string.image_not_accepted, android.widget.Toast.LENGTH_SHORT).show();
     }
 
     /** Types into the app while the search has the keys (an emoji picked from the results). */
@@ -3461,8 +3533,9 @@ public class LatinIME extends InputMethodService implements
         InputConnection ic = getCurrentInputConnection();
         if (ic == null)
             return false;
-        CharSequence toLeft = ic.getTextBeforeCursor(1, 0);
-        CharSequence toRight = ic.getTextAfterCursor(1, 0);
+        CharSequence[] around = EditingUtil.textAround(ic, 1, 1);
+        CharSequence toLeft = around[0];
+        CharSequence toRight = around[1];
         if (!TextUtils.isEmpty(toLeft) && !isWordSeparator(toLeft.charAt(0))
                 && !isSuggestedPunctuation(toLeft.charAt(0))) {
             return true;

@@ -133,13 +133,37 @@ public class EditingUtil {
         }
     }
 
+    /**
+     * The text before the selection (or cursor) and after it: one round trip to the app on
+     * Android 12+ (getSurroundingText) instead of two, and a consistent snapshot.
+     */
+    static CharSequence[] textAround(InputConnection ic, int before, int after) {
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            try {
+                android.view.inputmethod.SurroundingText st = ic.getSurroundingText(before, after, 0);
+                if (st != null) {
+                    CharSequence text = st.getText();
+                    int s = Math.min(st.getSelectionStart(), st.getSelectionEnd());
+                    int e = Math.max(st.getSelectionStart(), st.getSelectionEnd());
+                    if (text != null && s >= 0 && e <= text.length()) {
+                        return new CharSequence[] {text.subSequence(0, s), text.subSequence(e, text.length())};
+                    }
+                }
+            } catch (RuntimeException ignored) {
+                // An editor that doesn't implement it well: ask twice instead.
+            }
+        }
+        return new CharSequence[] {ic.getTextBeforeCursor(before, 0), ic.getTextAfterCursor(after, 0)};
+    }
+
     private static Range getWordRangeAtCursor(
             InputConnection connection, String sep, Range range) {
         if (connection == null || sep == null) {
             return null;
         }
-        CharSequence before = connection.getTextBeforeCursor(1000, 0);
-        CharSequence after = connection.getTextAfterCursor(1000, 0);
+        CharSequence[] around = textAround(connection, 1000, 1000);
+        CharSequence before = around[0];
+        CharSequence after = around[1];
         if (before == null || after == null) {
             return null;
         }
@@ -234,13 +258,14 @@ public class EditingUtil {
             }
         } else {
             // Is the previous character empty or a word separator? If not, return null.
-            CharSequence charsBefore = ic.getTextBeforeCursor(1, 0);
+            CharSequence[] around = textAround(ic, 1, 1);
+            CharSequence charsBefore = around[0];
             if (!isWordBoundary(charsBefore, wordSeparators)) {
                 return null;
             }
 
             // Is the next character empty or a word separator? If not, return null.
-            CharSequence charsAfter = ic.getTextAfterCursor(1, 0);
+            CharSequence charsAfter = around[1];
             if (!isWordBoundary(charsAfter, wordSeparators)) {
                 return null;
             }

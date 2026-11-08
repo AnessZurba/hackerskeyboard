@@ -15,6 +15,7 @@
 package kr.jcb1ee.hackerskeyboard2;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -72,6 +73,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final List<View> mCells = new ArrayList<>();
     private final HorizontalScrollView mChipScroll;
     private final LinearLayout mChipRow;
+    private final LinearLayout mPinnedRow;
+    private final ImageView mChipsDismiss;
     // True while the row is shown only because autofill chips are offered.
     private boolean mShownForChips;
     private LatinKeyboardView mKeyboardView;
@@ -136,7 +139,25 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mChipScroll.addView(mChipRow, new FrameLayout.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         mChipScroll.setVisibility(GONE);
+        // Pinned chips (the password manager's own icon) stay put at the start, Samsung style.
+        mPinnedRow = new LinearLayout(ime);
+        mPinnedRow.setOrientation(HORIZONTAL);
+        mPinnedRow.setGravity(Gravity.CENTER_VERTICAL);
+        mPinnedRow.setPadding(dp(4), 0, 0, 0);
+        mPinnedRow.setVisibility(GONE);
+        mBar.addView(mPinnedRow, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         mBar.addView(mChipScroll, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        // ">" puts the regular toolbar back in the chips' place.
+        mChipsDismiss = new ImageView(ime);
+        mChipsDismiss.setImageResource(R.drawable.ic_toolbar_chips_dismiss);
+        mChipsDismiss.setScaleType(ImageView.ScaleType.CENTER);
+        mChipsDismiss.setContentDescription(ime.getString(R.string.toolbar_show_buttons));
+        mChipsDismiss.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            dismissChips();
+        });
+        mChipsDismiss.setVisibility(GONE);
+        mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
         addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight));
 
         mBody = new FrameLayout(ime);
@@ -223,27 +244,31 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     boolean hasChips() {
-        return mChipRow.getChildCount() > 0;
+        return mChipRow.getChildCount() > 0 || mPinnedRow.getChildCount() > 0;
+    }
+
+    void showChips(List<View> chips) {
+        showChips(chips, java.util.Collections.<View>emptyList());
     }
 
     /**
      * Shows a password manager's inline suggestion chips in place of the buttons (or puts
-     * the buttons back for an empty list). A hidden toolbar slides in for them and hides
-     * again when they are gone; the swipe-up setting is left alone.
+     * the buttons back for empty lists): pinned ones (its icon) fixed at the start, the rest
+     * scrolling, and a ">" button that brings the regular toolbar back. A hidden toolbar
+     * slides in for them and hides again when they are gone; the swipe-up setting is left
+     * alone.
      */
-    void showChips(List<View> chips) {
+    void showChips(List<View> chips, List<View> pinned) {
         mChipRow.removeAllViews();
-        for (View chip : chips) {
-            if (chip.getParent() instanceof ViewGroup) ((ViewGroup) chip.getParent()).removeView(chip);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            lp.setMargins(dp(3), 0, dp(3), 0);
-            lp.gravity = Gravity.CENTER_VERTICAL;
-            mChipRow.addView(chip, lp);
-        }
+        mPinnedRow.removeAllViews();
+        addChips(mChipRow, chips);
+        addChips(mPinnedRow, pinned);
         boolean any = hasChips();
+        if (mSearching) return; // the search bar has the row; chips come back after it
         for (View cell : mCells) cell.setVisibility(any ? GONE : VISIBLE);
         mChipScroll.setVisibility(any ? VISIBLE : GONE);
+        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
+        mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
         mChipScroll.scrollTo(0, 0);
         if (any && !mToolbarShown && !mShownForChips) {
             mShownForChips = true;
@@ -252,6 +277,22 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             mShownForChips = false;
             concealBar();
         }
+    }
+
+    private void addChips(LinearLayout row, List<View> chips) {
+        for (View chip : chips) {
+            if (chip.getParent() instanceof ViewGroup) ((ViewGroup) chip.getParent()).removeView(chip);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            lp.setMargins(dp(3), 0, dp(3), 0);
+            lp.gravity = Gravity.CENTER_VERTICAL;
+            row.addView(chip, lp);
+        }
+    }
+
+    /** ">" on the chips: the regular toolbar (or, if the user keeps it hidden, nothing). */
+    private void dismissChips() {
+        showChips(java.util.Collections.<View>emptyList());
     }
 
     // Whether the hidden row's space is given to the app (see LatinIME.onComputeInsets).
@@ -633,6 +674,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             if (mClipSelecting) {
                 if (!mClipSelected.remove(clip)) mClipSelected.add(clip);
                 refreshClipboard();
+            } else if (clip.isImage()) {
+                if (ime().appConnection() == null) {
+                    connection(); // explains
+                } else if (!ime().commitImage(ClipboardHistory.get(getContext()).imageFile(clip), clip.mime)) {
+                    ime().imageNotAccepted();
+                }
             } else if (connection() != null) {
                 ime().onText(clip.text);
             }
@@ -790,16 +837,31 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 pin.setImageResource(R.drawable.ic_clip_pinned);
                 pin.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
                 card.addView(pin, new FrameLayout.LayoutParams(dp(16), dp(16), Gravity.TOP | Gravity.END));
+                ImageView picture = new ImageView(getContext());
+                picture.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                picture.setClipToOutline(true);
+                picture.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                    @Override
+                    public void getOutline(View view, android.graphics.Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(12));
+                    }
+                });
+                card.addView(picture, 0, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
                 check = new ImageView(getContext());
                 card.addView(check, new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.TOP | Gravity.START));
-                card.setTag(new View[] {text, pin, check});
+                card.setTag(new View[] {text, pin, check, picture});
             }
             View[] parts = (View[]) card.getTag();
             text = (TextView) parts[0];
             pin = (ImageView) parts[1];
             check = (ImageView) parts[2];
+            ImageView picture = (ImageView) parts[3];
             ClipboardHistory.Clip clip = mClips.get(position);
             text.setText(clip.text.trim());
+            text.setVisibility(clip.isImage() ? GONE : VISIBLE);
+            picture.setVisibility(clip.isImage() ? VISIBLE : GONE);
+            picture.setImageBitmap(clip.isImage() ? thumbnail(clip) : null);
             pin.setVisibility(clip.pinned ? VISIBLE : GONE);
             ((FrameLayout.LayoutParams) pin.getLayoutParams()).setMargins(0, dp(6), dp(6), 0);
             if (mClipSelecting) {
@@ -815,6 +877,33 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             }
             return card;
         }
+    }
+
+    private final android.util.LruCache<String, Bitmap> mThumbnails =
+            new android.util.LruCache<String, Bitmap>(6 * 1024 * 1024) {
+                @Override
+                protected int sizeOf(String key, Bitmap value) {
+                    return value.getByteCount();
+                }
+            };
+
+    /** A small copy of an image clip, for its card. */
+    private Bitmap thumbnail(ClipboardHistory.Clip clip) {
+        Bitmap cached = mThumbnails.get(clip.image);
+        if (cached != null) return cached;
+        java.io.File file = ClipboardHistory.get(getContext()).imageFile(clip);
+        android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeFile(file.getPath(), o);
+        int target = dp(120);
+        o.inSampleSize = 1;
+        while (o.outWidth / (o.inSampleSize * 2) >= target && o.outHeight / (o.inSampleSize * 2) >= target) {
+            o.inSampleSize *= 2;
+        }
+        o.inJustDecodeBounds = false;
+        Bitmap bmp = android.graphics.BitmapFactory.decodeFile(file.getPath(), o);
+        if (bmp != null) mThumbnails.put(clip.image, bmp);
+        return bmp;
     }
 
     @Override
@@ -942,8 +1031,25 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         });
         TextView backspace = cell("⌫", 18);
         setRepeating(backspace, () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0));
-        int[] widths = {72, 0, 72};
-        View[] views = {abc, space, backspace};
+        // Gallery: pick a photo to insert, in fields that take images (chat apps).
+        ImageView gallery = new ImageView(getContext());
+        gallery.setImageResource(R.drawable.ic_emoji_gallery);
+        gallery.setImageTintList(ColorStateList.valueOf(mForeground));
+        gallery.setScaleType(ImageView.ScaleType.CENTER);
+        gallery.setBackground(cellBackground(false));
+        gallery.setContentDescription(mIme.getString(R.string.toolbar_gallery));
+        gallery.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            if (!ime().acceptsImage("image/png") && !ime().acceptsImage("image/jpeg")) {
+                ime().imageNotAccepted();
+                return;
+            }
+            Intent pick = new Intent(getContext(), ImagePickActivity.class);
+            pick.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            getContext().startActivity(pick);
+        });
+        int[] widths = {72, 56, 0, 72};
+        View[] views = {abc, gallery, space, backspace};
         for (int i = 0; i < views.length; i++) {
             LinearLayout.LayoutParams lp = widths[i] > 0
                     ? new LinearLayout.LayoutParams(dp(widths[i]), LayoutParams.MATCH_PARENT)
@@ -1066,6 +1172,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
         mChipScroll.setVisibility(GONE);
+        mPinnedRow.setVisibility(GONE);
+        mChipsDismiss.setVisibility(GONE);
         mSearchRow.setVisibility(VISIBLE);
         ime().setSearchConnection(new SearchConnection());
         updateSearch();
@@ -1080,6 +1188,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean chips = hasChips();
         for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
         mChipScroll.setVisibility(chips ? VISIBLE : GONE);
+        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
+        mChipsDismiss.setVisibility(chips ? VISIBLE : GONE);
         if (toPanel) togglePanel(PANEL_EMOJI);
     }
 
@@ -1443,6 +1553,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         // Backgrounds per part: when the toolbar row is hidden, its space must stay clear.
         mBar.setBackgroundColor(mBackground);
         mBody.setBackgroundColor(mBackground);
+        mChipsDismiss.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
         updateButtons();
     }
 

@@ -44,16 +44,44 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     private static final String FILE = "clipboard_history.json";
     private static final int MAX_UNPINNED = 50;
     private static final int MAX_LENGTH = 20000;
-    private static final String EXTRA_IS_SENSITIVE = "android.content.extra.IS_SENSITIVE";
 
     static final class Clip {
         final String text;
         boolean pinned;
+        /** An image clip: its file in {@link #imageDir}, and its type; null for text. */
+        final String image;
+        final String mime;
 
         Clip(String text, boolean pinned) {
+            this(text, pinned, null, null);
+        }
+
+        Clip(String text, boolean pinned, String image, String mime) {
             this.text = text;
             this.pinned = pinned;
+            this.image = image;
+            this.mime = mime;
         }
+
+        boolean isImage() {
+            return image != null;
+        }
+    }
+
+    private static final long MAX_IMAGE_BYTES = 15L * 1024 * 1024;
+    private final java.util.concurrent.Executor mIo = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mMain = new android.os.Handler(android.os.Looper.getMainLooper());
+
+    /** Where copied images are kept (private; shared with apps only through the FileProvider). */
+    static File imageDir(Context context) {
+        File dir = new File(context.getFilesDir(), "clip_images");
+        //noinspection ResultOfMethodCallIgnored
+        dir.mkdirs();
+        return dir;
+    }
+
+    File imageFile(Clip clip) {
+        return new File(imageDir(mContext), clip.image);
     }
 
     interface Listener {
@@ -65,6 +93,11 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     static synchronized ClipboardHistory get(Context context) {
         if (sInstance == null) sInstance = new ClipboardHistory(context.getApplicationContext());
         return sInstance;
+    }
+
+    /** Drops the instance (tests: each runs with a fresh app). */
+    static synchronized void forget() {
+        sInstance = null;
     }
 
     private final Context mContext;
@@ -114,7 +147,13 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
             ClipDescription description = clip.getDescription();
             if (description != null) {
                 PersistableBundle extras = description.getExtras();
-                if (extras != null && extras.getBoolean(EXTRA_IS_SENSITIVE, false)) return;
+                if (extras != null && extras.getBoolean(ClipDescription.EXTRA_IS_SENSITIVE, false)) return;
+            }
+            android.net.Uri uri = clip.getItemAt(0).getUri();
+            String imageType = imageType(description, uri);
+            if (uri != null && imageType != null) {
+                copyImage(uri, imageType);
+                return;
             }
             CharSequence text = clip.getItemAt(0).coerceToText(mContext);
             if (text == null) return;
@@ -125,13 +164,88 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
         }
     }
 
+    private String imageType(ClipDescription description, android.net.Uri uri) {
+        if (description != null) {
+            for (int i = 0; i < description.getMimeTypeCount(); i++) {
+                String type = description.getMimeType(i);
+                if (type != null && type.startsWith("image/")) return type;
+            }
+        }
+        if (uri == null) return null;
+        try {
+            String type = mContext.getContentResolver().getType(uri);
+            return type != null && type.startsWith("image/") ? type : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Keeps a copy of a copied image: the app's link to it may stop working (the keyboard
+     * may read it only while the clip is current). Named by its contents, so copying the
+     * same image again moves it to the top instead of adding it twice.
+     */
+    private void copyImage(final android.net.Uri uri, final String type) {
+        mIo.execute(() -> {
+            File tmp = new File(imageDir(mContext), "incoming.tmp");
+            try (java.io.InputStream in = mContext.getContentResolver().openInputStream(uri);
+                 FileOutputStream out = new FileOutputStream(tmp)) {
+                if (in == null) return;
+                java.security.MessageDigest sha = java.security.MessageDigest.getInstance("SHA-1");
+                byte[] buf = new byte[64 * 1024];
+                long total = 0;
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    total += n;
+                    if (total > MAX_IMAGE_BYTES) return;
+                    sha.update(buf, 0, n);
+                    out.write(buf, 0, n);
+                }
+                StringBuilder name = new StringBuilder();
+                for (byte b : sha.digest()) name.append(String.format("%02x", b));
+                String ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(type);
+                name.append('.').append(ext != null ? ext : "img");
+                final String file = name.toString();
+                if (!tmp.renameTo(new File(imageDir(mContext), file))) return;
+                mMain.post(() -> addImage(file, type));
+            } catch (Exception e) {
+                Log.i(TAG, "Could not copy the clipboard image: " + e);
+            } finally {
+                //noinspection ResultOfMethodCallIgnored
+                tmp.delete();
+            }
+        });
+    }
+
+    void addImage(String file, String type) {
+        ensureLoaded();
+        boolean pinned = false;
+        for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
+            Clip c = it.next();
+            if (file.equals(c.image)) {
+                pinned = c.pinned;
+                it.remove();
+            }
+        }
+        mClips.add(0, new Clip("", pinned, file, type));
+        trim();
+        changed();
+    }
+
+    private void deleteImage(Clip clip) {
+        if (clip.image == null) return;
+        for (Clip c : mClips) if (c != clip && clip.image.equals(c.image)) return;
+        //noinspection ResultOfMethodCallIgnored
+        imageFile(clip).delete();
+    }
+
     void add(String text) {
         if (text.trim().isEmpty() || text.length() > MAX_LENGTH) return;
         ensureLoaded();
         boolean pinned = false;
         for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
             Clip c = it.next();
-            if (c.text.equals(text)) {
+            if (!c.isImage() && c.text.equals(text)) {
                 pinned = c.pinned;
                 it.remove();
             }
@@ -148,6 +262,7 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
 
     void remove(Clip clip) {
         mClips.remove(clip);
+        deleteImage(clip);
         changed();
     }
 
@@ -158,6 +273,7 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
 
     void removeAll(java.util.Collection<Clip> clips) {
         mClips.removeAll(clips);
+        for (Clip c : clips) deleteImage(c);
         changed();
     }
 
@@ -165,7 +281,11 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     void clearUnpinned() {
         ensureLoaded();
         for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
-            if (!it.next().pinned) it.remove();
+            Clip c = it.next();
+            if (!c.pinned) {
+                it.remove();
+                deleteImage(c);
+            }
         }
         changed();
     }
@@ -174,7 +294,10 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
         int unpinned = 0;
         for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
             Clip c = it.next();
-            if (!c.pinned && ++unpinned > MAX_UNPINNED) it.remove();
+            if (!c.pinned && ++unpinned > MAX_UNPINNED) {
+                it.remove();
+                deleteImage(c);
+            }
         }
     }
 
@@ -195,7 +318,9 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
             JSONArray array = new JSONArray(new String(bytes, 0, off, StandardCharsets.UTF_8));
             for (int i = 0; i < array.length(); i++) {
                 JSONObject o = array.getJSONObject(i);
-                mClips.add(new Clip(o.getString("t"), o.optBoolean("p")));
+                String image = o.optString("i", null);
+                mClips.add(new Clip(o.optString("t", ""), o.optBoolean("p"), image,
+                        image != null ? o.optString("m", "image/*") : null));
             }
         } catch (Exception e) {
             Log.w(TAG, "Could not read clipboard history", e);
@@ -209,6 +334,10 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
                 JSONObject o = new JSONObject();
                 o.put("t", c.text);
                 if (c.pinned) o.put("p", true);
+                if (c.image != null) {
+                    o.put("i", c.image);
+                    o.put("m", c.mime);
+                }
                 array.put(o);
             }
             File file = new File(mContext.getFilesDir(), FILE);
@@ -228,6 +357,9 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
         mLoaded = true;
         //noinspection ResultOfMethodCallIgnored
         new File(mContext.getFilesDir(), FILE).delete();
+        File[] images = imageDir(mContext).listFiles();
+        if (images != null) for (File f : images) //noinspection ResultOfMethodCallIgnored
+            f.delete();
         if (mListener != null) mListener.onClipboardHistoryChanged();
     }
 }
