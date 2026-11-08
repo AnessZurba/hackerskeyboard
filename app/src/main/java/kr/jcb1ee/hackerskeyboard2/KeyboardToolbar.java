@@ -74,6 +74,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final HorizontalScrollView mChipScroll;
     private final InlineContentClipView mChipClip; // holds mChipScroll
     private final LinearLayout mChipRow;
+    private final LinearLayout mPinnedRow; // the password manager's own icon, fixed at the start
     private final ImageView mChipsDismiss;
     // True while the row is shown only because autofill chips are offered.
     private boolean mShownForChips;
@@ -130,11 +131,20 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             mCells.add(cell);
         }
         // Autofill chips (password managers) take the buttons' place while offered.
+        // Pinned chips (the password manager's icon) at the start, as on Samsung; they keep
+        // the size they come with (see addChips), so they can't crowd out the rest.
+        mPinnedRow = new LinearLayout(ime);
+        mPinnedRow.setOrientation(HORIZONTAL);
+        mPinnedRow.setGravity(Gravity.CENTER_VERTICAL);
+        mPinnedRow.setPadding(dp(4), 0, 0, 0);
+        mPinnedRow.setVisibility(GONE);
+        mBar.addView(mPinnedRow, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         mChipScroll = new HorizontalScrollView(ime);
         mChipScroll.setHorizontalScrollBarEnabled(false);
+        mChipScroll.setFillViewport(true); // so the chips can be centred when they fit
         mChipRow = new LinearLayout(ime);
         mChipRow.setOrientation(HORIZONTAL);
-        mChipRow.setGravity(Gravity.CENTER_VERTICAL);
+        mChipRow.setGravity(Gravity.CENTER); // centred, as on Samsung; scrolls when too many
         mChipRow.setPadding(dp(4), 0, dp(4), 0);
         mChipScroll.addView(mChipRow, new FrameLayout.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
@@ -244,7 +254,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     boolean hasChips() {
-        return mChipRow.getChildCount() > 0;
+        return mChipRow.getChildCount() > 0 || mPinnedRow.getChildCount() > 0;
     }
 
     void showChips(List<View> chips) {
@@ -253,16 +263,15 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /**
      * Shows a password manager's inline suggestion chips in place of the buttons (or puts
-     * the buttons back for empty lists): pinned ones (its icon) first, then the rest, and a
-     * ">" button that brings the regular toolbar back. A hidden toolbar
+     * the buttons back for empty lists): pinned ones (its icon) fixed at the start, the rest
+     * centred (scrolling when they don't fit), and a ">" button that brings the regular toolbar back. A hidden toolbar
      * slides in for them and hides again when they are gone; the swipe-up setting is left
      * alone.
      */
     void showChips(List<View> chips, List<View> pinned) {
         mChipRow.removeAllViews();
-        // Pinned chips (the password manager's own icon) first, then the rest; all in the
-        // one scrolling row, so a chip that reports a large size can't crowd out ">".
-        addChips(mChipRow, pinned);
+        mPinnedRow.removeAllViews();
+        addChips(mPinnedRow, pinned);
         addChips(mChipRow, chips);
         boolean any = hasChips();
         if (mSearching) return; // the search bar has the row; chips come back after it
@@ -271,6 +280,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean concealing = !any && mShownForChips;
         for (View cell : mCells) cell.setVisibility(any || concealing ? GONE : VISIBLE);
         mChipClip.setVisibility(any ? VISIBLE : GONE);
+        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
         updateChipsButton();
         mChipScroll.scrollTo(0, 0);
@@ -1270,6 +1280,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
         mChipClip.setVisibility(GONE);
+        mPinnedRow.setVisibility(GONE);
         mChipsDismiss.setVisibility(GONE);
         mSearchRow.setVisibility(VISIBLE);
         ime().setSearchConnection(new SearchConnection());
@@ -1285,6 +1296,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean chips = hasChips();
         for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
         mChipClip.setVisibility(chips ? VISIBLE : GONE);
+        mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(chips ? VISIBLE : GONE);
         if (toPanel) togglePanel(PANEL_EMOJI);
     }

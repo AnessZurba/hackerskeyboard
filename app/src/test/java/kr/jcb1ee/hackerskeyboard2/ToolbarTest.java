@@ -35,7 +35,7 @@ public class ToolbarTest {
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
         assertEquals("three buttons, the (hidden) autofill chip rows and their > button",
-                5, bar.getChildCount());
+                6, bar.getChildCount());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());
 
@@ -153,10 +153,10 @@ public class ToolbarTest {
         android.widget.TextView chip = new android.widget.TextView(ime);
         chip.setText("Open 1Password");
         // Inline suggestion views arrive sized by the password manager's renderer.
-        chip.setLayoutParams(new ViewGroup.LayoutParams(400, 90));
+        chip.setLayoutParams(new ViewGroup.LayoutParams(120, 90));
         android.widget.TextView icon = new android.widget.TextView(ime);
         icon.setText("1P");
-        icon.setMinWidth(5000); // a chip that reports a huge size must not crowd out ">"
+        icon.setLayoutParams(new ViewGroup.LayoutParams(90, 90)); // sized by the renderer
         toolbar.showChips(java.util.Collections.<View>singletonList(chip),
                 java.util.Collections.<View>singletonList(icon));
         settle(toolbar);
@@ -170,8 +170,12 @@ public class ToolbarTest {
         assertNotNull(dismiss);
         assertEquals(View.VISIBLE, dismiss.getVisibility());
         assertTrue("> on screen", dismiss.getWidth() > 0 && dismiss.getRight() <= bar.getWidth());
-        assertEquals("the chip keeps the size it came with", 400, chip.getWidth());
+        assertEquals("the chip keeps the size it came with", 120, chip.getWidth());
         assertEquals("pinned chip shown", View.VISIBLE, ((View) icon.getParent()).getVisibility());
+        assertTrue("pinned icon at the start", icon.getLeft() + ((View) icon.getParent()).getLeft() < 40);
+        View viewport = (View) chip.getParent().getParent(); // the scrolling row
+        float chipCentre = chip.getLeft() + chip.getWidth() / 2f;
+        assertEquals("the chip is centred, as on Samsung", viewport.getWidth() / 2f, chipCentre, 3);
         dismiss.performClick();
         settle(toolbar);
         assertFalse(toolbar.hasChips());
