@@ -64,6 +64,7 @@ public class PointerTracker {
     // cursor one character per step by sending the arrow keys.
     private boolean mCursorSlide;
     private final CursorTrackpad mTrackpad;
+    private final float mDensity;
     private boolean mCursorDragging; // the editor's text is exposed: LatinIME tracks the cursor
     private int mDownX;
     private final int mCursorSlop;
@@ -203,6 +204,7 @@ public class PointerTracker {
         mMultiTapKeyTimeout = res.getInteger(R.integer.config_multi_tap_key_timeout);
         float density = res.getDisplayMetrics().density;
         mTrackpad = new CursorTrackpad(density);
+        mDensity = density;
         mCursorSlop = Math.round(12 * density);
         mDeleteStep = Math.round(16 * density);
         sSlideKeyHack = slideKeyHack;
@@ -403,9 +405,8 @@ public class PointerTracker {
             moveCursor(x, y);
             return;
         }
-        if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide())) {
-            int words = Math.max(0, (mDownX - x) / mDeleteStep);
-            LatinIME.sInstance.setDeleteSwipeWords(words);
+        if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide(x, eventTime))) {
+            LatinIME.sInstance.setDeleteSwipeWords(deleteSwipeWords(x, eventTime));
             return;
         }
         final KeyState keyState = mKeyState;
@@ -611,7 +612,31 @@ public class PointerTracker {
         return mDownOnDelete;
     }
 
-    private boolean startDeleteSlide() {
+    // Backspace swipe with acceleration, like the trackpad: one word per 16dp when slow, up
+    // to 4x when fast; sliding back selects fewer, and back over the key selects none.
+    private float mDeleteWords;
+    private int mDeleteLastX;
+    private long mDeleteLastTime;
+
+    private int deleteSwipeWords(int x, long time) {
+        if (x >= mDownX - mDeleteStep / 2) {
+            mDeleteWords = 0; // back on the key: cancel
+        } else {
+            long dt = Math.max(1, time - mDeleteLastTime);
+            int dx = mDeleteLastX - x; // leftwards = more words
+            float speed = Math.abs(dx) / mDensity / dt;
+            float boost = 1 + Math.max(0f, Math.min(3f, (speed - 0.25f) * 3f));
+            mDeleteWords = Math.max(0f, mDeleteWords + dx * boost / mDeleteStep);
+        }
+        mDeleteLastX = x;
+        mDeleteLastTime = time;
+        return (int) mDeleteWords;
+    }
+
+    private boolean startDeleteSlide(int x, long time) {
+        mDeleteWords = (float) (mDownX - x) / mDeleteStep;
+        mDeleteLastX = x;
+        mDeleteLastTime = time;
         if (!LatinIME.sInstance.startDeleteSwipe()) {
             mDownOnDelete = false;
             return false;

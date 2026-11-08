@@ -525,6 +525,52 @@ public class SelectionPanelTest {
         mIme.mCursorDrag.end();
     }
 
+    // ---------------------------------------------------------------- backspace swipe
+
+    /** Characters selected after dragging left from backspace by {@code dp} over {@code ms}. */
+    private int backspaceSwipe(float dp, long ms) throws Exception {
+        sConnection = mField.onCreateInputConnection(new EditorInfo());
+        mField.setText("aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt");
+        sConnection.setSelection(mField.length(), mField.length());
+        attachKeyboard();
+        java.lang.reflect.Field f = LatinIME.class.getDeclaredField("mDeleteSwipeField");
+        f.setAccessible(true);
+        f.setBoolean(mIme, true);
+        LatinKeyboardView view = mIme.mKeyboardSwitcher.getInputView();
+        Keyboard.Key del = null;
+        for (Keyboard.Key k : view.getKeyboard().getKeys()) {
+            if (k.codes != null && k.codes[0] == Keyboard.KEYCODE_DELETE) del = k;
+        }
+        float x0 = del.x + del.width / 2f, y = del.y + del.height / 2f;
+        float px = dp * view.getResources().getDisplayMetrics().density;
+        long t0 = SystemClock.uptimeMillis();
+        view.onTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, x0, y, 0));
+        int steps = 8;
+        for (int i = 1; i <= steps; i++) {
+            ShadowSystemClock.advanceBy(Duration.ofMillis(ms / steps));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, x0 - px * i / steps, y, 0));
+        }
+        int selected = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, x0 - px, y, 0));
+        idle();
+        return selected;
+    }
+
+    @Test
+    public void backspaceSwipeSlowIsOneWordPerStep() throws Exception {
+        assertEquals("4 words (16dp each): \"qq rr ss tt\"", 11, backspaceSwipe(64, 800));
+        assertEquals("deleted on release", "aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp ",
+                mField.getText().toString());
+    }
+
+    @Test
+    public void backspaceSwipeFastGoesFurther() throws Exception {
+        int fast = backspaceSwipe(64, 40);
+        assertTrue("fast flick selects more than 4 words: " + fast, fast > 11);
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }
