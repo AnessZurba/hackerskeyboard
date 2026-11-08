@@ -345,7 +345,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         Object[][] rows = {
                 {"Home", act(KeyEvent.KEYCODE_MOVE_HOME), "▲", act(KeyEvent.KEYCODE_DPAD_UP),
                         "End", act(KeyEvent.KEYCODE_MOVE_END), mIme.getString(R.string.toolbar_select_all), ctx(android.R.id.selectAll),
-                        mIme.getString(R.string.toolbar_word), (Runnable) () -> selectAt(false)},
+                        "⌫", (Runnable) () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0)},
                 {"◀", act(KeyEvent.KEYCODE_DPAD_LEFT), mIme.getString(R.string.toolbar_select), (Runnable) this::toggleSelecting,
                         "▶", act(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_copy), ctx(android.R.id.copy),
                         "⇄", (Runnable) this::swapEnds},
@@ -354,9 +354,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         mIme.getString(R.string.toolbar_line), (Runnable) () -> selectAt(true)},
                 {mIme.getString(R.string.toolbar_undo), ctrl(KeyEvent.KEYCODE_Z, false),
                         mIme.getString(R.string.toolbar_redo), ctrl(KeyEvent.KEYCODE_Z, true),
-                        "⌫", (Runnable) () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0),
+                        mIme.getString(R.string.toolbar_unselect), (Runnable) this::unselect,
                         mIme.getString(R.string.toolbar_paste), ctx(android.R.id.paste),
-                        mIme.getString(R.string.toolbar_unselect), (Runnable) this::unselect},
+                        mIme.getString(R.string.toolbar_word), (Runnable) () -> selectAt(false)},
         };
         for (Object[] row : rows) {
             LinearLayout line = row();

@@ -34,6 +34,9 @@ public class SwipeGestureTest {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
         mToolbar = (KeyboardToolbar) ime.onCreateInputView();
         idle();
+        mToolbar.measure(android.view.View.MeasureSpec.makeMeasureSpec(320, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED));
+        mToolbar.layout(0, 0, 320, mToolbar.getMeasuredHeight());
         mView = (LatinKeyboardView) ((FrameLayout) mToolbar.getChildAt(1)).getChildAt(0);
         final LatinKeyboardBaseView.OnKeyboardActionListener real = mView.getOnKeyboardActionListener();
         mView.setOnKeyboardActionListener((LatinKeyboardBaseView.OnKeyboardActionListener)
@@ -144,6 +147,71 @@ public class SwipeGestureTest {
         idle();
         assertEquals("nothing typed", java.util.Collections.emptyList(), mTyped);
         assertEquals("swipe up toggles the toolbar", !shown, mToolbar.isToolbarShown());
+    }
+
+    /**
+     * Once a stroke is clearly a swipe, keys stop reacting: holding still on a key after
+     * swiping onto it must not open its long-press popup (or type it).
+     */
+    @Test
+    public void swipeThatPausesOpensNoPopup() throws Exception {
+        boolean shown = mToolbar.isToolbarShown();
+        float[] from = centre('c'), to = {centre('c')[0], centre('e')[1]};
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, from, 0)));
+        for (int i = 1; i <= 4; i++) {
+            float[] at = {from[0] + (to[0] - from[0]) * i / 4, from[1] + (to[1] - from[1]) * i / 4};
+            mView.onTouchEvent(ev(t0, t0 + i * 15, MotionEvent.ACTION_MOVE, p(0, at, 0)));
+        }
+        // Rest on the top row (an accented-letter key) longer than the long-press delay.
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(600, java.util.concurrent.TimeUnit.MILLISECONDS);
+        java.lang.reflect.Field popup = LatinKeyboardBaseView.class.getDeclaredField("mMiniKeyboardVisible");
+        popup.setAccessible(true);
+        assertEquals("no long-press popup", false, popup.getBoolean(mView));
+        mView.onTouchEvent(ev(t0, t0 + 700, MotionEvent.ACTION_UP, p(0, to, 0)));
+        idle();
+        assertEquals("nothing typed", java.util.Collections.emptyList(), mTyped);
+        assertEquals("swipe up toggles the toolbar", !shown, mToolbar.isToolbarShown());
+    }
+
+    private boolean previewShowing() throws Exception {
+        java.lang.reflect.Field f = LatinKeyboardBaseView.class.getDeclaredField("mPreviewPopup");
+        f.setAccessible(true);
+        android.widget.PopupWindow w = (android.widget.PopupWindow) f.get(mView);
+        return w != null && w.isShowing();
+    }
+
+    /** Key previews (the enlarged-key bubbles) must not keep showing during a swipe. */
+    @Test
+    public void noKeyPreviewsDuringASwipe() throws Exception {
+        mView.setPreviewEnabled(true);
+        float[] from = centre('c'), to = {centre('c')[0], centre('e')[1]};
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, from, 0)));
+        idle();
+        org.junit.Assert.assertTrue("control: a touch shows its key's preview", previewShowing());
+        for (int i = 1; i <= 4; i++) {
+            float[] at = {from[0], from[1] + (to[1] - from[1]) * i / 4};
+            mView.onTouchEvent(ev(t0, t0 + i * 15, MotionEvent.ACTION_MOVE, p(0, at, 0)));
+            idle();
+        }
+        // Previews close 10ms after they are released.
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(50, java.util.concurrent.TimeUnit.MILLISECONDS);
+        org.junit.Assert.assertFalse("no preview once it is a swipe", previewShowing());
+        mView.onTouchEvent(ev(t0, t0 + 80, MotionEvent.ACTION_UP, p(0, to, 0)));
+        idle();
+    }
+
+    /** Control for the test above: a plain long press on 'e' does open its popup here. */
+    @Test
+    public void longPressOnEOpensPopup() throws Exception {
+        float[] e = centre('e');
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, e, 0)));
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(600, java.util.concurrent.TimeUnit.MILLISECONDS);
+        java.lang.reflect.Field popup = LatinKeyboardBaseView.class.getDeclaredField("mMiniKeyboardVisible");
+        popup.setAccessible(true);
+        assertEquals("long press opens the popup", true, popup.getBoolean(mView));
     }
 
     /** Two-thumb typing (bottom row, then top row) is not a swipe. */

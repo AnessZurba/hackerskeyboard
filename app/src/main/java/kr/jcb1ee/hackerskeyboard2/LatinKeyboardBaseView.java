@@ -205,14 +205,25 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
      * had few touch samples, and the key under the finger was typed instead.)
      */
     private boolean isVerticalSwipe(MotionEvent up) {
+        return isVerticalStroke(up, 3f) && up.getEventTime() - mStrokeStartTime < 1000;
+    }
+
+    /**
+     * Whether the current one-finger stroke has gone at least 1/{@code fraction} of the
+     * keyboard's height up or down, mostly vertically (not while a mini keyboard, the
+     * cursor slider or the backspace swipe has the finger).
+     */
+    private boolean isVerticalStroke(MotionEvent me, float fraction) {
         if (!mSingleFingerStroke || mMiniKeyboardVisible) return false;
         for (PointerTracker t : mPointerTrackers) {
             if (t.isSliding()) return false;
         }
-        float dx = up.getX() - mStrokeStartX, dy = up.getY() - mStrokeStartY;
-        return Math.abs(dy) > getHeight() / 3f && Math.abs(dy) > 2 * Math.abs(dx)
-                && up.getEventTime() - mStrokeStartTime < 1000;
+        float dx = me.getX() - mStrokeStartX, dy = me.getY() - mStrokeStartY;
+        return Math.abs(dy) > getHeight() / fraction && Math.abs(dy) > 2 * Math.abs(dx);
     }
+
+    // True once the current stroke is clearly a vertical swipe (see onTouchEvent).
+    private boolean mSwipeInProgress;
     protected int mPreviewHeight;
     protected int mPopupLayout;
 
@@ -1662,12 +1673,31 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mSwipeTracker.addMovement(me);
         if (action == MotionEvent.ACTION_DOWN) {
             mSingleFingerStroke = true;
+            mSwipeInProgress = false;
             mStrokeStartX = me.getX();
             mStrokeStartY = me.getY();
             mStrokeStartTime = me.getEventTime();
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
             mSingleFingerStroke = false;
-        } else if (action == MotionEvent.ACTION_UP && isVerticalSwipe(me)) {
+        } else if (action == MotionEvent.ACTION_MOVE && !mSwipeInProgress
+                && isVerticalStroke(me, 4f)) {
+            // Clearly a swipe already: stop treating it as key presses, so no key previews
+            // or long-press popups show along the way and no key is typed.
+            mSwipeInProgress = true;
+            dismissKeyPreview();
+            mHandler.cancelKeyTimers();
+            mPointerQueue.cancelAll(me.getEventTime());
+        }
+        if (mSwipeInProgress) {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                mSwipeInProgress = false;
+                if (action == MotionEvent.ACTION_UP && isVerticalSwipe(me)) {
+                    if (me.getY() < mStrokeStartY) swipeUp(); else swipeDown();
+                }
+            }
+            return true;
+        }
+        if (action == MotionEvent.ACTION_UP && isVerticalSwipe(me)) {
             float dy = me.getY() - mStrokeStartY;
             if (dy < 0 ? swipeUp() : swipeDown()) {
                 dismissKeyPreview();
