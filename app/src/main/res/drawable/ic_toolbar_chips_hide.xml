@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Material Symbols Outlined "expand_more" (Apache License 2.0), in a rounded box like
-     the > button: hides the autofill chips when the toolbar itself is kept hidden. -->
+<!-- The > button (Material Symbols "chevron_right", Apache License 2.0) pointing down,
+     in the same rounded box: hides the autofill chips when the toolbar itself is kept hidden. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="26dp" android:height="26dp"
     android:viewportWidth="960" android:viewportHeight="960">
     <group android:translateY="960">
         <path android:fillColor="#FFFFFFFF" android:pathData="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Z" />
-        <path android:fillColor="#FFFFFFFF" android:pathData="M480-376 376-480l56-56 48 48 48-48 56 56-104 104Z" />
+        <!-- The > button's chevron turned to point down: the same size. -->
+        <path android:fillColor="#FFFFFFFF" android:pathData="M480-496L584-600L640-544L480-384L320-544L376-600Z" />
     </group>
 </vector>
