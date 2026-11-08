@@ -34,8 +34,8 @@ public class RenderKeyboardTest {
         toolbar.layout(0, 0, w, toolbar.getMeasuredHeight());
         Bitmap bmp = Bitmap.createBitmap(w, toolbar.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
         toolbar.draw(new Canvas(bmp));
-        try (java.io.FileOutputStream out = new java.io.FileOutputStream(out)) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+        try (java.io.FileOutputStream file = new java.io.FileOutputStream(out)) {
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, file);
         }
     }
 }
