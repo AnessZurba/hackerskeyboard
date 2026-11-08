@@ -612,31 +612,15 @@ public class PointerTracker {
         return mDownOnDelete;
     }
 
-    // Backspace swipe with acceleration, like the trackpad: one word per 16dp when slow, up
-    // to 4x when fast; sliding back selects fewer, and back over the key selects none.
-    private float mDeleteWords;
-    private int mDeleteLastX;
-    private long mDeleteLastTime;
+    private DeleteSwipeAccel mDeleteAccel;
 
     private int deleteSwipeWords(int x, long time) {
-        if (x >= mDownX - mDeleteStep / 2) {
-            mDeleteWords = 0; // back on the key: cancel
-        } else {
-            long dt = Math.max(1, time - mDeleteLastTime);
-            int dx = mDeleteLastX - x; // leftwards = more words
-            float speed = Math.abs(dx) / mDensity / dt;
-            float boost = 1 + Math.max(0f, Math.min(3f, (speed - 0.25f) * 3f));
-            mDeleteWords = Math.max(0f, mDeleteWords + dx * boost / mDeleteStep);
-        }
-        mDeleteLastX = x;
-        mDeleteLastTime = time;
-        return (int) mDeleteWords;
+        return mDeleteAccel.words(x, time);
     }
 
     private boolean startDeleteSlide(int x, long time) {
-        mDeleteWords = (float) (mDownX - x) / mDeleteStep;
-        mDeleteLastX = x;
-        mDeleteLastTime = time;
+        if (mDeleteAccel == null) mDeleteAccel = new DeleteSwipeAccel(mDensity);
+        mDeleteAccel.start(mDownX, x, time);
         if (!LatinIME.sInstance.startDeleteSwipe()) {
             mDownOnDelete = false;
             return false;

@@ -86,6 +86,12 @@ public class Main extends AppCompatActivity {
 
         // Like a chat app, the test field takes images: try the clipboard and gallery images.
         final android.widget.ImageView image = findViewById(R.id.main_test_image);
+        final android.view.View removeImage = findViewById(R.id.main_test_image_remove);
+        removeImage.setOnClickListener(v -> {
+            image.setImageDrawable(null);
+            image.setVisibility(android.view.View.GONE);
+            removeImage.setVisibility(android.view.View.GONE);
+        });
         androidx.core.view.ViewCompat.setOnReceiveContentListener(test, new String[] {"image/*"},
                 (view, payload) -> {
                     android.util.Pair<androidx.core.view.ContentInfoCompat, androidx.core.view.ContentInfoCompat> split =
@@ -94,6 +100,7 @@ public class Main extends AppCompatActivity {
                         image.setImageURI(null);
                         image.setImageURI(split.first.getClip().getItemAt(0).getUri());
                         image.setVisibility(android.view.View.VISIBLE);
+                        removeImage.setVisibility(android.view.View.VISIBLE);
                     }
                     return split.second;
                 });

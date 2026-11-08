@@ -87,11 +87,18 @@ final class CursorLoupe implements CursorDrag.Listener {
     private String mText;
     private int mAnchor, mFocus;
 
+    // Delays before the loupe shows: from the start of a drag, and after a fast stretch has
+    // calmed down (so a quick flick doesn't make it blink on and off).
+    static final long START_DELAY_MS = 400, RESUME_DELAY_MS = 500;
+    private long mStart, mCalmSince;
+
     @Override
     public void onDragMoved(String text, int anchor, int focus) {
         if (!mEnabled) return;
         long now = android.os.SystemClock.uptimeMillis();
-        if (mLastFocus >= 0 && mText != null && focus != mLastFocus) {
+        if (mText == null) {
+            mStart = mCalmSince = now; // a new drag
+        } else if (mLastFocus >= 0 && focus != mLastFocus) {
             int distance = Math.abs(focus - mLastFocus);
             int lo = Math.min(focus, mLastFocus), hi = Math.max(focus, mLastFocus);
             if (text.indexOf('\n', lo) >= 0 && text.indexOf('\n', lo) < hi) {
@@ -103,18 +110,15 @@ final class CursorLoupe implements CursorDrag.Listener {
         mText = text;
         mAnchor = anchor;
         mFocus = focus;
-        int moved = recentMovement(now);
-        if (moved > FAST) {
+        if (recentMovement(now) > FAST) {
             mFast = true;
             hide();
         }
-        if (mFast && moved > CALM) {
-            mHandler.removeCallbacks(mRecheck);
-            mHandler.postDelayed(mRecheck, 100);
-            return;
+        if (isShowing()) {
+            display(); // follow the cursor
+        } else {
+            recheck();
         }
-        mFast = false;
-        display();
     }
 
     private int recentMovement(long now) {
@@ -124,15 +128,20 @@ final class CursorLoupe implements CursorDrag.Listener {
         return sum;
     }
 
-    /** While hidden for speed: back once the cursor has calmed down. */
+    /** While hidden: shows once the drag is old enough and has been calm long enough. */
     private void recheck() {
-        if (!mFast || mText == null) return;
-        if (recentMovement(android.os.SystemClock.uptimeMillis()) > CALM) {
-            mHandler.postDelayed(mRecheck, 100);
+        mHandler.removeCallbacks(mRecheck);
+        if (mText == null || isShowing()) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (mFast && recentMovement(now) <= CALM) {
+            mFast = false;
+            mCalmSince = now;
+        }
+        if (!mFast && now - mStart >= START_DELAY_MS && now - mCalmSince >= RESUME_DELAY_MS) {
+            display();
             return;
         }
-        mFast = false;
-        display();
+        mHandler.postDelayed(mRecheck, 50);
     }
 
     private void display() {

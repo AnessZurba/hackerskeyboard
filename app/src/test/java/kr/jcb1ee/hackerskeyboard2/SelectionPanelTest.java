@@ -455,7 +455,9 @@ public class SelectionPanelTest {
         settle();
         attachKeyboard();
         assertTrue(mIme.beginCursorDrag(false));
-        assertTrue("loupe up", mIme.mLoupe.isShowing());
+        assertTrue("not at once", !mIme.mLoupe.isShowing());
+        ShadowLooper.idleMainLooper(CursorLoupe.START_DELAY_MS + 100, TimeUnit.MILLISECONDS);
+        assertTrue("loupe up after a moment", mIme.mLoupe.isShowing());
         assertEquals("the current line only", "second line", mIme.mLoupe.text().toString());
         mIme.mCursorDrag.lines(-1);
         settle();
@@ -474,6 +476,7 @@ public class SelectionPanelTest {
                 .putBoolean(CursorLoupe.PREF, false).commit();
         idle();
         assertTrue(mIme.beginCursorDrag(false));
+        ShadowLooper.idleMainLooper(CursorLoupe.START_DELAY_MS + 100, TimeUnit.MILLISECONDS);
         assertTrue(!mIme.mLoupe.isShowing());
         mIme.mCursorDrag.end();
     }
@@ -519,13 +522,16 @@ public class SelectionPanelTest {
         sConnection.setSelection(0, 0);
         attachKeyboard();
         assertTrue(mIme.beginCursorDrag(false));
+        ShadowLooper.idleMainLooper(CursorLoupe.START_DELAY_MS + 100, TimeUnit.MILLISECONDS);
         assertTrue(mIme.mLoupe.isShowing());
         mIme.mCursorDrag.chars(1);
         assertTrue("slow: stays", mIme.mLoupe.isShowing());
         for (int i = 0; i < 5; i++) mIme.mCursorDrag.chars(4); // 20 characters at once
         assertTrue("fast: hidden", !mIme.mLoupe.isShowing());
-        ShadowLooper.idleMainLooper(500, TimeUnit.MILLISECONDS);
-        assertTrue("calm again: back", mIme.mLoupe.isShowing());
+        ShadowLooper.idleMainLooper(CursorLoupe.RESUME_DELAY_MS - 100, TimeUnit.MILLISECONDS);
+        assertTrue("not straight back", !mIme.mLoupe.isShowing());
+        ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
+        assertTrue("calm for a while: back", mIme.mLoupe.isShowing());
         mIme.mCursorDrag.end();
     }
 
@@ -637,6 +643,78 @@ public class SelectionPanelTest {
         settle();
         assertEquals("anchor kept", 15, f.getSelectionStart());
         assertTrue("two lines down: " + f.getSelectionEnd(), f.getSelectionEnd() > 23);
+    }
+
+    // ---------------------------------------------------------------- panel keys
+
+    private KeyboardToolbar openPanel(int button) throws Exception {
+        // Keys reach the field as the app's window would deliver them.
+        sConnection = new InputConnectionWrapper(mField.onCreateInputConnection(new EditorInfo()), true) {
+            @Override
+            public boolean sendKeyEvent(android.view.KeyEvent event) {
+                return mField.dispatchKeyEvent(event);
+            }
+        };
+        KeyboardToolbar toolbar = (KeyboardToolbar) mIme.onCreateInputView();
+        idle();
+        layout(toolbar);
+        java.lang.reflect.Field f = LatinIME.class.getDeclaredField("mDeleteSwipeField");
+        f.setAccessible(true);
+        f.setBoolean(mIme, true);
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+        ((ViewGroup) bar.getChildAt(button)).getChildAt(0).performClick();
+        idle();
+        layout(toolbar);
+        return toolbar;
+    }
+
+    private static void drag(View v, float dx, long ms, boolean hold) {
+        long t0 = SystemClock.uptimeMillis();
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        if (hold) ShadowLooper.idleMainLooper(600, TimeUnit.MILLISECONDS);
+        for (int i = 1; i <= 6; i++) {
+            ShadowSystemClock.advanceBy(Duration.ofMillis(ms / 6));
+            v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, 100 + dx * i / 6, 10, 0));
+        }
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, 100 + dx, 10, 0));
+        idle();
+    }
+
+    /** The selection panel's backspace swipes words away like the keyboard's. */
+    @Test
+    public void selectionPanelBackspaceSwipes() throws Exception {
+        KeyboardToolbar toolbar = openPanel(0);
+        mField.setText("one two three four");
+        sConnection.setSelection(mField.length(), mField.length());
+        TextView del = find(((FrameLayout) toolbar.getChildAt(1)).getChildAt(1), "⌫");
+        float d = mIme.getResources().getDisplayMetrics().density;
+        drag(del, -40 * d, 600, false); // two words, slowly
+        assertEquals("one two ", mField.getText().toString());
+        del.dispatchTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        del.dispatchTouchEvent(MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, 100, 10, 0));
+        idle();
+        assertEquals("a tap deletes one character", "one two", mField.getText().toString());
+    }
+
+    /** The emoji panel's space bar types a space, and is a trackpad when held. */
+    @Test
+    public void emojiPanelSpaceIsATrackpad() throws Exception {
+        KeyboardToolbar toolbar = openPanel(2);
+        mField.setText("hello world");
+        sConnection.setSelection(0, 0);
+        View space = findByDescription(((FrameLayout) toolbar.getChildAt(1)).getChildAt(1),
+                mIme.getString(R.string.toolbar_emoji_space));
+        float d = mIme.getResources().getDisplayMetrics().density;
+        drag(space, 40 * d, 600, true);
+        assertTrue("cursor moved right: " + mField.getSelectionEnd(), mField.getSelectionEnd() > 2);
+        assertEquals("hello world", mField.getText().toString());
+        space.dispatchTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        space.dispatchTouchEvent(MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, 100, 10, 0));
+        idle();
+        assertTrue("a tap types a space", mField.getText().toString().contains("  ")
+                || mField.getText().toString().length() == 12);
     }
 
     private static void idle() {

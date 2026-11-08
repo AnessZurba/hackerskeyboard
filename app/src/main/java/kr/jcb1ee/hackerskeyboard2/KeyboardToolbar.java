@@ -413,7 +413,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 TextView cell = cell(label, 15);
                 boolean repeats = label.startsWith("◀") || label.startsWith("▶")
                         || label.equals("▲") || label.equals("▼") || label.equals("⌫");
-                if (repeats) {
+                if (label.equals("⌫")) {
+                    setBackspace(cell);
+                } else if (repeats) {
                     setRepeating(cell, action);
                 } else if (label.equals(mIme.getString(R.string.toolbar_select))) {
                     setTrackpad(cell);
@@ -446,6 +448,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
      * while Select is on.
      */
     private void setTrackpad(final TextView cell) {
+        setTrackpad(cell, true, () -> {
+            cell.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            toggleSelecting();
+        });
+    }
+
+    /**
+     * A key that is also a trackpad when held or dragged (the Select button; the emoji
+     * panel's space bar). {@code selectButton}: moves the selection's end while Select is on.
+     */
+    private void setTrackpad(final TextView cell, final boolean selectButton, final Runnable tap) {
         final CursorTrackpad trackpad = new CursorTrackpad(getResources().getDisplayMetrics().density);
         final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
         final boolean[] active = new boolean[1];
@@ -453,7 +466,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         final boolean[] dragging = new boolean[1];
         final Runnable start = () -> {
             active[0] = true;
-            dragging[0] = ime().getCurrentInputConnection() != null && ime().beginCursorDrag(mSelecting);
+            dragging[0] = ime().getCurrentInputConnection() != null
+                    && ime().beginCursorDrag(selectButton && mSelecting);
             cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             cell.setAlpha(0.6f);
         };
@@ -464,7 +478,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 if (connection() == null) return false;
                 int code = n < 0 ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT;
                 for (int i = Math.abs(n); i > 0; i--) {
-                    sendKey(code, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
+                    sendKey(code, selectButton && mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
                 }
                 return true;
             }
@@ -501,10 +515,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     cell.setAlpha(1f);
                     if (dragging[0]) ime().mCursorDrag.end();
                     dragging[0] = false;
-                    if (!active[0] && e.getActionMasked() == MotionEvent.ACTION_UP) {
-                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                        toggleSelecting();
-                    }
+                    if (!active[0] && e.getActionMasked() == MotionEvent.ACTION_UP) tap.run();
                     active[0] = false;
                     return true;
                 default:
@@ -629,6 +640,69 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 case MotionEvent.ACTION_CANCEL:
                     view.setPressed(false);
                     stopRepeat();
+                    return true;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    /**
+     * A panel's backspace, like the keyboard's: hold to repeat; slide left to select words
+     * back from the cursor (faster slides go further), slide back for fewer, release to
+     * delete, back over the key to cancel. Where the swipe is available a tap deletes on
+     * release; elsewhere (terminals, or swipe turned off) on touch.
+     */
+    private void setBackspace(final View v) {
+        final Runnable delete = () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0);
+        final DeleteSwipeAccel accel = new DeleteSwipeAccel(getResources().getDisplayMetrics().density);
+        final float[] downX = new float[1];
+        // [0] deferred tap pending, [1] repeating, [2] swiping
+        final boolean[] state = new boolean[3];
+        final Runnable repeat = new Runnable() {
+            @Override
+            public void run() {
+                state[0] = false;
+                state[1] = true;
+                delete.run();
+                mHandler.postDelayed(this, 50);
+            }
+        };
+        v.setOnTouchListener((view, e) -> {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    view.setPressed(true);
+                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    downX[0] = e.getRawX();
+                    state[1] = state[2] = false;
+                    state[0] = LatinIME.deleteSwipeAvailable();
+                    if (!state[0]) delete.run();
+                    stopRepeat();
+                    mRepeat = repeat;
+                    mHandler.postDelayed(repeat, 400);
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    if (!state[2] && !state[1] && LatinIME.deleteSwipeAvailable()
+                            && downX[0] - e.getRawX() > accel.step() && ime().startDeleteSwipe()) {
+                        state[2] = true;
+                        state[0] = false;
+                        stopRepeat();
+                        accel.start(downX[0], e.getRawX(), e.getEventTime());
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    }
+                    if (state[2]) ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getEventTime()));
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    boolean up = e.getActionMasked() == MotionEvent.ACTION_UP;
+                    view.setPressed(false);
+                    stopRepeat();
+                    if (state[2]) {
+                        ime().finishDeleteSwipe(up);
+                    } else if (state[0] && up) {
+                        delete.run(); // a tap
+                    }
+                    state[0] = state[1] = state[2] = false;
                     return true;
                 default:
                     return true;
@@ -1024,12 +1098,13 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         LinearLayout bottom = row();
         TextView space = cell(" ", 15);
         space.setContentDescription(mIme.getString(R.string.toolbar_emoji_space));
-        space.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        // Space: tap types a space; hold or drag it to move the cursor, like the keyboard's.
+        setTrackpad(space, false, () -> {
+            space.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             if (connection() != null) ime().onText(" ");
         });
         TextView backspace = cell("⌫", 18);
-        setRepeating(backspace, () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0));
+        setBackspace(backspace);
         // Gallery: pick a photo to insert, in fields that take images (chat apps).
         ImageView gallery = new ImageView(getContext());
         gallery.setImageResource(R.drawable.ic_emoji_gallery);

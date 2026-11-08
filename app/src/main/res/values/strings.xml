@@ -641,6 +641,7 @@
     <string name="main_test_type_lines">Lines</string>
     <string name="main_test_type_number">Number</string>
     <string name="main_test_type_password">Password</string>
+    <string name="main_test_image_remove">Remove image</string>
     <string name="main_body"><Data>
       <![CDATA["
         <h2>Enabling Hacker's Keyboard</h2>

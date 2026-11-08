@@ -416,6 +416,16 @@
                 android:visibility="gone"
                 android:importantForAccessibility="no" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/main_test_image_remove"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/main_test_image_remove"
+                android:textAllCaps="false"
+                android:visibility="gone" />
+
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
