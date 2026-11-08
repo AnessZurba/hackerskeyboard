@@ -248,6 +248,25 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         }
     }
 
+    /** The running keyboard service (a restarted service replaces the one we were made by). */
+    private LatinIME ime() {
+        LatinIME current = LatinIME.sInstance;
+        return current != null ? current : mIme;
+    }
+
+    /**
+     * The connection to the app's text field, or null with a short notice: if the panels
+     * ever do nothing in an app, this tells whether the connection is missing.
+     */
+    private InputConnection connection() {
+        InputConnection ic = ime().getCurrentInputConnection();
+        if (ic == null) {
+            android.widget.Toast.makeText(getContext(), R.string.toolbar_no_connection,
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
+        return ic;
+    }
+
     // ------------------------------------------------------------------ selection panel
 
     private View buildSelectPanel() {
@@ -263,7 +282,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         "▶▶", word(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_cut), ctx(android.R.id.cut)},
                 {mIme.getString(R.string.toolbar_undo), ctrl(KeyEvent.KEYCODE_Z, false),
                         mIme.getString(R.string.toolbar_redo), ctrl(KeyEvent.KEYCODE_Z, true),
-                        "⌫", (Runnable) () -> mIme.onKey(Keyboard.KEYCODE_DELETE, null, 0, 0),
+                        "⌫", (Runnable) () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0),
                         mIme.getString(R.string.toolbar_paste), ctx(android.R.id.paste)},
         };
         for (Object[] row : rows) {
@@ -307,11 +326,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     /** A cursor key; extends the selection while Select is on. */
     private Runnable act(final int keyCode) {
         return () -> {
+            if (connection() == null) return;
             int steps = keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1
                     : keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0;
             // Left/right move within the text (an arrow key at its ends would move focus
             // away and close the keyboard); arrow keys only where the text isn't exposed.
-            if (steps != 0 && mIme.moveCursor(steps, mSelecting, false)) return;
+            if (steps != 0 && ime().moveCursor(steps, mSelecting, false)) return;
+            // Up/down: same problem at the first/last line; see LatinIME.moveCursorVertically.
+            if ((keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+                    && ime().moveCursorVertically(keyCode == KeyEvent.KEYCODE_DPAD_UP, mSelecting)) {
+                return;
+            }
             sendKey(keyCode, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
         };
     }
@@ -320,7 +345,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private Runnable word(final int keyCode) {
         return () -> {
             int steps = keyCode == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1;
-            if (mIme.moveCursor(steps, mSelecting, true)) return;
+            if (ime().moveCursor(steps, mSelecting, true)) return;
             sendKey(keyCode, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON
                     | (mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0));
         };
@@ -333,7 +358,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private Runnable ctx(final int id) {
         return () -> {
-            InputConnection ic = mIme.getCurrentInputConnection();
+            InputConnection ic = connection();
             if (ic != null) ic.performContextMenuAction(id);
             if (id == android.R.id.copy || id == android.R.id.cut || id == android.R.id.paste) {
                 mSelecting = false;
@@ -343,7 +368,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private void sendKey(int keyCode, int meta) {
-        InputConnection ic = mIme.getCurrentInputConnection();
+        InputConnection ic = connection();
         if (ic == null) return;
         long now = SystemClock.uptimeMillis();
         ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0, meta,
@@ -420,7 +445,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             row.setPadding(dp(12), dp(8), dp(12), dp(8));
             row.setOnClickListener(v -> {
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                mIme.onText(clip.text);
+                if (connection() == null) return;
+                ime().onText(clip.text);
             });
             row.setOnLongClickListener(v -> {
                 history.togglePin(clip);
@@ -508,7 +534,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         highlightTab(tabRow, initial);
         tabs.addView(tabScroll, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         TextView backspace = cell("⌫", 18);
-        setRepeating(backspace, () -> mIme.onKey(Keyboard.KEYCODE_DELETE, null, 0, 0));
+        setRepeating(backspace, () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0));
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(56), LayoutParams.MATCH_PARENT);
         blp.setMargins(dp(4), dp(4), dp(4), dp(4));
         tabs.addView(backspace, blp);
@@ -594,7 +620,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private void typeEmoji(String emoji) {
-        mIme.onText(emoji);
+        if (connection() == null) return;
+        ime().onText(emoji);
         addRecent(emoji);
     }
 

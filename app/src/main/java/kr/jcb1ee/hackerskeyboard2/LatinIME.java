@@ -2358,6 +2358,36 @@ public class LatinIME extends InputMethodService implements
     }
 
     /**
+     * Up/down for the toolbar. An arrow key on the first (last) line of a field moves the
+     * cursor to its start (end), but once there it moves focus to another view, which
+     * closes the keyboard. So: at the start (end) do nothing; on a single-line field go
+     * to the start (end) directly; otherwise let the arrow key through.
+     *
+     * @return true if handled here, false to send the arrow key
+     */
+    boolean moveCursorVertically(boolean up, boolean select) {
+        InputConnection ic = getCurrentInputConnection();
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ic == null || ei == null
+                || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_NULL) {
+            return false;
+        }
+        android.view.inputmethod.ExtractedText et =
+                ic.getExtractedText(new android.view.inputmethod.ExtractedTextRequest(), 0);
+        if (et == null || et.text == null || et.selectionStart < 0) return false;
+        commitTyped(ic, true);
+        select |= isShiftMod();
+        int len = et.text.length();
+        int anchor = et.selectionStart, end = et.selectionEnd;
+        int target = up ? 0 : len;
+        boolean multiLine = (ei.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0;
+        if (end == target) return true; // already there: nowhere to go
+        if (multiLine) return false;     // the field moves between its lines itself
+        ic.setSelection(et.startOffset + (select ? anchor : target), et.startOffset + target);
+        return true;
+    }
+
+    /**
      * The selection {anchor, end} after moving {@code steps} visually (negative = left) from
      * the given selection, by characters (graphemes) or words, clamped to the text.
      */

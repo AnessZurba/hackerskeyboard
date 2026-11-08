@@ -731,4 +731,5 @@
 
     <string name="title_delete_swipe">Backspace swipe</string>
     <string name="summary_delete_swipe">Slide left from backspace to select whole words back from the cursor; slide back to select fewer, release to delete, return to backspace to cancel. A tap deletes when you lift your finger. Off in terminals.</string>
+    <string name="toolbar_no_connection">Toolbar: no connection to the text field</string>
 </resources>
