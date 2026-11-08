@@ -41,28 +41,28 @@ public class ToolbarTest {
         ClipboardHistory.get(ime).add("hello clipboard");
 
         for (int i = 0; i < 3; i++) {
-            bar.getChildAt(i).performClick();
+            button(bar, i).performClick();
             idle();
             assertEquals("panel " + i + " opened", 2, body.getChildCount());
             assertEquals(View.INVISIBLE, body.getChildAt(0).getVisibility());
             View panel = body.getChildAt(1);
             assertNotNull(panel);
             // Second tap goes back to the keyboard.
-            bar.getChildAt(i).performClick();
+            button(bar, i).performClick();
             idle();
             assertEquals(1, body.getChildCount());
             assertEquals(View.VISIBLE, body.getChildAt(0).getVisibility());
         }
 
         // Clipboard panel lists the clip.
-        bar.getChildAt(1).performClick();
+        button(bar, 1).performClick();
         idle();
         View clipPanel = body.getChildAt(1);
         assertTrue(containsText(clipPanel, "hello clipboard"));
         toolbar.closePanel();
 
         // Emoji panel has a grid with emoji.
-        bar.getChildAt(2).performClick();
+        button(bar, 2).performClick();
         idle();
         assertTrue(containsText(body.getChildAt(1), "😀"));
         toolbar.closePanel();
@@ -74,6 +74,10 @@ public class ToolbarTest {
         assertFalse(toolbar.isToolbarShown());
         toolbar.toggleToolbar();
         assertTrue(toolbar.isToolbarShown());
+    }
+
+    private static View button(LinearLayout bar, int i) {
+        return ((ViewGroup) bar.getChildAt(i)).getChildAt(0);
     }
 
     private static boolean containsText(View v, String text) {

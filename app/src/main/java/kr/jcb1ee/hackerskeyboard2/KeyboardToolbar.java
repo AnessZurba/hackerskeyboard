@@ -115,7 +115,10 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 togglePanel(panel);
             });
             mButtons[i] = b;
-            mBar.addView(b, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+            // Samsung-style: each icon on its own circle, centred in an equal share of the row.
+            FrameLayout cell = new FrameLayout(ime);
+            cell.addView(b, new FrameLayout.LayoutParams(dp(38), dp(38), Gravity.CENTER));
+            mBar.addView(cell, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         }
         addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight));
 
@@ -218,7 +221,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void updateButtons() {
         for (int i = 0; i < mButtons.length; i++) {
             boolean active = mOpenPanel == i + 1;
-            mButtons[i].setImageTintList(ColorStateList.valueOf(active ? mAccent : faded(mForeground)));
+            mButtons[i].setImageTintList(ColorStateList.valueOf(active ? mBackground : mForeground));
+            GradientDrawable circle = new GradientDrawable();
+            circle.setShape(GradientDrawable.OVAL);
+            circle.setColor(active ? mAccent : blend(mBackground, mForeground, 0.10f));
+            GradientDrawable pressed = new GradientDrawable();
+            pressed.setShape(GradientDrawable.OVAL);
+            pressed.setColor(blend(mBackground, mForeground, 0.25f));
+            StateListDrawable states = new StateListDrawable();
+            states.addState(new int[] {android.R.attr.state_pressed}, pressed);
+            states.addState(new int[0], circle);
+            mButtons[i].setBackground(states);
         }
     }
 
