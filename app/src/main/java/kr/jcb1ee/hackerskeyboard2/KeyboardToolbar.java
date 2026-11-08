@@ -273,17 +273,23 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         LinearLayout grid = column();
         grid.setPadding(dp(4), dp(4), dp(4), dp(4));
         // label, action; null action = spacer
+        // Gboard/Samsung-style editing pad plus a fifth column: select the word or line at
+        // the cursor, swap which end of the selection moves, and drop the selection.
         Object[][] rows = {
                 {"Home", act(KeyEvent.KEYCODE_MOVE_HOME), "▲", act(KeyEvent.KEYCODE_DPAD_UP),
-                        "End", act(KeyEvent.KEYCODE_MOVE_END), mIme.getString(R.string.toolbar_select_all), ctx(android.R.id.selectAll)},
+                        "End", act(KeyEvent.KEYCODE_MOVE_END), mIme.getString(R.string.toolbar_select_all), ctx(android.R.id.selectAll),
+                        mIme.getString(R.string.toolbar_word), (Runnable) () -> selectAt(false)},
                 {"◀", act(KeyEvent.KEYCODE_DPAD_LEFT), mIme.getString(R.string.toolbar_select), (Runnable) this::toggleSelecting,
-                        "▶", act(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_copy), ctx(android.R.id.copy)},
+                        "▶", act(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_copy), ctx(android.R.id.copy),
+                        "⇄", (Runnable) this::swapEnds},
                 {"◀◀", word(KeyEvent.KEYCODE_DPAD_LEFT), "▼", act(KeyEvent.KEYCODE_DPAD_DOWN),
-                        "▶▶", word(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_cut), ctx(android.R.id.cut)},
+                        "▶▶", word(KeyEvent.KEYCODE_DPAD_RIGHT), mIme.getString(R.string.toolbar_cut), ctx(android.R.id.cut),
+                        mIme.getString(R.string.toolbar_line), (Runnable) () -> selectAt(true)},
                 {mIme.getString(R.string.toolbar_undo), ctrl(KeyEvent.KEYCODE_Z, false),
                         mIme.getString(R.string.toolbar_redo), ctrl(KeyEvent.KEYCODE_Z, true),
                         "⌫", (Runnable) () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0),
-                        mIme.getString(R.string.toolbar_paste), ctx(android.R.id.paste)},
+                        mIme.getString(R.string.toolbar_paste), ctx(android.R.id.paste),
+                        mIme.getString(R.string.toolbar_unselect), (Runnable) this::unselect},
         };
         for (Object[] row : rows) {
             LinearLayout line = row();
@@ -314,6 +320,34 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private void toggleSelecting() {
         mSelecting = !mSelecting;
+        updateSelectButton();
+    }
+
+    /** Selects the word/line at the cursor and turns Select on, so arrows extend it. */
+    private void selectAt(boolean line) {
+        if (connection() == null) return;
+        if (ime().selectAtCursor(line)) {
+            mSelecting = true;
+            updateSelectButton();
+        }
+    }
+
+    /** Arrows (and word jumps, Home/End) now move the selection's other end. */
+    private void swapEnds() {
+        if (connection() == null) return;
+        if (ime().swapSelectionEnds()) {
+            mSelecting = true;
+            updateSelectButton();
+        } else {
+            android.widget.Toast.makeText(getContext(), R.string.toolbar_nothing_selected,
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void unselect() {
+        if (connection() == null) return;
+        ime().collapseSelection();
+        mSelecting = false;
         updateSelectButton();
     }
 

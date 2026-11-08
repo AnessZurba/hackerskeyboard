@@ -2357,6 +2357,71 @@ public class LatinIME extends InputMethodService implements
         return true;
     }
 
+    private android.view.inputmethod.ExtractedText extractText(InputConnection ic) {
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ic == null || ei == null
+                || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_NULL) {
+            return null;
+        }
+        android.view.inputmethod.ExtractedText et =
+                ic.getExtractedText(new android.view.inputmethod.ExtractedTextRequest(), 0);
+        return et == null || et.text == null || et.selectionStart < 0 ? null : et;
+    }
+
+    /**
+     * Swaps which end of the selection moves. A text field keeps a selection as an anchor
+     * and a moving end (and reports them in that order), so setting the selection reversed
+     * makes arrows, word jumps, Home/End and Shift+arrows move the other end.
+     *
+     * @return false if there is no selection to swap
+     */
+    boolean swapSelectionEnds() {
+        InputConnection ic = getCurrentInputConnection();
+        android.view.inputmethod.ExtractedText et = extractText(ic);
+        if (et == null || et.selectionStart == et.selectionEnd) return false;
+        ic.setSelection(et.startOffset + et.selectionEnd, et.startOffset + et.selectionStart);
+        return true;
+    }
+
+    /** Selects the word (or, with {@code line}, the line) at the cursor. */
+    boolean selectAtCursor(boolean line) {
+        InputConnection ic = getCurrentInputConnection();
+        android.view.inputmethod.ExtractedText et = extractText(ic);
+        if (et == null) return false;
+        commitTyped(ic, true);
+        String text = et.text.toString();
+        int[] range = line ? lineAt(text, et.selectionEnd) : wordAt(text, et.selectionEnd);
+        if (range[0] == range[1]) return false;
+        ic.setSelection(et.startOffset + range[0], et.startOffset + range[1]);
+        return true;
+    }
+
+    /** Puts the cursor where the selection's moving end is, dropping the selection. */
+    boolean collapseSelection() {
+        InputConnection ic = getCurrentInputConnection();
+        android.view.inputmethod.ExtractedText et = extractText(ic);
+        if (et == null) return false;
+        ic.setSelection(et.startOffset + et.selectionEnd, et.startOffset + et.selectionEnd);
+        return true;
+    }
+
+    /** The word around {@code pos}: letters, digits, marks, apostrophes. */
+    static int[] wordAt(String text, int pos) {
+        pos = Math.max(0, Math.min(pos, text.length()));
+        int start = pos, end = pos;
+        while (start > 0 && isSwipeWordChar(text.charAt(start - 1))) start--;
+        while (end < text.length() && isSwipeWordChar(text.charAt(end))) end++;
+        return new int[] {start, end};
+    }
+
+    /** The line (between line breaks) around {@code pos}, without the break. */
+    static int[] lineAt(String text, int pos) {
+        pos = Math.max(0, Math.min(pos, text.length()));
+        int start = text.lastIndexOf('\n', pos - 1) + 1;
+        int end = text.indexOf('\n', pos);
+        return new int[] {start, end < 0 ? text.length() : end};
+    }
+
     /**
      * Up/down for the toolbar. An arrow key on the first (last) line of a field moves the
      * cursor to its start (end), but once there it moves focus to another view, which

@@ -46,4 +46,26 @@ public class CursorMoveTest {
         assertArrayEquals(new int[] {1, 1}, move("hello", 1, 4, -1, false, false));
         assertArrayEquals(new int[] {4, 4}, move("hello", 1, 4, 1, false, false));
     }
+
+    @Test
+    public void wordAndLineAtCursor() {
+        assertArrayEquals(new int[] {4, 7}, LatinIME.wordAt("one two three", 5));
+        assertArrayEquals(new int[] {4, 7}, LatinIME.wordAt("one two three", 7)); // at its end
+        assertArrayEquals(new int[] {0, 5}, LatinIME.wordAt("مرحبا بك", 2));
+        assertArrayEquals(new int[] {4, 9}, LatinIME.lineAt("abc\ndefgh\nij", 6));
+        assertArrayEquals(new int[] {0, 3}, LatinIME.lineAt("abc\ndef", 0));
+        assertArrayEquals(new int[] {4, 7}, LatinIME.lineAt("abc\ndef", 7));
+    }
+
+    @Test
+    public void movesEitherEndOfASelection() {
+        String s = "hello world";
+        // Selection 2..8 with the end moving: extend right.
+        assertArrayEquals(new int[] {2, 9}, move(s, 2, 8, 1, true, false));
+        // Swapped (anchor 8, moving end 2): the start moves, left or right.
+        assertArrayEquals(new int[] {8, 1}, move(s, 8, 2, -1, true, false));
+        assertArrayEquals(new int[] {8, 3}, move(s, 8, 2, 1, true, false));
+        // The start moves by words too.
+        assertArrayEquals(new int[] {8, 0}, move(s, 8, 2, -1, true, true));
+    }
 }
