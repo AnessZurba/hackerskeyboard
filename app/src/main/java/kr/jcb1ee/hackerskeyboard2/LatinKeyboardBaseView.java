@@ -555,8 +555,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         final Resources res = getResources();
 
         mShowPreview = false;
-        // Lift key previews above the key so the finger doesn't cover them.
-        mPreviewOffset = -res.getDimensionPixelSize(R.dimen.key_popup_lift);
         mDelayBeforePreview = res.getInteger(R.integer.config_delay_before_preview);
         mDelayBeforeSpacePreview = res.getInteger(R.integer.config_delay_before_space_preview);
         mDelayAfterPreview = res.getInteger(R.integer.config_delay_after_preview);
@@ -1488,7 +1486,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         popupY += getPaddingTop();
         popupY -= mMiniKeyboardContainer.getMeasuredHeight();
         popupY += mMiniKeyboardContainer.getPaddingBottom();
-        popupY -= getResources().getDimensionPixelSize(R.dimen.key_popup_lift);
         final int x = popupX;
         final int y = mShowPreview && isOneRowKeys(miniKeys) ? mPopupPreviewDisplayedY : popupY;
 
