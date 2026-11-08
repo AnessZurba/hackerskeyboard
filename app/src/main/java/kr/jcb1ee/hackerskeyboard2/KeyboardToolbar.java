@@ -217,6 +217,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         return mBarHeight - dp(6);
     }
 
+    /** The keyboard's background colour, as sampled for the toolbar. */
+    int backgroundColour() {
+        return mBackground;
+    }
+
     boolean hasChips() {
         return mChipRow.getChildCount() > 0;
     }

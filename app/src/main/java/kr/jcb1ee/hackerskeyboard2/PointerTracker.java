@@ -63,7 +63,10 @@ public class PointerTracker {
     // Space-bar cursor slider: holding space without sliding, then sliding, moves the
     // cursor one character per step by sending the arrow keys.
     private boolean mCursorSlide;
-    private int mCursorLastX;
+    private int mCursorLastX, mCursorLastY;
+    private long mCursorLastTime;
+    private float mCursorAccumX, mCursorAccumY;
+    private final float mDensity;
     private int mDownX;
     private final int mCursorStep;
     private final int mCursorSlop;
@@ -202,7 +205,8 @@ public class PointerTracker {
         mDelayBeforeKeyRepeatStart = res.getInteger(R.integer.config_delay_before_key_repeat_start);
         mMultiTapKeyTimeout = res.getInteger(R.integer.config_multi_tap_key_timeout);
         float density = res.getDisplayMetrics().density;
-        mCursorStep = Math.max(1, Math.round(10 * density));
+        mCursorStep = Math.max(1, Math.round(6 * density));
+        mDensity = density;
         mCursorSlop = Math.round(12 * density);
         mDeleteStep = Math.round(16 * density);
         sSlideKeyHack = slideKeyHack;
@@ -400,7 +404,7 @@ public class PointerTracker {
         if (mKeyAlreadyProcessed)
             return;
         if (mCursorSlide) {
-            moveCursor(x);
+            moveCursor(x, y);
             return;
         }
         if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide())) {
@@ -538,11 +542,17 @@ public class PointerTracker {
         if (Math.abs(x - mDownX) > mCursorSlop) return false;
         mCursorSlide = true;
         mCursorLastX = x;
+        mCursorLastY = mKeyState.getLastY();
+        mCursorLastTime = android.os.SystemClock.uptimeMillis();
+        mCursorAccumX = mCursorAccumY = 0;
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(true);
         }
         View view = mKeyboardSwitcher.getInputView();
-        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        if (view != null) {
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            view.invalidate(); // dims the key labels: the keyboard is a trackpad now
+        }
         return true;
     }
 
@@ -561,23 +571,53 @@ public class PointerTracker {
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(false);
         }
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.invalidate();
     }
 
-    private void moveCursor(int x) {
-        int steps = (x - mCursorLastX) / mCursorStep;
-        if (steps == 0 || mListener == null) return;
-        mCursorLastX += steps * mCursorStep;
-        // Move within the text, stopping at its ends: an arrow key at the start or end of a
-        // field moves focus to another view and closes the keyboard. Terminals don't expose
-        // their text, so they get arrow keys (Shift/Ctrl held on other keys still apply).
-        if (!LatinIME.sInstance.moveCursor(steps, false, false)) {
-            int code = steps < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
-            for (int i = Math.abs(steps); i > 0; i--) {
-                mListener.onKey(code, null, x, mKeyState.getLastY());
+    /**
+     * The space-bar trackpad, iOS style: the cursor follows the finger in both directions,
+     * one character per 6dp sideways and one line per 24dp up or down, and a faster finger
+     * covers more ground (up to 4x).
+     */
+    private void moveCursor(int x, int y) {
+        if (mListener == null) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        long dt = Math.max(1, now - mCursorLastTime);
+        int dx = x - mCursorLastX, dy = y - mCursorLastY;
+        mCursorLastX = x;
+        mCursorLastY = y;
+        mCursorLastTime = now;
+        // Acceleration: dp per millisecond above a slow drag speeds the cursor up.
+        float speed = (float) Math.hypot(dx, dy) / mDensity / dt;
+        float boost = 1 + Math.max(0f, Math.min(3f, (speed - 0.25f) * 3f));
+        mCursorAccumX += dx * boost / mCursorStep;
+        mCursorAccumY += dy * boost / (mCursorStep * 4f);
+        int steps = (int) mCursorAccumX;
+        int lines = (int) mCursorAccumY;
+        mCursorAccumX -= steps;
+        mCursorAccumY -= lines;
+        boolean moved = false;
+        if (steps != 0) {
+            moved = true;
+            // Move within the text, stopping at its ends: an arrow key at the start or end of
+            // a field moves focus to another view and closes the keyboard. Terminals don't
+            // expose their text, so they get arrow keys (Shift/Ctrl on other keys apply).
+            if (!LatinIME.sInstance.moveCursor(steps, false, false)) {
+                int code = steps < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
+                for (int i = Math.abs(steps); i > 0; i--) {
+                    mListener.onKey(code, null, x, y);
+                }
             }
         }
-        View view = mKeyboardSwitcher.getInputView();
-        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+        for (int i = Math.abs(lines); i > 0; i--) {
+            // Lines only in multi-line fields (see LatinIME.moveCursorLine).
+            if (LatinIME.sInstance.moveCursorLine(lines < 0)) moved = true;
+        }
+        if (moved) {
+            View view = mKeyboardSwitcher.getInputView();
+            if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+        }
     }
 
     /** True while the key repeat must still see finger movement (backspace swipe). */

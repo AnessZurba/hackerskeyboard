@@ -214,6 +214,39 @@ public class SwipeGestureTest {
         assertEquals("long press opens the popup", true, popup.getBoolean(mView));
     }
 
+    /** Slides the held space bar 60px right in the given time; returns the arrow presses. */
+    private int trackpadRight(long durationMs) {
+        mTyped.clear();
+        float[] space = centre(' ');
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, space, 0)));
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+        long t = SystemClock.uptimeMillis();
+        for (int i = 1; i <= 6; i++) {
+            org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(durationMs / 6));
+            float[] at = {space[0] + i * 10, space[1]};
+            mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, p(0, at, 0)));
+        }
+        mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP,
+                p(0, new float[] {space[0] + 60, space[1]}, 0)));
+        idle();
+        int arrows = 0;
+        for (int code : mTyped) {
+            org.junit.Assert.assertNotEquals("the held space bar types no space", (int) ' ', code);
+            if (code == LatinKeyboardView.KEYCODE_DPAD_RIGHT) arrows++;
+        }
+        return arrows;
+    }
+
+    /** Holding space turns the keyboard into a trackpad; a faster slide goes further. */
+    @Test
+    public void spaceTrackpadMovesTheCursorWithAcceleration() {
+        int slow = trackpadRight(600);
+        int fast = trackpadRight(60);
+        org.junit.Assert.assertTrue("slow slide moves the cursor right, got " + slow, slow > 0);
+        org.junit.Assert.assertTrue("faster slide moves further (" + fast + " > " + slow + ")", fast > slow);
+    }
+
     /** Two-thumb typing (bottom row, then top row) is not a swipe. */
     @Test
     public void twoThumbTypingIsNotASwipe() {

@@ -916,6 +916,19 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             onBufferDraw(canvas);
         }
         if (mBuffer != null) canvas.drawBitmap(mBuffer, 0, 0, null);
+        if (isTrackpadActive()) {
+            // The space-bar trackpad is on: fade the keys, as iOS does.
+            KeyboardToolbar toolbar = KeyboardSwitcher.getInstance().getInputContainer();
+            int colour = toolbar != null ? toolbar.backgroundColour() : 0xFF000000;
+            canvas.drawColor((colour & 0x00FFFFFF) | 0xD0000000);
+        }
+    }
+
+    private boolean isTrackpadActive() {
+        for (PointerTracker t : mPointerTrackers) {
+            if (t.isCursorSliding()) return true;
+        }
+        return false;
     }
     
     private void drawDeadKeyLabel(Canvas canvas, String hint, int x, float baseline, Paint paint) {

@@ -1607,8 +1607,8 @@ public class LatinIME extends InputMethodService implements
 
     private boolean isConnectbot() {
         EditorInfo ei = getCurrentInputEditorInfo();
+        if (ei == null || ei.packageName == null) return false;
         String pkg = ei.packageName;
-        if (ei == null || pkg == null) return false;
         return ((pkg.equalsIgnoreCase("org.connectbot")
             || pkg.equalsIgnoreCase("org.woltage.irssiconnectbot")
             || pkg.equalsIgnoreCase("com.pslib.connectbot")
@@ -2515,6 +2515,37 @@ public class LatinIME extends InputMethodService implements
         if (end == target) return true; // already there: nowhere to go
         if (multiLine) return false;     // the field moves between its lines itself
         ic.setSelection(et.startOffset + (select ? anchor : target), et.startOffset + target);
+        return true;
+    }
+
+    /**
+     * One line up or down for the space-bar trackpad, only in multi-line text fields: a
+     * single-line field has no lines (an arrow key there jumps to an end or leaves the
+     * field), and in a terminal a stray vertical drift would recall shell history.
+     *
+     * @return whether the cursor moved
+     */
+    boolean moveCursorLine(boolean up) {
+        InputConnection ic = getCurrentInputConnection();
+        EditorInfo ei = getCurrentInputEditorInfo();
+        if (ic == null || ei == null
+                || (ei.inputType & EditorInfo.TYPE_MASK_CLASS) != EditorInfo.TYPE_CLASS_TEXT
+                || (ei.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) == 0) {
+            return false;
+        }
+        android.view.inputmethod.ExtractedText et = extractText(ic);
+        if (et != null) {
+            int end = et.selectionEnd;
+            if (up ? end == 0 : end == et.text.length()) return false; // nowhere to go
+        }
+        commitTyped(ic, true);
+        int code = up ? KeyEvent.KEYCODE_DPAD_UP : KeyEvent.KEYCODE_DPAD_DOWN;
+        long now = SystemClock.uptimeMillis();
+        int meta = isShiftMod() ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0;
+        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0, meta,
+                -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
+        ic.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0, meta,
+                -1, 0, KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE));
         return true;
     }
 
