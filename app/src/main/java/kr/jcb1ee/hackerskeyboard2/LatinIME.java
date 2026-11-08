@@ -2292,7 +2292,7 @@ public class LatinIME extends InputMethodService implements
             revertLastWord(deleteChar);
             ic.endBatchEdit();
             return;
-        } else if (mEnteredText != null && !isLamAlef(mEnteredText)
+        } else if (mEnteredText != null
                 && sameAsTextBeforeCursor(ic, mEnteredText)) {
             ic.deleteSurroundingText(mEnteredText.length(), 0);
         } else if (deleteChar) {
@@ -2316,13 +2316,6 @@ public class LatinIME extends InputMethodService implements
         }
         mJustRevertedSeparator = null;
         ic.endBatchEdit();
-    }
-
-    /** Lam + alef (ا أ إ آ): backspace removes the alef, then the lam, like other letters. */
-    private static boolean isLamAlef(CharSequence text) {
-        if (text == null || text.length() != 2 || text.charAt(0) != '\u0644') return false;
-        char alef = text.charAt(1);
-        return alef == '\u0627' || alef == '\u0623' || alef == '\u0625' || alef == '\u0622';
     }
 
     // ---------------------------------------------------------------- backspace swipe
