@@ -562,15 +562,20 @@ public class SelectionPanelTest {
                     MotionEvent.ACTION_MOVE, x0 - px * i / steps, y, 0));
         }
         int selected = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        mLastOverlay = view.gestureOverlayStatus();
         view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
                 MotionEvent.ACTION_UP, x0 - px, y, 0));
         idle();
+        assertEquals("label gone after", null, view.gestureOverlayStatus());
         return selected;
     }
+
+    private String mLastOverlay;
 
     @Test
     public void backspaceSwipeSlowIsOneWordPerStep() throws Exception {
         assertEquals("4 words (16dp each): \"qq rr ss tt\"", 11, backspaceSwipe(64, 800));
+        assertEquals("the keyboard says how many", "4 words", mLastOverlay);
         assertEquals("deleted on release", "aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp ",
                 mField.getText().toString());
     }

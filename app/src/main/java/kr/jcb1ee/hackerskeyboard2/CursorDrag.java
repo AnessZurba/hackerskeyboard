@@ -97,6 +97,11 @@ final class CursorDrag {
         return mActive;
     }
 
+    /** Whether this drag extends a selection (Select on, or Shift). */
+    boolean isSelecting() {
+        return mActive && mSelect;
+    }
+
     /**
      * Starts a drag. Returns false when the editor doesn't expose its text (terminals): the
      * caller sends arrow keys instead.

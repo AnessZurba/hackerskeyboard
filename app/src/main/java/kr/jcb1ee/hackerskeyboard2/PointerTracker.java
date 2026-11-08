@@ -539,6 +539,13 @@ public class PointerTracker {
         if (Math.abs(x - mDownX) > mCursorSlop) return false;
         mCursorSlide = true;
         mCursorDragging = LatinIME.sInstance != null && LatinIME.sInstance.beginCursorDrag(false);
+        LatinKeyboardBaseView overlay = mKeyboardSwitcher.getInputView();
+        if (overlay != null) {
+            boolean selecting = mCursorDragging && LatinIME.sInstance.mCursorDrag.isSelecting();
+            overlay.setGestureOverlay(overlay.getContext().getString(selecting
+                            ? R.string.gesture_selecting : R.string.gesture_moving_cursor),
+                    overlay.getContext().getString(R.string.gesture_trackpad_hint));
+        }
         mTrackpad.start(x, mKeyState.getLastY(), android.os.SystemClock.uptimeMillis());
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(true);
@@ -563,6 +570,8 @@ public class PointerTracker {
     private void endCursorSlide() {
         if (!mCursorSlide) return;
         mCursorSlide = false;
+        LatinKeyboardBaseView overlay = mKeyboardSwitcher.getInputView();
+        if (overlay != null) overlay.setGestureOverlay(null, null);
         if (mCursorDragging && LatinIME.sInstance != null) LatinIME.sInstance.mCursorDrag.end();
         mCursorDragging = false;
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {

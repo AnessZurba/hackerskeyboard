@@ -741,6 +741,16 @@
     <string name="title_clipboard_history">Clipboard history</string>
     <string name="summary_clipboard_history">Keep the last 50 copied texts for the toolbar\'s clipboard panel. Texts apps mark as sensitive (passwords) are never kept. Swipe up on the keyboard to show or hide the toolbar.</string>
 
+    <!-- Shown on the keyboard while a gesture is active: what it's doing, and how it works. -->
+    <string name="gesture_moving_cursor">Moving the cursor</string>
+    <string name="gesture_selecting">Selecting</string>
+    <string name="gesture_trackpad_hint">Drag in any direction · lift to stop</string>
+    <string name="gesture_nothing_selected">Nothing selected</string>
+    <plurals name="gesture_words">
+        <item quantity="one">%d word</item>
+        <item quantity="other">%d words</item>
+    </plurals>
+    <string name="gesture_delete_hint">Slide back for fewer · lift to delete · back to ⌫ to cancel</string>
     <string name="title_cursor_loupe">Cursor loupe</string>
     <string name="summary_cursor_loupe">While you hold the space bar (or the Select button) and drag the cursor, show the text around it, larger, above the cursor.</string>
     <string name="title_delete_swipe">Backspace swipe</string>

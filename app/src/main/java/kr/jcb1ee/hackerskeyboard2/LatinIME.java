@@ -2895,6 +2895,7 @@ public class LatinIME extends InputMethodService implements
         mDeleteSwipeAnchor = end;
         mDeleteSwipeChars = 0;
         mDeleteSwipeWords = 0;
+        showDeleteSwipeStatus(0);
         return true;
     }
 
@@ -2904,7 +2905,8 @@ public class LatinIME extends InputMethodService implements
         mDeleteSwipeWords = words;
         CharSequence t = mDeleteSwipeText;
         int i = t.length();
-        for (int w = 0; w < words && i > 0; w++) {
+        int taken = 0; // words actually there to select
+        for (int w = 0; w < words && i > 0; w++, taken++) {
             while (i > 0 && Character.isWhitespace(t.charAt(i - 1))) i--;
             if (i > 0 && isSwipeWordChar(t.charAt(i - 1))) {
                 while (i > 0 && isSwipeWordChar(t.charAt(i - 1))) i--;
@@ -2914,6 +2916,7 @@ public class LatinIME extends InputMethodService implements
             }
         }
         int chars = Math.min(t.length() - i, mDeleteSwipeAnchor);
+        showDeleteSwipeStatus(chars == 0 ? 0 : taken);
         if (chars == mDeleteSwipeChars) return;
         mDeleteSwipeChars = chars;
         InputConnection ic = getCurrentInputConnection();
@@ -2922,6 +2925,15 @@ public class LatinIME extends InputMethodService implements
         View view = mKeyboardSwitcher.getInputContainer();
         if (view == null) view = mKeyboardSwitcher.getInputView();
         if (view != null) view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+    /** The keyboard's label for the backspace swipe: how many words, and how it works. */
+    private void showDeleteSwipeStatus(int words) {
+        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        if (view == null) return;
+        view.setGestureOverlay(words == 0 ? getString(R.string.gesture_nothing_selected)
+                        : getResources().getQuantityString(R.plurals.gesture_words, words, words),
+                getString(R.string.gesture_delete_hint));
     }
 
     private static boolean isSwipeWordChar(char c) {
@@ -2942,6 +2954,8 @@ public class LatinIME extends InputMethodService implements
         }
         mDeleteSwipeText = null;
         mDeleteSwipeChars = 0;
+        LatinKeyboardView overlay = mKeyboardSwitcher.getInputView();
+        if (overlay != null) overlay.setGestureOverlay(null, null);
         mDeleteSwipeWords = 0;
         updateShiftKeyState(getCurrentInputEditorInfo());
     }
