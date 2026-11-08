@@ -721,6 +721,9 @@
     <string name="toolbar_select">Select</string>
     <string name="toolbar_clipboard">Clipboard</string>
     <string name="toolbar_emoji">Emoji</string>
+    <string name="toolbar_emoji_recent">Recently used</string>
+    <string name="toolbar_emoji_search">Search emoji</string>
+    <string name="toolbar_emoji_space">Space</string>
     <string name="toolbar_select_all">All</string>
     <string name="toolbar_copy">Copy</string>
     <string name="toolbar_cut">Cut</string>

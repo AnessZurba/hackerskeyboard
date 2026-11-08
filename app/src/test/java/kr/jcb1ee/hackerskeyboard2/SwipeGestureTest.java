@@ -265,4 +265,24 @@ public class SwipeGestureTest {
         idle();
         assertEquals("toolbar must not toggle", shown, mToolbar.isToolbarShown());
     }
+
+    /** Holding a key and sliding up into its popup types the popup key (not a swipe). */
+    @Test
+    public void slidingUpIntoALongPressPopupTypesThePopupKey() {
+        boolean shown = mToolbar.isToolbarShown();
+        float[] e = centre('e');
+        float keyHeight = mView.getKeyboard().getKeys().get(0).height;
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, e, 0)));
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+        long t = SystemClock.uptimeMillis();
+        for (int i = 1; i <= 6; i++) {
+            mView.onTouchEvent(ev(t0, t + i * 20, MotionEvent.ACTION_MOVE, p(0, e, -keyHeight * i / 6)));
+        }
+        mView.onTouchEvent(ev(t0, t + 140, MotionEvent.ACTION_UP, p(0, e, -keyHeight)));
+        idle();
+        assertEquals("not a swipe", shown, mToolbar.isToolbarShown());
+        assertEquals("one popup key typed: " + mTyped, 1, mTyped.size());
+        org.junit.Assert.assertNotEquals("a popup key, not the held key", (int) 'e', (int) mTyped.get(0));
+    }
 }

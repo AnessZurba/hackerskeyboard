@@ -802,6 +802,9 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
+        if (mSearchConnection != null && mKeyboardSwitcher.getInputContainer() != null) {
+            mKeyboardSwitcher.getInputContainer().closePanel(); // ends the emoji search
+        }
         sKeyboardSettings.editorPackageName = attribute.packageName;
         sKeyboardSettings.editorFieldName = attribute.fieldName;
         sKeyboardSettings.editorFieldId = attribute.fieldId;
@@ -1269,6 +1272,11 @@ public class LatinIME extends InputMethodService implements
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
         case KeyEvent.KEYCODE_BACK:
+            if (event.getRepeatCount() == 0 && mSearchConnection != null
+                    && mKeyboardSwitcher.getInputContainer() != null) {
+                mKeyboardSwitcher.getInputContainer().endSearchFromBack();
+                return true;
+            }
             if (event.getRepeatCount() == 0
                     && mKeyboardSwitcher.getInputView() != null) {
                 if (mKeyboardSwitcher.getInputView().handleBack()) {
@@ -2005,7 +2013,9 @@ public class LatinIME extends InputMethodService implements
         if (ch >= '0' && ch <= '9') {
             //WIP
             InputConnection ic = getCurrentInputConnection();
-            ic.clearMetaKeyStates(KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON | KeyEvent.META_SYM_ON);
+            if (ic != null) {
+                ic.clearMetaKeyStates(KeyEvent.META_SHIFT_ON | KeyEvent.META_ALT_ON | KeyEvent.META_SYM_ON);
+            }
             //EditorInfo ei = getCurrentInputEditorInfo();
             //Log.i(TAG, "capsmode=" + ic.getCursorCapsMode(ei.inputType));
             //sendModifiedKeyDownUp(KeyEvent.KEYCODE_0 + ch - '0');
@@ -2453,6 +2463,38 @@ public class LatinIME extends InputMethodService implements
     }
 
     final CursorDrag mCursorDrag = new CursorDrag(this);
+
+    // While the emoji panel's search is open, the keys type into its query instead.
+    private InputConnection mSearchConnection;
+
+    @Override
+    public InputConnection getCurrentInputConnection() {
+        return mSearchConnection != null ? mSearchConnection : appConnection();
+    }
+
+    /** The app's text field, even while the emoji search has the keys. */
+    InputConnection appConnection() {
+        return super.getCurrentInputConnection();
+    }
+
+    /** Sends the keys to {@code search} (the emoji search query), or back to the app (null). */
+    void setSearchConnection(InputConnection search) {
+        InputConnection current = getCurrentInputConnection();
+        if (current != null) commitTyped(current, true); // a word in progress stays where it is
+        mSearchConnection = search;
+        TextEntryState.reset();
+    }
+
+    /** Types into the app while the search has the keys (an emoji picked from the results). */
+    void typeIntoApp(String text) {
+        InputConnection search = mSearchConnection;
+        if (search != null) setSearchConnection(null);
+        try {
+            onText(text);
+        } finally {
+            if (search != null) setSearchConnection(search);
+        }
+    }
 
     /** Starts a trackpad drag; false when the editor hides its text (send arrow keys). */
     boolean beginCursorDrag(boolean select) {

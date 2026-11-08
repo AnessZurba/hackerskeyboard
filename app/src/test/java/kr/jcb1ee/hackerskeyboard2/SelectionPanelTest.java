@@ -40,7 +40,7 @@ public class SelectionPanelTest {
     /** The keyboard, typing into {@link #sConnection}. */
     public static class TestIME extends LatinIME {
         @Override
-        public InputConnection getCurrentInputConnection() {
+        InputConnection appConnection() {
             return sConnection;
         }
 
@@ -258,6 +258,115 @@ public class SelectionPanelTest {
         settle();
         assertSelection(15, 24);
         mIme.mCursorDrag.end();
+    }
+
+    // ---------------------------------------------------------------- emoji panel
+
+    private KeyboardToolbar openEmoji() {
+        sConnection = mField.onCreateInputConnection(new EditorInfo());
+        mField.setText("");
+        KeyboardToolbar toolbar = (KeyboardToolbar) mIme.onCreateInputView();
+        idle();
+        layout(toolbar);
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+        ((ViewGroup) bar.getChildAt(2)).getChildAt(0).performClick();
+        idle();
+        layout(toolbar);
+        return toolbar;
+    }
+
+    private static void layout(View v) {
+        for (int i = 0; i < 2; i++) {
+            v.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            v.layout(0, 0, 1080, v.getMeasuredHeight());
+        }
+    }
+
+    /** Every category is in the one scrolling grid, not just a page of it. */
+    @Test
+    public void emojiPanelHoldsEveryEmoji() {
+        KeyboardToolbar toolbar = openEmoji();
+        FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
+        androidx.recyclerview.widget.RecyclerView grid = findGrid(body.getChildAt(1));
+        assertTrue("all emoji, got " + grid.getAdapter().getItemCount(),
+                grid.getAdapter().getItemCount() > 1500);
+        assertTrue("cells laid out", grid.getChildCount() > 20);
+        View cell = grid.getChildAt(1); // after the first section header
+        cell.performClick();
+        assertTrue("typed into the app: " + mField.getText(), mField.getText().length() > 0);
+    }
+
+    /** Search: the keys type the query, results come up, a tap types into the app. */
+    @Test
+    public void emojiSearchTypesQueryAndInsertsResult() {
+        KeyboardToolbar toolbar = openEmoji();
+        FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
+        View panel = body.getChildAt(1);
+        View search = findByDescription(panel, mIme.getString(R.string.toolbar_emoji_search));
+        search.performClick();
+        idle();
+        assertTrue(toolbar.isSearching());
+        assertEquals("keyboard is back", View.VISIBLE, body.getChildAt(0).getVisibility());
+        for (char c : "grin".toCharArray()) mIme.onKey(c, new int[] {c}, 0, 0);
+        idle();
+        assertEquals("the app got none of the query", "", mField.getText().toString());
+        assertTrue(mIme.getCurrentInputConnection().getTextBeforeCursor(10, 0).toString().contains("grin"));
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+        TextView first = firstEmojiIn(bar);
+        assertTrue("found a result", first != null);
+        String emoji = first.getText().toString();
+        first.performClick();
+        assertEquals("result typed into the app", emoji, mField.getText().toString());
+        assertTrue("still searching", toolbar.isSearching());
+        toolbar.endSearchFromBack();
+        assertTrue(!toolbar.isSearching());
+        assertTrue("keys go to the app again", mIme.getCurrentInputConnection() == sConnection);
+    }
+
+    @Test
+    public void emojiSearchMatchesArabicAndHebrew() {
+        KeyboardToolbar toolbar = openEmoji();
+        assertTrue(toolbar.searchEmoji("ضحك", 10).contains("😀"));
+        assertTrue(toolbar.searchEmoji("חיוך", 10).contains("😀"));
+        assertEquals("😀", toolbar.searchEmoji("grinning face", 10).get(0));
+    }
+
+    private static androidx.recyclerview.widget.RecyclerView findGrid(View v) {
+        if (v instanceof androidx.recyclerview.widget.RecyclerView) return (androidx.recyclerview.widget.RecyclerView) v;
+        if (v instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) v).getChildCount(); i++) {
+                androidx.recyclerview.widget.RecyclerView r = findGrid(((ViewGroup) v).getChildAt(i));
+                if (r != null) return r;
+            }
+        }
+        return null;
+    }
+
+    private static View findByDescription(View v, String d) {
+        if (d.contentEquals(v.getContentDescription() == null ? "" : v.getContentDescription())) return v;
+        if (v instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) v).getChildCount(); i++) {
+                View r = findByDescription(((ViewGroup) v).getChildAt(i), d);
+                if (r != null) return r;
+            }
+        }
+        return null;
+    }
+
+    private static TextView firstEmojiIn(View v) {
+        if (v instanceof TextView && v.getVisibility() == View.VISIBLE && v.isClickable()
+                && ((TextView) v).getText().length() > 0
+                && Character.isSurrogate(((TextView) v).getText().charAt(0))) {
+            return (TextView) v;
+        }
+        if (v instanceof ViewGroup && v.getVisibility() == View.VISIBLE) {
+            for (int i = 0; i < ((ViewGroup) v).getChildCount(); i++) {
+                TextView r = firstEmojiIn(((ViewGroup) v).getChildAt(i));
+                if (r != null) return r;
+            }
+        }
+        return null;
     }
 
     private static void idle() {

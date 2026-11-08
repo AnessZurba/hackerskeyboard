@@ -271,6 +271,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /** Back to the keyboard; called when input starts or finishes. */
     void closePanel() {
+        endEmojiSearch(false);
         if (mOpenPanel == PANEL_NONE) return;
         mOpenPanel = PANEL_NONE;
         stopRepeat();
@@ -670,16 +671,13 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void buildClipHeader(final List<ClipboardHistory.Clip> clips) {
         mClipHeader.removeAllViews();
         final ClipboardHistory history = ClipboardHistory.get(getContext());
-        mClipHeader.addView(headerIcon(R.drawable.ic_clip_back, v -> {
-            if (mClipSelecting) {
+        if (mClipSelecting) {
+            // Back leaves selection mode (the toolbar's clipboard button closes the panel).
+            mClipHeader.addView(headerIcon(R.drawable.ic_clip_back, v -> {
                 mClipSelecting = false;
                 mClipSelected.clear();
                 refreshClipboard();
-            } else {
-                closePanel();
-            }
-        }));
-        if (mClipSelecting) {
+            }));
             final boolean all = !clips.isEmpty() && mClipSelected.size() == clips.size();
             LinearLayout allToggle = row();
             allToggle.setGravity(Gravity.CENTER_VERTICAL);
@@ -717,6 +715,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             }));
         } else {
             TextView title = headerText(mIme.getString(R.string.toolbar_clipboard));
+            title.setPadding(dp(12), 0, dp(6), 0);
             mClipHeader.addView(title, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1));
             View.OnClickListener select = v -> {
                 if (clips.isEmpty()) return;
@@ -825,104 +824,442 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     // ------------------------------------------------------------------ emoji panel
 
+    /**
+     * Samsung-style emoji panel: search and category tabs on top, every category in one
+     * scrolling grid (recents first) with the tab following the scroll, and ABC, space and
+     * backspace at the bottom.
+     */
     private View buildEmojiPanel() {
         loadEmoji();
         LinearLayout panel = column();
-        final GridView grid = new GridView(getContext());
-        grid.setColumnWidth(dp(46));
-        grid.setNumColumns(GridView.AUTO_FIT);
-        grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
-        grid.setVerticalSpacing(dp(2));
-        grid.setSelector(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
-        final EmojiAdapter adapter = new EmojiAdapter();
-        grid.setAdapter(adapter);
-        grid.setOnItemClickListener((parent, view, position, id) -> {
-            String emoji = withTone(adapter.getItem(position));
-            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-            typeEmoji(emoji);
-        });
-        grid.setOnItemLongClickListener((parent, view, position, id) -> {
-            String base = baseOf(adapter.getItem(position));
-            String[] tones = mTones.get(base);
-            if (tones == null) return false;
-            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-            showTonePicker(view, base, tones, adapter);
-            return true;
-        });
-        panel.addView(grid, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
 
-        // Category tabs, recents first, and a backspace key.
-        LinearLayout tabs = row();
-        HorizontalScrollView tabScroll = new HorizontalScrollView(getContext());
-        tabScroll.setHorizontalScrollBarEnabled(false);
-        final LinearLayout tabRow = row();
-        tabScroll.addView(tabRow);
-        final List<String[]> pages = new ArrayList<>();
+        // Sections: recents (if any), then each group.
+        final List<Object> items = new ArrayList<>(); // String = emoji, Integer = header of section
+        final List<Integer> sectionStarts = new ArrayList<>();
         List<String> tabLabels = new ArrayList<>();
-        pages.add(recents());
-        tabLabels.add("🕘");
+        String[] recent = recents();
+        List<String[]> sections = new ArrayList<>();
+        final List<String> sectionNames = new ArrayList<>();
+        if (recent.length > 0) {
+            sections.add(recent);
+            sectionNames.add(mIme.getString(R.string.toolbar_emoji_recent));
+            tabLabels.add("🕘");
+        }
         for (int i = 0; i < mGroups.size(); i++) {
-            pages.add(mGroups.get(i));
+            sections.add(mGroups.get(i));
+            sectionNames.add(mGroupNames.get(i));
             tabLabels.add(mGroups.get(i)[0]);
         }
-        final int initial = pages.get(0).length > 0 ? 0 : 1;
-        for (int i = 0; i < pages.size(); i++) {
-            final int page = i;
+        for (int i = 0; i < sections.size(); i++) {
+            sectionStarts.add(items.size());
+            items.add(i);
+            items.addAll(Arrays.asList(sections.get(i)));
+        }
+
+        // Top: search, then one tab per section.
+        final LinearLayout tabs = row();
+        ImageView search = new ImageView(getContext());
+        search.setImageResource(R.drawable.ic_emoji_search);
+        search.setImageTintList(ColorStateList.valueOf(mForeground));
+        search.setScaleType(ImageView.ScaleType.CENTER);
+        search.setContentDescription(mIme.getString(R.string.toolbar_emoji_search));
+        search.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            startEmojiSearch();
+        });
+        tabs.addView(search, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        panel.addView(tabs, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(40)));
+
+        final androidx.recyclerview.widget.RecyclerView grid =
+                new androidx.recyclerview.widget.RecyclerView(getContext());
+        int columns = Math.max(6, (getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels) / dp(46));
+        final androidx.recyclerview.widget.GridLayoutManager layout =
+                new androidx.recyclerview.widget.GridLayoutManager(getContext(), columns);
+        layout.setSpanSizeLookup(new androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                return items.get(position) instanceof Integer ? layout.getSpanCount() : 1;
+            }
+        });
+        grid.setLayoutManager(layout);
+        grid.setItemAnimator(null);
+        final EmojiGridAdapter adapter = new EmojiGridAdapter(items, sectionNames);
+        grid.setAdapter(adapter);
+        panel.addView(grid, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
+
+        final int[] current = {-1};
+        final Runnable followScroll = () -> {
+            int first = layout.findFirstVisibleItemPosition();
+            if (first < 0) return;
+            int section = 0;
+            for (int i = 0; i < sectionStarts.size(); i++) {
+                if (sectionStarts.get(i) <= first) section = i;
+            }
+            if (section != current[0]) {
+                current[0] = section;
+                for (int i = 1; i < tabs.getChildCount(); i++) {
+                    tabs.getChildAt(i).setBackground(i - 1 == section ? cellBackground(false) : null);
+                }
+            }
+        };
+        for (int i = 0; i < tabLabels.size(); i++) {
+            final int section = i;
             TextView tab = new TextView(getContext());
             tab.setText(tabLabels.get(i));
-            tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+            tab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(dp(10), 0, dp(10), 0);
+            tab.setContentDescription(sectionNames.get(i));
             tab.setOnClickListener(v -> {
-                if (page == 0) pages.set(0, recents());
-                adapter.setEmoji(pages.get(page));
-                grid.setSelection(0);
-                highlightTab(tabRow, page);
+                v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                layout.scrollToPositionWithOffset(sectionStarts.get(section), 0);
+                current[0] = -1;
+                grid.post(followScroll);
             });
-            tabRow.addView(tab, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
+            lp.setMargins(dp(1), dp(3), dp(1), dp(3));
+            tabs.addView(tab, lp);
         }
-        adapter.setEmoji(pages.get(initial));
-        highlightTab(tabRow, initial);
-        tabs.addView(tabScroll, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        grid.addOnScrollListener(new androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(androidx.recyclerview.widget.RecyclerView rv, int dx, int dy) {
+                followScroll.run();
+            }
+        });
+        grid.post(followScroll);
+
+        // Bottom: back to the keyboard, space, backspace.
+        LinearLayout bottom = row();
+        TextView abc = cell("ABC", 15);
+        abc.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            closePanel();
+        });
+        TextView space = cell(" ", 15);
+        space.setContentDescription(mIme.getString(R.string.toolbar_emoji_space));
+        space.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            if (connection() != null) ime().onText(" ");
+        });
         TextView backspace = cell("⌫", 18);
         setRepeating(backspace, () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0));
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(dp(56), LayoutParams.MATCH_PARENT);
-        blp.setMargins(dp(4), dp(4), dp(4), dp(4));
-        tabs.addView(backspace, blp);
-        panel.addView(tabs, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(44)));
+        int[] widths = {72, 0, 72};
+        View[] views = {abc, space, backspace};
+        for (int i = 0; i < views.length; i++) {
+            LinearLayout.LayoutParams lp = widths[i] > 0
+                    ? new LinearLayout.LayoutParams(dp(widths[i]), LayoutParams.MATCH_PARENT)
+                    : new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
+            lp.setMargins(dp(4), dp(4), dp(4), dp(4));
+            bottom.addView(views[i], lp);
+        }
+        panel.addView(bottom, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(46)));
         return panel;
     }
 
-    private void highlightTab(LinearLayout tabRow, int selected) {
-        for (int i = 0; i < tabRow.getChildCount(); i++) {
-            tabRow.getChildAt(i).setBackground(i == selected ? cellBackground(false) : null);
+    private static final int TYPE_HEADER = 0, TYPE_EMOJI = 1;
+
+    /** The emoji grid: section headers across the full width, emoji cells in between. */
+    private final class EmojiGridAdapter
+            extends androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder> {
+        private final List<Object> mItems;
+        private final List<String> mNames;
+
+        EmojiGridAdapter(List<Object> items, List<String> names) {
+            mItems = items;
+            mNames = names;
+        }
+
+        @Override
+        public int getItemCount() {
+            return mItems.size();
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return mItems.get(position) instanceof Integer ? TYPE_HEADER : TYPE_EMOJI;
+        }
+
+        @Override
+        public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int type) {
+            TextView v;
+            if (type == TYPE_HEADER) {
+                v = new TextView(getContext());
+                v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+                v.setTextColor(faded(mForeground));
+                v.setPadding(dp(12), dp(10), dp(12), dp(4));
+                v.setLayoutParams(new androidx.recyclerview.widget.RecyclerView.LayoutParams(
+                        LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            } else {
+                v = newEmojiCell();
+                v.setLayoutParams(new androidx.recyclerview.widget.RecyclerView.LayoutParams(
+                        LayoutParams.MATCH_PARENT, dp(46)));
+            }
+            return new androidx.recyclerview.widget.RecyclerView.ViewHolder(v) { };
+        }
+
+        @Override
+        public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView.ViewHolder holder, int position) {
+            Object item = mItems.get(position);
+            if (item instanceof Integer) {
+                ((TextView) holder.itemView).setText(mNames.get((Integer) item));
+            } else {
+                bindEmojiCell((EmojiCell) holder.itemView, (String) item, this::notifyDataSetChanged);
+            }
         }
     }
 
-    private final class EmojiAdapter extends BaseAdapter {
-        private String[] mEmoji = new String[0];
+    /** An emoji cell: tap types it, a long press offers its skin tones. */
+    private EmojiCell newEmojiCell() {
+        EmojiCell v = new EmojiCell(getContext());
+        v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        v.setGravity(Gravity.CENTER);
+        v.setBackground(pressedBackground());
+        return v;
+    }
 
-        void setEmoji(String[] emoji) {
-            mEmoji = emoji;
-            notifyDataSetChanged();
+    private void bindEmojiCell(final EmojiCell v, final String emoji, final Runnable toneChanged) {
+        v.setText(withTone(emoji));
+        final String base = baseOf(emoji);
+        v.mHasTones = mTones.containsKey(base);
+        v.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            typeEmoji(withTone(emoji));
+        });
+        v.setOnLongClickListener(view -> {
+            String[] tones = mTones.get(base);
+            if (tones == null) return false;
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            showTonePicker(view, base, tones, toneChanged);
+            return true;
+        });
+    }
+
+    private android.graphics.drawable.Drawable pressedBackground() {
+        GradientDrawable pressed = new GradientDrawable();
+        pressed.setCornerRadius(dp(8));
+        pressed.setColor(blend(mBackground, mForeground, 0.2f));
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[] {android.R.attr.state_pressed}, pressed);
+        return states;
+    }
+
+    // ------------------------------------------------------------------ emoji search
+
+    private boolean mSearching;
+    private LinearLayout mSearchRow;
+    private TextView mSearchQuery;
+    private LinearLayout mSearchResults;
+    private HorizontalScrollView mSearchScroll;
+    private android.text.SpannableStringBuilder mQuery;
+    private List<String[]> mSearchWords; // {emoji, "name|keyword|..."}
+
+    /**
+     * Search, Samsung style: the toolbar row becomes a search bar with the matching emoji,
+     * and the keyboard comes back below it to type the query (LatinIME sends the keys to
+     * the query instead of the app meanwhile). Tapping a result types it into the app.
+     */
+    private void startEmojiSearch() {
+        closePanel();
+        loadSearchWords();
+        if (mSearchRow == null) buildSearchRow();
+        mQuery = new android.text.SpannableStringBuilder();
+        android.text.Selection.setSelection(mQuery, 0);
+        mSearching = true;
+        for (View cell : mCells) cell.setVisibility(GONE);
+        mChipScroll.setVisibility(GONE);
+        mSearchRow.setVisibility(VISIBLE);
+        ime().setSearchConnection(new SearchConnection());
+        updateSearch();
+    }
+
+    /** Leaves the search; back to the emoji panel when {@code toPanel}. */
+    private void endEmojiSearch(boolean toPanel) {
+        if (!mSearching) return;
+        mSearching = false;
+        ime().setSearchConnection(null);
+        mSearchRow.setVisibility(GONE);
+        boolean chips = hasChips();
+        for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
+        mChipScroll.setVisibility(chips ? VISIBLE : GONE);
+        if (toPanel) togglePanel(PANEL_EMOJI);
+    }
+
+    boolean isSearching() {
+        return mSearching;
+    }
+
+    /** Back during the search returns to the emoji panel instead of closing the keyboard. */
+    void endSearchFromBack() {
+        endEmojiSearch(true);
+    }
+
+    private void buildSearchRow() {
+        mSearchRow = row();
+        mSearchRow.setGravity(Gravity.CENTER_VERTICAL);
+        ImageView back = headerIcon(R.drawable.ic_clip_back, v -> endEmojiSearch(true));
+        mSearchRow.addView(back, new LinearLayout.LayoutParams(dp(40), LayoutParams.MATCH_PARENT));
+        mSearchQuery = new TextView(getContext());
+        mSearchQuery.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        mSearchQuery.setSingleLine(true);
+        mSearchQuery.setEllipsize(android.text.TextUtils.TruncateAt.START);
+        mSearchQuery.setGravity(Gravity.CENTER_VERTICAL);
+        mSearchQuery.setPadding(dp(12), 0, dp(12), 0);
+        mSearchQuery.setCompoundDrawablePadding(dp(6));
+        GradientDrawable pill = new GradientDrawable();
+        pill.setCornerRadius(dp(18));
+        pill.setColor(blend(mBackground, mForeground, 0.12f));
+        mSearchQuery.setBackground(pill);
+        LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(dp(130), dp(34));
+        qlp.setMargins(0, 0, dp(4), 0);
+        mSearchRow.addView(mSearchQuery, qlp);
+        mSearchScroll = new HorizontalScrollView(getContext());
+        mSearchScroll.setHorizontalScrollBarEnabled(false);
+        mSearchResults = row();
+        mSearchScroll.addView(mSearchResults, new FrameLayout.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+        mSearchRow.addView(mSearchScroll, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        mSearchRow.setVisibility(GONE);
+        mBar.addView(mSearchRow, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+    }
+
+    private void updateSearch() {
+        String q = mQuery.toString();
+        mSearchQuery.setTextColor(q.isEmpty() ? faded(mForeground) : mForeground);
+        mSearchQuery.setText(q.isEmpty() ? mIme.getString(R.string.toolbar_emoji_search) : q);
+        mSearchResults.removeAllViews();
+        for (String emoji : searchEmoji(q, 60)) {
+            EmojiCell cell = newEmojiCell();
+            cell.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
+            bindEmojiCell(cell, emoji, this::updateSearch);
+            mSearchResults.addView(cell, new LinearLayout.LayoutParams(dp(42), LayoutParams.MATCH_PARENT));
+        }
+        mSearchScroll.scrollTo(0, 0);
+    }
+
+    /**
+     * Emoji whose name or keywords (English, Arabic, Hebrew) match {@code query}: whole
+     * words first, then words starting with it, then names containing it. Recents when empty.
+     */
+    List<String> searchEmoji(String query, int max) {
+        loadSearchWords();
+        String q = query.trim().toLowerCase(java.util.Locale.ROOT);
+        List<String> out = new ArrayList<>();
+        if (q.isEmpty()) {
+            out.addAll(Arrays.asList(recents()));
+            return out.size() > max ? out.subList(0, max) : out;
+        }
+        List<List<String>> ranks = new ArrayList<>();
+        for (int i = 0; i < 4; i++) ranks.add(new ArrayList<>());
+        for (String[] entry : mSearchWords) {
+            int best = 4;
+            String[] words = entry[1].split("\\|");
+            for (int i = 0; i < words.length && best > 0; i++) {
+                String w = words[i];
+                if (w.equals(q)) best = i == 0 ? 0 : Math.min(best, 1);
+                else if (w.startsWith(q) || w.contains(" " + q)) best = Math.min(best, 2);
+                else if (i == 0 && w.contains(q)) best = Math.min(best, 3);
+            }
+            if (best < 4) ranks.get(best).add(entry[0]);
+        }
+        for (List<String> rank : ranks) {
+            for (String e : rank) {
+                if (out.size() >= max) return out;
+                out.add(e);
+            }
+        }
+        return out;
+    }
+
+    private void loadSearchWords() {
+        if (mSearchWords != null) return;
+        loadEmoji();
+        mSearchWords = new ArrayList<>();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                getContext().getAssets().open("emoji_search.txt"), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                if (line.startsWith("#")) continue;
+                int tab = line.indexOf('\t');
+                if (tab > 0) mSearchWords.add(new String[] {line.substring(0, tab), line.substring(tab + 1)});
+            }
+        } catch (Exception e) {
+            android.util.Log.w("HK/Toolbar", "Could not load emoji search words", e);
+        }
+    }
+
+    /** Where the keys type during the search: the query. */
+    private final class SearchConnection extends android.view.inputmethod.BaseInputConnection {
+        SearchConnection() {
+            super(KeyboardToolbar.this, true);
         }
 
-        @Override public int getCount() { return mEmoji.length; }
-        @Override public String getItem(int position) { return mEmoji[position]; }
-        @Override public long getItemId(int position) { return position; }
+        @Override
+        public android.text.Editable getEditable() {
+            return mQuery;
+        }
+
+        private boolean changed(boolean result) {
+            if (mSearching) updateSearch();
+            return result;
+        }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            EmojiCell v = convertView instanceof EmojiCell ? (EmojiCell) convertView : null;
-            if (v == null) {
-                v = new EmojiCell(getContext());
-                v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-                v.setGravity(Gravity.CENTER);
-                v.setLayoutParams(new GridView.LayoutParams(GridView.LayoutParams.MATCH_PARENT, dp(46)));
+        public boolean commitText(CharSequence text, int newCursorPosition) {
+            if (text != null && text.toString().contains("\n")) return pickFirst();
+            return changed(super.commitText(text, newCursorPosition));
+        }
+
+        @Override
+        public boolean setComposingText(CharSequence text, int newCursorPosition) {
+            return changed(super.setComposingText(text, newCursorPosition));
+        }
+
+        @Override
+        public boolean finishComposingText() {
+            return changed(super.finishComposingText());
+        }
+
+        @Override
+        public boolean deleteSurroundingText(int before, int after) {
+            return changed(super.deleteSurroundingText(before, after));
+        }
+
+        @Override
+        public boolean performEditorAction(int action) {
+            return pickFirst();
+        }
+
+        @Override
+        public boolean sendKeyEvent(KeyEvent event) {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return true;
+            switch (event.getKeyCode()) {
+                case KeyEvent.KEYCODE_DEL:
+                    int end = android.text.Selection.getSelectionEnd(mQuery);
+                    if (end > 0) {
+                        int start = Character.isLowSurrogate(mQuery.charAt(end - 1)) && end > 1 ? end - 2 : end - 1;
+                        mQuery.delete(start, end);
+                    }
+                    return changed(true);
+                case KeyEvent.KEYCODE_ENTER:
+                case KeyEvent.KEYCODE_NUMPAD_ENTER:
+                    return pickFirst();
+                case KeyEvent.KEYCODE_ESCAPE:
+                case KeyEvent.KEYCODE_BACK:
+                    endEmojiSearch(true);
+                    return true;
+                default:
+                    int c = event.getUnicodeChar(event.getMetaState());
+                    if (c > 0 && !Character.isISOControl(c)) {
+                        mQuery.insert(android.text.Selection.getSelectionEnd(mQuery),
+                                new String(Character.toChars(c)));
+                        return changed(true);
+                    }
+                    return true;
             }
-            v.setText(withTone(mEmoji[position]));
-            v.mHasTones = mTones.containsKey(baseOf(mEmoji[position]));
-            return v;
+        }
+
+        private boolean pickFirst() {
+            if (mSearchResults.getChildCount() > 0) mSearchResults.getChildAt(0).performClick();
+            return true;
         }
     }
 
@@ -971,13 +1308,16 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private void typeEmoji(String emoji) {
-        if (connection() == null) return;
-        ime().onText(emoji);
+        if (ime().appConnection() == null) {
+            connection(); // explains
+            return;
+        }
+        if (mSearching) ime().typeIntoApp(emoji); else ime().onText(emoji);
         addRecent(emoji);
     }
 
     private void showTonePicker(View anchor, final String base, String[] tones,
-            final EmojiAdapter adapter) {
+            final Runnable changed) {
         final android.widget.PopupWindow popup = new android.widget.PopupWindow(getContext());
         LinearLayout row = row();
         GradientDrawable bg = new GradientDrawable();
@@ -999,7 +1339,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 privatePrefs().edit().putString("emoji_tone_" + base, option).apply();
                 typeEmoji(option);
-                adapter.notifyDataSetChanged();
+                changed.run();
                 popup.dismiss();
             });
             row.addView(t, new LinearLayout.LayoutParams(dp(48), dp(52)));

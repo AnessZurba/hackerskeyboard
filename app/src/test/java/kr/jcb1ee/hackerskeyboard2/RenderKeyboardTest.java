@@ -29,6 +29,23 @@ public class RenderKeyboardTest {
         KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         String panel = System.getProperty("renderPanel");
+        if ("emoji".equals(panel) || "emojisearch".equals(panel)) {
+            int w0 = ime.getResources().getDisplayMetrics().widthPixels;
+            toolbar.measure(View.MeasureSpec.makeMeasureSpec(w0, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            toolbar.layout(0, 0, w0, toolbar.getMeasuredHeight());
+            View bar = ((android.view.ViewGroup) toolbar.getChildAt(0)).getChildAt(2);
+            ((android.view.ViewGroup) bar).getChildAt(0).performClick();
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        }
+        if ("emojisearch".equals(panel)) {
+            View body = ((android.view.ViewGroup) toolbar.getChildAt(1)).getChildAt(1);
+            View search = ((android.view.ViewGroup) ((android.view.ViewGroup) body).getChildAt(0)).getChildAt(0);
+            search.performClick();
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+            for (char c : "cat".toCharArray()) ime.onKey(c, new int[] {c}, 0, 0);
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        }
         if ("clipboard".equals(panel)) {
             ClipboardHistory h = ClipboardHistory.get(ime);
             h.add("ssh user@example.com -p 2222");

@@ -214,13 +214,17 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
      * cursor slider or the backspace swipe has the finger).
      */
     private boolean isVerticalStroke(MotionEvent me, float fraction) {
-        if (!mSingleFingerStroke || mMiniKeyboardVisible) return false;
+        if (!mDetectSwipes || !mSingleFingerStroke || mMiniKeyboardVisible) return false;
         for (PointerTracker t : mPointerTrackers) {
             if (t.isSliding()) return false;
         }
         float dx = me.getX() - mStrokeStartX, dy = me.getY() - mStrokeStartY;
         return Math.abs(dy) > getHeight() / fraction && Math.abs(dy) > 2 * Math.abs(dx);
     }
+
+    // False in long-press popups: sliding into a popup key is not a swipe (measured against
+    // a popup's small height, it looked like one, and the key was dropped).
+    private boolean mDetectSwipes = true;
 
     // True once the current stroke is clearly a vertical swipe (see onTouchEvent).
     private boolean mSwipeInProgress;
@@ -1412,6 +1416,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
         mMiniKeyboard =
                 (LatinKeyboardBaseView)container.findViewById(R.id.LatinKeyboardBaseView);
+        mMiniKeyboard.mDetectSwipes = false;
         mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
             public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
                 mKeyboardActionListener.onKey(primaryCode, keyCodes, x, y);
