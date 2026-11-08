@@ -195,6 +195,24 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     protected int mPreviewOffset;
     // True while the current touch stroke has had only one finger down (see onFling).
     private boolean mSingleFingerStroke;
+    private float mStrokeStartX, mStrokeStartY;
+    private long mStrokeStartTime;
+
+    /**
+     * A one-finger stroke that ends a third of the keyboard's height above or below where it
+     * started, mostly vertically and within a second, is a swipe whatever its final speed;
+     * it is never a key press. (The fling detector alone missed swipes that slowed down or
+     * had few touch samples, and the key under the finger was typed instead.)
+     */
+    private boolean isVerticalSwipe(MotionEvent up) {
+        if (!mSingleFingerStroke || mMiniKeyboardVisible) return false;
+        for (PointerTracker t : mPointerTrackers) {
+            if (t.isSliding()) return false;
+        }
+        float dx = up.getX() - mStrokeStartX, dy = up.getY() - mStrokeStartY;
+        return Math.abs(dy) > getHeight() / 3f && Math.abs(dy) > 2 * Math.abs(dx)
+                && up.getEventTime() - mStrokeStartTime < 1000;
+    }
     protected int mPreviewHeight;
     protected int mPopupLayout;
 
@@ -397,6 +415,15 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                     return index;
             }
             return -1;
+        }
+
+        /** Cancels every pending press, e.g. when a swipe gesture has used the touch. */
+        public void cancelAll(long eventTime) {
+            for (PointerTracker t : mQueue) {
+                t.onCancelEvent(t.getLastX(), t.getLastY(), eventTime);
+                t.setAlreadyProcessed();
+            }
+            mQueue.clear();
         }
 
         public void releaseAllPointersOlderThan(PointerTracker tracker, long eventTime) {
@@ -1635,8 +1662,19 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mSwipeTracker.addMovement(me);
         if (action == MotionEvent.ACTION_DOWN) {
             mSingleFingerStroke = true;
+            mStrokeStartX = me.getX();
+            mStrokeStartY = me.getY();
+            mStrokeStartTime = me.getEventTime();
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
             mSingleFingerStroke = false;
+        } else if (action == MotionEvent.ACTION_UP && isVerticalSwipe(me)) {
+            float dy = me.getY() - mStrokeStartY;
+            if (dy < 0 ? swipeUp() : swipeDown()) {
+                dismissKeyPreview();
+                mHandler.cancelKeyTimers();
+                mPointerQueue.cancelAll(me.getEventTime());
+                return true;
+            }
         }
 
         // Gesture detector must be enabled only when mini-keyboard is not on the screen.
@@ -1644,6 +1682,9 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 && mGestureDetector != null && mGestureDetector.onTouchEvent(me)) {
             dismissKeyPreview();
             mHandler.cancelKeyTimers();
+            // The swipe used this touch. Without this, the key under the finger stayed
+            // pressed and was typed by the next touch (a swipe up ending on 9 typed "9").
+            mPointerQueue.cancelAll(me.getEventTime());
             return true;
         }
 

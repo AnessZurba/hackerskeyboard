@@ -76,6 +76,37 @@ public class ToolbarTest {
         assertTrue(toolbar.isToolbarShown());
     }
 
+    /** Hiding the toolbar keeps the input view's height and gives the row's space to the app. */
+    @Test
+    public void hidingKeepsHeightAndGivesSpaceToApp() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        if (!toolbar.isToolbarShown()) toolbar.toggleToolbar();
+        settle(toolbar);
+        int height = toolbar.getMeasuredHeight();
+        assertEquals(0, toolbar.spaceGivenToApp());
+
+        toolbar.toggleToolbar(); // hide
+        settle(toolbar);
+        assertEquals("window height unchanged", height, toolbar.getMeasuredHeight());
+        assertEquals("row's space goes to the app", toolbar.getChildAt(0).getHeight(),
+                toolbar.spaceGivenToApp());
+        assertTrue(toolbar.spaceGivenToApp() > 0);
+
+        toolbar.toggleToolbar(); // show
+        settle(toolbar);
+        assertEquals(height, toolbar.getMeasuredHeight());
+        assertEquals(0, toolbar.spaceGivenToApp());
+    }
+
+    private static void settle(View v) {
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(1, java.util.concurrent.TimeUnit.SECONDS);
+        v.measure(View.MeasureSpec.makeMeasureSpec(320, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        v.layout(0, 0, 320, v.getMeasuredHeight());
+    }
+
     private static View button(LinearLayout bar, int i) {
         return ((ViewGroup) bar.getChildAt(i)).getChildAt(0);
     }

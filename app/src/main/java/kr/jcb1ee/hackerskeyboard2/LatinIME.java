@@ -1225,6 +1225,13 @@ public class LatinIME extends InputMethodService implements
     public void onComputeInsets(InputMethodService.Insets outInsets) {
         super.onComputeInsets(outInsets);
         if (!isFullscreenMode()) {
+            // A hidden toolbar row keeps its space in the window (so the keys never move);
+            // the app gets that space, and touches there go to the app.
+            KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+            boolean stripShown = mCandidateViewContainer != null && mCandidateViewContainer.isShown();
+            if (toolbar != null && toolbar.isShown() && !stripShown) {
+                outInsets.visibleTopInsets += toolbar.spaceGivenToApp();
+            }
             outInsets.contentTopInsets = outInsets.visibleTopInsets;
         }
     }

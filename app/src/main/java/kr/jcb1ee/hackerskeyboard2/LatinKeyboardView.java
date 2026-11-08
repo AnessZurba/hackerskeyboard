@@ -342,7 +342,10 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
         // If an extension keyboard is visible or this is an extension keyboard, don't look
         // for sudden jumps. Otherwise, if there was a sudden jump, return without processing the
         // actual motion event.
-        if (!mExtensionVisible && !mIsExtensionType
+        // The sudden-jump filter is for old screens that reported two fingers as one jumping
+        // pointer. On distinct multi-touch screens it misread fast swipes as two taps and
+        // typed the keys at both ends (AOSP's keyboard keeps this hack off too).
+        if (!mExtensionVisible && !mIsExtensionType && !hasDistinctMultitouch()
                 && handleSuddenJump(me)) return true;
         // Reset any bounding box controls in the keyboard
         if (me.getAction() == MotionEvent.ACTION_DOWN) {

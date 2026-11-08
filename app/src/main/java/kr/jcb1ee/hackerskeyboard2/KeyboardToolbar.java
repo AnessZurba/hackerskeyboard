@@ -127,8 +127,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ime);
         mToolbarShown = prefs.getBoolean(PREF_SHOW_TOOLBAR, true);
-        mBar.getLayoutParams().height = mToolbarShown ? mBarHeight : 0;
-        mBar.setVisibility(mToolbarShown ? VISIBLE : GONE);
+        // The row always takes its space, so the input window never changes height (which
+        // made the keys jump). Hidden, it is invisible and LatinIME.onComputeInsets gives
+        // its space and touches to the app.
+        mBar.setVisibility(mToolbarShown ? VISIBLE : INVISIBLE);
+        mBarSpaceGiven = !mToolbarShown;
         ClipboardHistory.get(ime).setListener(this);
     }
 
@@ -162,24 +165,34 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 .putBoolean(PREF_SHOW_TOOLBAR, mToolbarShown).apply();
         if (!mToolbarShown) closePanel();
         mBar.animate().cancel();
-        final ViewGroup.LayoutParams lp = mBar.getLayoutParams();
         float offset = mBarHeight / 2f;
         if (mToolbarShown) {
-            lp.height = mBarHeight;
+            setBarSpaceGiven(false); // take the space back first, then fade in
             mBar.setVisibility(VISIBLE);
             mBar.setAlpha(0f);
             mBar.setTranslationY(offset);
-            mBar.requestLayout();
             mBar.animate().alpha(1f).translationY(0f).setDuration(180).withEndAction(null).start();
         } else {
             mBar.animate().alpha(0f).translationY(offset).setDuration(150).withEndAction(() -> {
-                lp.height = 0;
-                mBar.setVisibility(GONE);
+                mBar.setVisibility(INVISIBLE);
                 mBar.setAlpha(1f);
                 mBar.setTranslationY(0f);
-                mBar.requestLayout();
+                setBarSpaceGiven(true);
             }).start();
         }
+    }
+
+    // Whether the hidden row's space is given to the app (see LatinIME.onComputeInsets).
+    private boolean mBarSpaceGiven;
+
+    private void setBarSpaceGiven(boolean given) {
+        mBarSpaceGiven = given;
+        requestLayout(); // recomputes the input window's insets
+    }
+
+    /** Height at the top of this view that the app may use (and touch) right now. */
+    int spaceGivenToApp() {
+        return mBarSpaceGiven ? mBar.getHeight() : 0;
     }
 
     // ------------------------------------------------------------------ panels
@@ -697,7 +710,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         boolean light = luminance(mBackground) > 0.5;
         mForeground = light ? 0xFF202124 : 0xFFE8EAED;
         mAccent = light ? 0xFF1A73E8 : 0xFF8AB4F8;
-        setBackgroundColor(mBackground);
+        // Backgrounds per part: when the toolbar row is hidden, its space must stay clear.
+        mBar.setBackgroundColor(mBackground);
+        mBody.setBackgroundColor(mBackground);
         updateButtons();
     }
 

@@ -550,6 +550,11 @@ public class PointerTracker {
         return mCursorSlide;
     }
 
+    /** True while this pointer drives the cursor slider or the backspace swipe. */
+    boolean isSliding() {
+        return mCursorSlide || mDeleteSlide;
+    }
+
     private void endCursorSlide() {
         if (!mCursorSlide) return;
         mCursorSlide = false;
