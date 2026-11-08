@@ -83,8 +83,14 @@ final class CursorDrag {
         mListener = listener;
     }
 
+    private boolean mQuiet;       // no loupe (single toolbar arrow presses)
+    private boolean mEndPending;  // ended while an arrow key was in flight
+    private boolean mRestore;     // the editor dropped the selection: put it back
+
     private void moved() {
-        if (mListener != null && mActive) mListener.onDragMoved(mText, mAnchor, mFocus);
+        if (mListener != null && mActive && !mQuiet && !mEndPending) {
+            mListener.onDragMoved(mText, mAnchor, mFocus);
+        }
     }
 
     boolean isActive() {
@@ -96,7 +102,18 @@ final class CursorDrag {
      * caller sends arrow keys instead.
      */
     boolean begin(boolean select) {
-        end();
+        return begin(select, false);
+    }
+
+    /** {@code quiet}: a single step (toolbar arrows), no loupe. */
+    boolean begin(boolean select, boolean quiet) {
+        if (mActive && mEndPending && mSelect == select) {
+            // The last step's arrow key is still in flight: carry on from it.
+            mEndPending = false;
+            mQuiet = quiet;
+            return true;
+        }
+        finish();
         InputConnection ic = mIme.getCurrentInputConnection();
         EditorInfo ei = mIme.getCurrentInputEditorInfo();
         if (ic == null || ei == null) return false;
@@ -112,6 +129,8 @@ final class CursorDrag {
         mMultiLine = (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_CLASS_TEXT
                 && (ei.inputType & EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE) != 0;
         mWaiting = mVerifying = false;
+        mEndPending = mRestore = false;
+        mQuiet = quiet;
         mQueuedChars = mQueuedLines = 0;
         mMarkerTop = Float.NaN;
         mMarkerPos = -1;
@@ -129,9 +148,27 @@ final class CursorDrag {
         return true;
     }
 
+    /** Ends the drag (after the arrow key in flight, if any, has landed). */
     void end() {
         if (!mActive) return;
+        if (mWaiting) {
+            // Finish after the key in flight, and the moves queued behind it, have landed.
+            mEndPending = true;
+            if (mListener != null) mListener.onDragEnded();
+            return;
+        }
+        finish();
+    }
+
+    /** Ends the drag now (the input is gone). */
+    void cancel() {
+        finish();
+    }
+
+    private void finish() {
+        if (!mActive) return;
         mActive = false;
+        mEndPending = false;
         mHandler.removeCallbacks(mKeyTimeout);
         mWaiting = mVerifying = false;
         InputConnection ic = mIme.getCurrentInputConnection();
@@ -229,6 +266,10 @@ final class CursorDrag {
             focus = e;
         } else if (e == mAnchor) {
             focus = s;
+        } else if (s == e) {
+            // Some editors drop the selection on Shift+arrow: keep it, put it back.
+            focus = s;
+            mRestore = true;
         } else {
             // The editor normalised the order, or chose its own anchor.
             focus = Math.abs(s - mWaitFrom) < Math.abs(e - mWaitFrom) ? s : e;
@@ -314,7 +355,10 @@ final class CursorDrag {
             mText = et.text.toString();
             mOffset = et.startOffset;
             int s = clamp(et.selectionStart), e = clamp(et.selectionEnd);
-            if (mSelect && e == mAnchor && s != mAnchor) {
+            if (mSelect && s == e && s != mAnchor) {
+                mFocus = s;      // the selection was dropped: put it back
+                mRestore = true;
+            } else if (mSelect && e == mAnchor && s != mAnchor) {
                 mFocus = s;
             } else {
                 if (mSelect && s != mAnchor && e != mAnchor) mAnchor = s;
@@ -329,17 +373,22 @@ final class CursorDrag {
     private void keyDone() {
         mWaiting = false;
         mHandler.removeCallbacks(mKeyTimeout);
+        if (mRestore) {
+            mRestore = false;
+            if (mSelect && mAnchor != mFocus) set(mAnchor, mFocus);
+        }
         if (mQueuedLines != 0) {
             int n = mQueuedLines;
             mQueuedLines = 0;
             lines(n);
-            return; // queued characters wait for that line
+            if (mWaiting) return; // queued characters wait for that line
         }
         if (mQueuedChars != 0) {
             int n = mQueuedChars;
             mQueuedChars = 0;
             applyChars(n);
         }
+        if (mEndPending) finish();
     }
 
     private int clamp(int pos) {

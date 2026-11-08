@@ -74,13 +74,72 @@ final class CursorLoupe implements CursorDrag.Listener {
         if (isShowing()) place();
     }
 
+    // Like iOS: the loupe is for aiming, so it steps aside while the cursor moves fast and
+    // comes back once it slows down. Movement is summed over a short window: characters,
+    // and a line change counts as LINE_WEIGHT characters.
+    private static final long WINDOW_MS = 250;
+    private static final int FAST = 12, CALM = 3, LINE_WEIGHT = 6;
+    private final java.util.ArrayDeque<long[]> mRecent = new java.util.ArrayDeque<>(); // {time, chars}
+    private final android.os.Handler mHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable mRecheck = this::recheck;
+    private int mLastFocus = -1;
+    private boolean mFast;
+    private String mText;
+    private int mAnchor, mFocus;
+
     @Override
     public void onDragMoved(String text, int anchor, int focus) {
         if (!mEnabled) return;
+        long now = android.os.SystemClock.uptimeMillis();
+        if (mLastFocus >= 0 && mText != null && focus != mLastFocus) {
+            int distance = Math.abs(focus - mLastFocus);
+            int lo = Math.min(focus, mLastFocus), hi = Math.max(focus, mLastFocus);
+            if (text.indexOf('\n', lo) >= 0 && text.indexOf('\n', lo) < hi) {
+                distance = Math.max(LINE_WEIGHT, Math.min(distance, LINE_WEIGHT * 2));
+            }
+            mRecent.addLast(new long[] {now, distance});
+        }
+        mLastFocus = focus;
+        mText = text;
+        mAnchor = anchor;
+        mFocus = focus;
+        int moved = recentMovement(now);
+        if (moved > FAST) {
+            mFast = true;
+            hide();
+        }
+        if (mFast && moved > CALM) {
+            mHandler.removeCallbacks(mRecheck);
+            mHandler.postDelayed(mRecheck, 100);
+            return;
+        }
+        mFast = false;
+        display();
+    }
+
+    private int recentMovement(long now) {
+        while (!mRecent.isEmpty() && now - mRecent.peekFirst()[0] > WINDOW_MS) mRecent.removeFirst();
+        int sum = 0;
+        for (long[] m : mRecent) sum += m[1];
+        return sum;
+    }
+
+    /** While hidden for speed: back once the cursor has calmed down. */
+    private void recheck() {
+        if (!mFast || mText == null) return;
+        if (recentMovement(android.os.SystemClock.uptimeMillis()) > CALM) {
+            mHandler.postDelayed(mRecheck, 100);
+            return;
+        }
+        mFast = false;
+        display();
+    }
+
+    private void display() {
         View anchorView = mIme.loupeAnchor();
         if (anchorView == null || anchorView.getWindowToken() == null) return;
         if (mPopup == null) create(anchorView.getContext());
-        show(text, anchor, focus);
+        show(mText, mAnchor, mFocus);
         if (!mPopup.isShowing()) {
             mPopup.showAtLocation(anchorView, Gravity.NO_GRAVITY, 0, 0);
         }
@@ -90,6 +149,11 @@ final class CursorLoupe implements CursorDrag.Listener {
     @Override
     public void onDragEnded() {
         hide();
+        mHandler.removeCallbacks(mRecheck);
+        mRecent.clear();
+        mLastFocus = -1;
+        mFast = false;
+        mText = null;
         mCaretX = Float.NaN;
     }
 

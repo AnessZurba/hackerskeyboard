@@ -151,6 +151,11 @@ public class SelectionPanelTest {
      * first line (down on the last) jumps to the start (end) of the text.
      */
     private InputConnection laggy() {
+        return laggy(false);
+    }
+
+    /** {@code dropsSelection}: like some editors, Shift+arrow collapses the selection. */
+    private InputConnection laggy(final boolean dropsSelection) {
         mField.setText(LINES);
         sInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE;
         final int[] reported = {0, 0};
@@ -211,7 +216,7 @@ public class SelectionPanelTest {
                         target = Math.min(next + 1 + col, nextEnd);
                     }
                 }
-                select(event.isShiftPressed() ? anchor : target, target);
+                select(event.isShiftPressed() && !dropsSelection ? anchor : target, target);
                 return true;
             }
         };
@@ -466,6 +471,57 @@ public class SelectionPanelTest {
         idle();
         assertTrue(mIme.beginCursorDrag(false));
         assertTrue(!mIme.mLoupe.isShowing());
+        mIme.mCursorDrag.end();
+    }
+
+    /** An editor that drops the selection on Shift+arrow: the drag puts it back. */
+    @Test
+    public void selectDragKeepsSelectionWhereShiftArrowDropsIt() {
+        sConnection = laggy(true);
+        sConnection.setSelection(15, 15);
+        settle();
+        assertTrue(mIme.beginCursorDrag(true));
+        mIme.mCursorDrag.chars(2);   // 15..17
+        mIme.mCursorDrag.lines(-1);  // up: the editor collapses at 6
+        settle();
+        assertSelection(15, 6);
+        mIme.mCursorDrag.chars(1);
+        settle();
+        assertSelection(15, 7);
+        mIme.mCursorDrag.end();
+    }
+
+    /** The toolbar's up arrow with Select on, pressed twice quickly, keeps the selection. */
+    @Test
+    public void toolbarUpArrowKeepsSelection() {
+        sConnection = laggy(true);
+        sConnection.setSelection(26, 26); // "third", after "thi"
+        settle();
+        for (int i = 0; i < 2; i++) {     // second press while the first is in flight
+            assertTrue(mIme.beginQuietCursorDrag(true));
+            assertTrue(mIme.mCursorDrag.lines(-1));
+            mIme.mCursorDrag.end();
+        }
+        settle();
+        assertSelection(26, 3);           // two lines up, column 3
+        assertTrue("drag over", !mIme.mCursorDrag.isActive());
+    }
+
+    /** The loupe steps aside while the cursor moves fast, and is back once it slows. */
+    @Test
+    public void loupeHidesWhileMovingFast() {
+        sConnection = mField.onCreateInputConnection(new EditorInfo());
+        mField.setText("the quick brown fox jumps over the lazy dog, again and again");
+        sConnection.setSelection(0, 0);
+        attachKeyboard();
+        assertTrue(mIme.beginCursorDrag(false));
+        assertTrue(mIme.mLoupe.isShowing());
+        mIme.mCursorDrag.chars(1);
+        assertTrue("slow: stays", mIme.mLoupe.isShowing());
+        for (int i = 0; i < 5; i++) mIme.mCursorDrag.chars(4); // 20 characters at once
+        assertTrue("fast: hidden", !mIme.mLoupe.isShowing());
+        ShadowLooper.idleMainLooper(500, TimeUnit.MILLISECONDS);
+        assertTrue("calm again: back", mIme.mLoupe.isShowing());
         mIme.mCursorDrag.end();
     }
 

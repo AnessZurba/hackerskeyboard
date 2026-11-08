@@ -995,7 +995,7 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onFinishInput() {
         super.onFinishInput();
-        mCursorDrag.end();
+        mCursorDrag.cancel();
         mAdaptive.onFinishInput();
         commitHangulComposing();
         mHangulComposer.reset();
@@ -2590,6 +2590,11 @@ public class LatinIME extends InputMethodService implements
     /** Starts a trackpad drag; false when the editor hides its text (send arrow keys). */
     boolean beginCursorDrag(boolean select) {
         return mCursorDrag.begin(select || isShiftMod());
+    }
+
+    /** A single step (the toolbar's up/down arrows): no loupe. */
+    boolean beginQuietCursorDrag(boolean select) {
+        return mCursorDrag.begin(select || isShiftMod(), true);
     }
 
     @Override

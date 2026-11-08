@@ -556,9 +556,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             // Left/right move within the text (an arrow key at its ends would move focus
             // away and close the keyboard); arrow keys only where the text isn't exposed.
             if (steps != 0 && ime().moveCursor(steps, mSelecting, false)) return;
-            // Up/down: same problem at the first/last line; see LatinIME.moveCursorVertically.
-            if ((keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
-                    && ime().moveCursorVertically(keyCode == KeyEvent.KEYCODE_DPAD_UP, mSelecting)) {
+            boolean vertical = keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+            boolean up = keyCode == KeyEvent.KEYCODE_DPAD_UP;
+            // Up/down in multi-line fields: one step of a drag, which keeps the selection in
+            // editors that drop it on Shift+arrow and doesn't jump to the ends of the text.
+            if (vertical && ime().beginQuietCursorDrag(mSelecting)) {
+                boolean moved = ime().mCursorDrag.lines(up ? -1 : 1);
+                ime().mCursorDrag.end();
+                if (moved) return;
+            }
+            // Single-line fields, and the first/last line; see LatinIME.moveCursorVertically.
+            if (vertical && ime().moveCursorVertically(up, mSelecting)) {
                 return;
             }
             sendKey(keyCode, mSelecting ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0);
@@ -915,8 +923,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /**
      * Samsung-style emoji panel: search and category tabs on top, every category in one
-     * scrolling grid (recents first) with the tab following the scroll, and ABC, space and
-     * backspace at the bottom.
+     * scrolling grid (recents first) with the tab following the scroll, and gallery, space
+     * and backspace at the bottom.
      */
     private View buildEmojiPanel() {
         loadEmoji();
@@ -1016,13 +1024,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         });
         grid.post(followScroll);
 
-        // Bottom: back to the keyboard, space, backspace.
+        // Bottom: gallery, space, backspace (the toolbar's emoji button goes back to the keys).
         LinearLayout bottom = row();
-        TextView abc = cell("ABC", 15);
-        abc.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-            closePanel();
-        });
         TextView space = cell(" ", 15);
         space.setContentDescription(mIme.getString(R.string.toolbar_emoji_space));
         space.setOnClickListener(v -> {
@@ -1048,8 +1051,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             pick.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
             getContext().startActivity(pick);
         });
-        int[] widths = {72, 56, 0, 72};
-        View[] views = {abc, gallery, space, backspace};
+        int[] widths = {64, 0, 72};
+        View[] views = {gallery, space, backspace};
         for (int i = 0; i < views.length; i++) {
             LinearLayout.LayoutParams lp = widths[i] > 0
                     ? new LinearLayout.LayoutParams(dp(widths[i]), LayoutParams.MATCH_PARENT)
