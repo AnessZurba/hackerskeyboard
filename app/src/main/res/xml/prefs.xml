@@ -121,6 +121,14 @@
             android:key="key_settings">
 
     <CheckBoxPreference
+            android:key="pref_cursor_loupe"
+            android:title="@string/title_cursor_loupe"
+            android:summary="@string/summary_cursor_loupe"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+
+    <CheckBoxPreference
             android:key="pref_delete_swipe"
             android:title="@string/title_delete_swipe"
             android:summary="@string/summary_delete_swipe"

@@ -2468,6 +2468,25 @@ public class LatinIME extends InputMethodService implements
     }
 
     final CursorDrag mCursorDrag = new CursorDrag(this);
+    final CursorLoupe mLoupe = new CursorLoupe(this);
+    {
+        mCursorDrag.setListener(mLoupe); // on by default; settings may turn it off
+    }
+
+    /** The view the loupe's window hangs off (the keyboard). */
+    View loupeAnchor() {
+        return mKeyboardSwitcher == null ? null : mKeyboardSwitcher.getInputView();
+    }
+
+    int loupeBackground() {
+        KeyboardToolbar toolbar = mKeyboardSwitcher == null ? null : mKeyboardSwitcher.getInputContainer();
+        return toolbar != null ? toolbar.backgroundColour() : 0xFF202124;
+    }
+
+    private void setLoupeEnabled(boolean enabled) {
+        mLoupe.setEnabled(enabled);
+        mCursorDrag.setListener(enabled ? mLoupe : null);
+    }
 
     // While the emoji panel's search is open, the keys type into its query instead.
     private InputConnection mSearchConnection;
@@ -3636,6 +3655,7 @@ public class LatinIME extends InputMethodService implements
         sKeyboardSettings.sharedPreferenceChanged(sharedPreferences, key);
         mAdaptive.loadSettings(sharedPreferences);
         mDeleteSwipePref = sharedPreferences.getBoolean(PREF_DELETE_SWIPE, true);
+        setLoupeEnabled(sharedPreferences.getBoolean(CursorLoupe.PREF, true));
         if (ClipboardHistory.PREF_ENABLED.equals(key)) {
             ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
         }
@@ -4100,6 +4120,7 @@ public class LatinIME extends InputMethodService implements
                 .getDefaultSharedPreferences(this);
         mAdaptive.loadSettings(sp);
         mDeleteSwipePref = sp.getBoolean(PREF_DELETE_SWIPE, true);
+        setLoupeEnabled(sp.getBoolean(CursorLoupe.PREF, true));
         mVibrateOn = sp.getBoolean(PREF_VIBRATE_ON, false);
         mVibrateLen = getPrefInt(sp, PREF_VIBRATE_LEN, getResources().getString(R.string.vibrate_duration_ms));
         mSoundOn = sp.getBoolean(PREF_SOUND_ON, false);

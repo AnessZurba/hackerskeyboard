@@ -47,6 +47,7 @@ final class CursorDrag {
     private boolean mActive;
     private boolean mSelect;
     private boolean mMultiLine;
+    private boolean mMonitoring; // asked the editor for its cursor position
     private String mText;
     private int mOffset;          // where mText starts in the editor
     private int mAnchor, mFocus;  // in mText
@@ -62,8 +63,28 @@ final class CursorDrag {
     private float mMarkerTop = Float.NaN; // insertion marker top, from the editor
     private int mMarkerPos = -1;          // the position (in mText) it belongs to
 
+    /** Follows the drag (the cursor loupe). */
+    interface Listener {
+        void onDragMoved(String text, int anchor, int focus);
+
+        /** The cursor's place on screen, when the app reports it. */
+        void onCaretOnScreen(float x, float top, float bottom);
+
+        void onDragEnded();
+    }
+
+    private Listener mListener;
+
     CursorDrag(LatinIME ime) {
         mIme = ime;
+    }
+
+    void setListener(Listener listener) {
+        mListener = listener;
+    }
+
+    private void moved() {
+        if (mListener != null && mActive) mListener.onDragMoved(mText, mAnchor, mFocus);
     }
 
     boolean isActive() {
@@ -95,7 +116,8 @@ final class CursorDrag {
         mMarkerTop = Float.NaN;
         mMarkerPos = -1;
         mActive = true;
-        if (mMultiLine) {
+        mMonitoring = mMultiLine || mListener != null;
+        if (mMonitoring) {
             try {
                 ic.requestCursorUpdates(InputConnection.CURSOR_UPDATE_IMMEDIATE
                         | InputConnection.CURSOR_UPDATE_MONITOR);
@@ -103,6 +125,7 @@ final class CursorDrag {
                 // Optional: without it, jumps are recognised from the text alone.
             }
         }
+        moved();
         return true;
     }
 
@@ -112,7 +135,8 @@ final class CursorDrag {
         mHandler.removeCallbacks(mKeyTimeout);
         mWaiting = mVerifying = false;
         InputConnection ic = mIme.getCurrentInputConnection();
-        if (ic != null && mMultiLine) {
+        if (mListener != null) mListener.onDragEnded();
+        if (ic != null && mMonitoring) {
             try {
                 ic.requestCursorUpdates(0);
             } catch (RuntimeException ignored) {
@@ -160,6 +184,7 @@ final class CursorDrag {
         mFocus = focus;
         InputConnection ic = mIme.getCurrentInputConnection();
         if (ic != null) ic.setSelection(mOffset + anchor, mOffset + focus);
+        moved();
     }
 
     private boolean sendLine(boolean up) {
@@ -216,6 +241,11 @@ final class CursorDrag {
 
     /** Where the arrow key took the moving end. */
     private void landed(int focus) {
+        landedAt(focus);
+        moved();
+    }
+
+    private void landedAt(int focus) {
         boolean atEdge = mWaitUp ? focus == 0 : focus == mText.length();
         boolean fromEdgeLine = mWaitUp ? mText.lastIndexOf('\n', mWaitFrom - 1) < 0
                 : mText.indexOf('\n', mWaitFrom) < 0;
@@ -242,6 +272,12 @@ final class CursorDrag {
     /** The editor's cursor position on screen, while monitoring (multi-line fields). */
     void onUpdateCursorAnchorInfo(CursorAnchorInfo info) {
         if (!mActive) return;
+        if (mListener != null && !Float.isNaN(info.getInsertionMarkerHorizontal())) {
+            float[] pts = {info.getInsertionMarkerHorizontal(), info.getInsertionMarkerTop(),
+                    info.getInsertionMarkerHorizontal(), info.getInsertionMarkerBottom()};
+            info.getMatrix().mapPoints(pts); // editor -> screen
+            mListener.onCaretOnScreen(pts[0], pts[1], pts[3]);
+        }
         // The marker sits at the selection's start in some editors: only use it without one.
         if (info.getSelectionStart() != info.getSelectionEnd()) {
             mMarkerPos = -1;
@@ -285,6 +321,7 @@ final class CursorDrag {
                 mFocus = e;
             }
             if (!mSelect) mAnchor = mFocus;
+            moved();
         }
         keyDone();
     }

@@ -427,6 +427,48 @@ public class SelectionPanelTest {
         assertTrue("file removed", !file.exists());
     }
 
+    // ---------------------------------------------------------------- loupe
+
+    private void attachKeyboard() {
+        KeyboardToolbar toolbar = (KeyboardToolbar) mIme.onCreateInputView();
+        idle();
+        android.app.Activity host = Robolectric.buildActivity(android.app.Activity.class).setup().get();
+        if (toolbar.getParent() instanceof ViewGroup) ((ViewGroup) toolbar.getParent()).removeView(toolbar);
+        host.setContentView(toolbar);
+        idle();
+    }
+
+    /** Dragging shows the line around the cursor, follows it, and goes away at the end. */
+    @Test
+    public void loupeFollowsTheDrag() {
+        sConnection = laggy(); // "first line\nsecond line\nthird"
+        sConnection.setSelection(15, 15);
+        settle();
+        attachKeyboard();
+        assertTrue(mIme.beginCursorDrag(false));
+        assertTrue("loupe up", mIme.mLoupe.isShowing());
+        assertEquals("the current line only", "second line", mIme.mLoupe.text().toString());
+        mIme.mCursorDrag.lines(-1);
+        settle();
+        assertEquals("first line", mIme.mLoupe.text().toString());
+        mIme.mCursorDrag.end();
+        assertTrue("gone after", !mIme.mLoupe.isShowing());
+    }
+
+    @Test
+    public void loupeCanBeTurnedOff() {
+        sConnection = laggy();
+        sConnection.setSelection(15, 15);
+        settle();
+        attachKeyboard();
+        android.preference.PreferenceManager.getDefaultSharedPreferences(mIme).edit()
+                .putBoolean(CursorLoupe.PREF, false).commit();
+        idle();
+        assertTrue(mIme.beginCursorDrag(false));
+        assertTrue(!mIme.mLoupe.isShowing());
+        mIme.mCursorDrag.end();
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }
