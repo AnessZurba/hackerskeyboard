@@ -2437,6 +2437,10 @@ public class LatinIME extends InputMethodService implements
             final int index = i;
             suggestions.get(i).inflate(this, size, getMainExecutor(), view -> {
                 views[index] = view;
+                if (view != null && view.getLayoutParams() != null) {
+                    Log.i(TAG, "Autofill chip " + index + ": " + view.getLayoutParams().width
+                            + "x" + view.getLayoutParams().height);
+                }
                 if (--remaining[0] == 0) {
                     List<View> ready = new ArrayList<>(), pinned = new ArrayList<>();
                     for (int k = 0; k < views.length; k++) {

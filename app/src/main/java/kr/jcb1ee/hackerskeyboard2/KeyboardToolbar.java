@@ -218,6 +218,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mBar.animate().cancel();
         mBar.animate().alpha(0f).translationY(mBarHeight / 2f).setDuration(150).withEndAction(() -> {
             mBar.setVisibility(INVISIBLE);
+            if (!hasChips() && !mSearching) {
+                for (View cell : mCells) cell.setVisibility(VISIBLE); // ready for next time
+            }
             mBar.setAlpha(1f);
             mBar.setTranslationY(0f);
             setBarSpaceGiven(true);
@@ -259,7 +262,10 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         addChips(mChipRow, chips);
         boolean any = hasChips();
         if (mSearching) return; // the search bar has the row; chips come back after it
-        for (View cell : mCells) cell.setVisibility(any ? GONE : VISIBLE);
+        // Chips gone from a row shown only for them: it fades out empty, and the buttons
+        // come back once it's hidden (not during the fade).
+        boolean concealing = !any && mShownForChips;
+        for (View cell : mCells) cell.setVisibility(any || concealing ? GONE : VISIBLE);
         mChipScroll.setVisibility(any ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
         updateChipsButton();
@@ -287,8 +293,13 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void addChips(LinearLayout row, List<View> chips) {
         for (View chip : chips) {
             if (chip.getParent() instanceof ViewGroup) ((ViewGroup) chip.getParent()).removeView(chip);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            // Keep the size the chip came with: an inline suggestion's view is sized by the
+            // password manager's renderer, and can't measure itself. Re-wrapped, it stretched
+            // across the row (crowding out ">") or, in the scrolling row, shrank to nothing.
+            ViewGroup.LayoutParams own = chip.getLayoutParams();
+            LinearLayout.LayoutParams lp = own != null
+                    ? new LinearLayout.LayoutParams(own.width, own.height)
+                    : new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             lp.setMargins(dp(3), 0, dp(3), 0);
             lp.gravity = Gravity.CENTER_VERTICAL;
             row.addView(chip, lp);

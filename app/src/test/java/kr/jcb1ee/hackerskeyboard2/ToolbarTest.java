@@ -129,8 +129,10 @@ public class ToolbarTest {
         }
         assertNotNull("toolbar kept hidden: the button hides the strip (v, not >)", hide);
         hide.performClick();
+        assertEquals("no buttons while it fades out", View.GONE, bar.getChildAt(0).getVisibility());
         settle(toolbar);
         assertTrue("strip hidden again", toolbar.spaceGivenToApp() > 0);
+        assertEquals("buttons ready for next time", View.VISIBLE, bar.getChildAt(0).getVisibility());
         toolbar.showChips(java.util.Collections.<View>singletonList(chip));
         settle(toolbar);
 
@@ -150,6 +152,8 @@ public class ToolbarTest {
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         android.widget.TextView chip = new android.widget.TextView(ime);
         chip.setText("Open 1Password");
+        // Inline suggestion views arrive sized by the password manager's renderer.
+        chip.setLayoutParams(new ViewGroup.LayoutParams(400, 90));
         android.widget.TextView icon = new android.widget.TextView(ime);
         icon.setText("1P");
         icon.setMinWidth(5000); // a chip that reports a huge size must not crowd out ">"
@@ -166,6 +170,7 @@ public class ToolbarTest {
         assertNotNull(dismiss);
         assertEquals(View.VISIBLE, dismiss.getVisibility());
         assertTrue("> on screen", dismiss.getWidth() > 0 && dismiss.getRight() <= bar.getWidth());
+        assertEquals("the chip keeps the size it came with", 400, chip.getWidth());
         assertEquals("pinned chip shown", View.VISIBLE, ((View) icon.getParent()).getVisibility());
         dismiss.performClick();
         settle(toolbar);
