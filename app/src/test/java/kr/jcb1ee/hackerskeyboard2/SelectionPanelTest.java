@@ -698,6 +698,20 @@ public class SelectionPanelTest {
         assertEquals("a tap deletes one character", "one two", mField.getText().toString());
     }
 
+    /** Holding backspace a moment first (repeat starts), then sliding, still swipes words. */
+    @Test
+    public void panelBackspaceSwipesAfterAHold() throws Exception {
+        KeyboardToolbar toolbar = openPanel(0);
+        mField.setText("one two three four five six seven");
+        sConnection.setSelection(mField.length(), mField.length());
+        TextView del = find(((FrameLayout) toolbar.getChildAt(1)).getChildAt(1), "⌫");
+        float d = mIme.getResources().getDisplayMetrics().density;
+        drag(del, -48 * d, 600, true);
+        String text = mField.getText().toString();
+        assertTrue("whole words went, not just characters: \"" + text + "\"", text.endsWith(" "));
+        assertTrue(text.length() < "one two three four five six ".length());
+    }
+
     /** The emoji panel's space bar types a space, and is a trackpad when held. */
     @Test
     public void emojiPanelSpaceIsATrackpad() throws Exception {

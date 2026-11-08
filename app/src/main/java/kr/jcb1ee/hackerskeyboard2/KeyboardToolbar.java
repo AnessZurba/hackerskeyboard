@@ -656,6 +656,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void setBackspace(final View v) {
         final Runnable delete = () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0);
         final DeleteSwipeAccel accel = new DeleteSwipeAccel(getResources().getDisplayMetrics().density);
+        final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
         final float[] downX = new float[1];
         // [0] deferred tap pending, [1] repeating, [2] swiping
         final boolean[] state = new boolean[3];
@@ -682,7 +683,10 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     mHandler.postDelayed(repeat, 400);
                     return true;
                 case MotionEvent.ACTION_MOVE:
-                    if (!state[2] && !state[1] && LatinIME.deleteSwipeAvailable()
+                    // Heading left: a swipe is coming, so don't start repeating meanwhile.
+                    if (!state[1] && !state[2] && downX[0] - e.getRawX() > slop) stopRepeat();
+                    // The swipe may start after a hold too (repeat running), as on the keyboard.
+                    if (!state[2] && LatinIME.deleteSwipeAvailable()
                             && downX[0] - e.getRawX() > accel.step() && ime().startDeleteSwipe()) {
                         state[2] = true;
                         state[0] = false;

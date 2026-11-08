@@ -2842,7 +2842,9 @@ public class LatinIME extends InputMethodService implements
         mDeleteSwipeChars = chars;
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) ic.setSelection(mDeleteSwipeAnchor - chars, mDeleteSwipeAnchor);
-        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        // The toolbar container: visible also while a panel hides the keys.
+        View view = mKeyboardSwitcher.getInputContainer();
+        if (view == null) view = mKeyboardSwitcher.getInputView();
         if (view != null) view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
     }
 
