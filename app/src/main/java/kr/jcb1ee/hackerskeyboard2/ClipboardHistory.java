@@ -36,13 +36,16 @@ import java.util.List;
  * Recent clipboard texts for the toolbar's clipboard panel. The keyboard, as the default
  * input method, may read the clipboard while it is in use; each new text clip is added
  * here. Clips that apps mark as sensitive (password managers, Android 13+) are skipped.
- * Pinned clips are kept until unpinned; the others are capped at {@link #MAX_UNPINNED}.
+ * Pinned clips are kept until unpinned; the others are capped at {@link #MAX_UNPINNED} and
+ * go after {@link #MAX_AGE_MS} (a day).
  */
 final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedListener {
     private static final String TAG = "HK/ClipboardHistory";
     static final String PREF_ENABLED = "pref_clipboard_history";
     private static final String FILE = "clipboard_history.json";
-    private static final int MAX_UNPINNED = 200;
+    private static final int MAX_UNPINNED = 50;
+    /** Unpinned clips go after a day. */
+    static final long MAX_AGE_MS = 24L * 60 * 60 * 1000;
     private static final int MAX_UNPINNED_IMAGES = 20; // images take space: fewer of them
     private static final int MAX_LENGTH = 20000;
 
@@ -52,6 +55,8 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
         /** An image clip: its file in {@link #imageDir}, and its type; null for text. */
         final String image;
         final String mime;
+        /** When it was copied (System.currentTimeMillis), for the day-long expiry. */
+        long time = System.currentTimeMillis();
 
         Clip(String text, boolean pinned) {
             this(text, pinned, null, null);
@@ -135,7 +140,23 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
 
     List<Clip> clips() {
         ensureLoaded();
+        if (expire()) changed();
         return mClips;
+    }
+
+    /** Drops unpinned clips older than a day; returns whether any went. */
+    private boolean expire() {
+        long now = System.currentTimeMillis();
+        boolean any = false;
+        for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
+            Clip c = it.next();
+            if (!c.pinned && now - c.time > MAX_AGE_MS) {
+                it.remove();
+                deleteImage(c);
+                any = true;
+            }
+        }
+        return any;
     }
 
     @Override
@@ -295,6 +316,7 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
 
     void togglePin(Clip clip) {
         clip.pinned = !clip.pinned;
+        if (!clip.pinned) clip.time = System.currentTimeMillis(); // a fresh day once unpinned
         changed();
     }
 
@@ -305,7 +327,10 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     }
 
     void setPinned(java.util.Collection<Clip> clips, boolean pinned) {
-        for (Clip c : clips) c.pinned = pinned;
+        for (Clip c : clips) {
+            if (c.pinned && !pinned) c.time = System.currentTimeMillis(); // a fresh day
+            c.pinned = pinned;
+        }
         changed();
     }
 
@@ -329,13 +354,17 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
     }
 
     private void trim() {
+        expire();
         int unpinned = 0, images = 0;
         for (Iterator<Clip> it = mClips.iterator(); it.hasNext(); ) {
             Clip c = it.next();
             if (c.pinned) continue;
-            boolean tooMany = ++unpinned > MAX_UNPINNED
-                    || (c.isImage() && ++images > MAX_UNPINNED_IMAGES);
-            if (tooMany) {
+            boolean tooMany = unpinned >= MAX_UNPINNED
+                    || (c.isImage() && images >= MAX_UNPINNED_IMAGES);
+            if (!tooMany) {
+                unpinned++;
+                if (c.isImage()) images++;
+            } else {
                 it.remove();
                 deleteImage(c);
             }
@@ -360,8 +389,11 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
             for (int i = 0; i < array.length(); i++) {
                 JSONObject o = array.getJSONObject(i);
                 String image = o.optString("i", null);
-                mClips.add(new Clip(o.optString("t", ""), o.optBoolean("p"), image,
-                        image != null ? o.optString("m", "image/*") : null));
+                Clip clip = new Clip(o.optString("t", ""), o.optBoolean("p"), image,
+                        image != null ? o.optString("m", "image/*") : null);
+                // Clips saved before times were kept start their day now.
+                clip.time = o.optLong("w", System.currentTimeMillis());
+                mClips.add(clip);
             }
         } catch (Exception e) {
             Log.w(TAG, "Could not read clipboard history", e);
@@ -374,6 +406,7 @@ final class ClipboardHistory implements ClipboardManager.OnPrimaryClipChangedLis
             for (Clip c : mClips) {
                 JSONObject o = new JSONObject();
                 o.put("t", c.text);
+                o.put("w", c.time);
                 if (c.pinned) o.put("p", true);
                 if (c.image != null) {
                     o.put("i", c.image);

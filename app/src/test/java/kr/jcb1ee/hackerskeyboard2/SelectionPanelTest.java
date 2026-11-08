@@ -747,22 +747,44 @@ public class SelectionPanelTest {
         assertEquals(2, history.clips().size());
     }
 
-    /** The history keeps many texts but fewer images (they take space). */
+    /** The history keeps 50 unpinned clips, of which at most 20 images. */
     @Test
-    public void clipboardKeepsFewerImagesThanTexts() throws Exception {
+    public void clipboardKeeps50ClipsAndFewerImages() throws Exception {
         ClipboardHistory history = ClipboardHistory.get(mIme);
         for (int i = 0; i < 60; i++) history.add("text " + i);
+        assertEquals(50, history.clips().size());
+        assertEquals("newest first", "text 59", history.clips().get(0).text);
         for (int i = 0; i < 25; i++) {
             java.io.File f = new java.io.File(ClipboardHistory.imageDir(mIme), "img" + i + ".png");
             new java.io.FileOutputStream(f).close();
             history.addImage(f.getName(), "image/png");
         }
-        int texts = 0, images = 0;
-        for (ClipboardHistory.Clip c : history.clips()) if (c.isImage()) images++; else texts++;
-        assertEquals("all 60 texts kept (more than the old 50)", 60, texts);
+        int images = 0;
+        for (ClipboardHistory.Clip c : history.clips()) if (c.isImage()) images++;
         assertEquals("20 images at most", 20, images);
+        assertEquals(50, history.clips().size());
         assertTrue("oldest image files removed",
                 !new java.io.File(ClipboardHistory.imageDir(mIme), "img0.png").exists());
+    }
+
+    /** Unpinned clips go after a day; pinned ones stay, and unpinning starts a fresh day. */
+    @Test
+    public void clipboardClipsExpireAfterADay() {
+        ClipboardHistory history = ClipboardHistory.get(mIme);
+        history.add("old");
+        history.add("kept");
+        history.add("fresh");
+        long dayAgo = System.currentTimeMillis() - ClipboardHistory.MAX_AGE_MS - 1000;
+        for (ClipboardHistory.Clip c : history.clips()) {
+            if (!c.text.equals("fresh")) c.time = dayAgo;
+            if (c.text.equals("kept")) c.pinned = true;
+        }
+        java.util.List<String> left = new java.util.ArrayList<>();
+        for (ClipboardHistory.Clip c : history.clips()) left.add(c.text);
+        assertEquals(java.util.Arrays.asList("fresh", "kept"), left);
+        ClipboardHistory.Clip kept = history.clips().get(1);
+        history.togglePin(kept); // unpinned: a fresh day, not gone at once
+        assertEquals(2, history.clips().size());
     }
 
     private static void idle() {
