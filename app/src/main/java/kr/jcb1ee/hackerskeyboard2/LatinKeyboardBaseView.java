@@ -193,6 +193,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     private float mKeyHysteresisDistance;
     private float mVerticalCorrection;
     protected int mPreviewOffset;
+    // True while the current touch stroke has had only one finger down (see onFling).
+    private boolean mSingleFingerStroke;
     protected int mPreviewHeight;
     protected int mPopupLayout;
 
@@ -586,6 +588,9 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             @Override
             public boolean onFling(MotionEvent me1, MotionEvent me2, float velocityX,
                     float velocityY) {
+                // Typing with two thumbs looks like a fast stroke from one key to another
+                // (e.g. ',' then '9' reads as a swipe up). Only one-finger strokes count.
+                if (!mSingleFingerStroke || me1 == null) return false;
                 final float absX = Math.abs(velocityX);
                 final float absY = Math.abs(velocityY);
                 float deltaX = me2.getX() - me1.getX();
@@ -1628,6 +1633,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
         // Track the last few movements to look for spurious swipes.
         mSwipeTracker.addMovement(me);
+        if (action == MotionEvent.ACTION_DOWN) {
+            mSingleFingerStroke = true;
+        } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
+            mSingleFingerStroke = false;
+        }
 
         // Gesture detector must be enabled only when mini-keyboard is not on the screen.
         if (!mMiniKeyboardVisible

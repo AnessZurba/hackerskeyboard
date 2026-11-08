@@ -158,6 +158,9 @@ public class KeyboardSwitcher implements
 
     public static void init(LatinIME ims) {
         sInstance.mInputMethodService = ims;
+        // This switcher outlives the service; a new service needs its own toolbar (the old
+        // one belongs to the old service's window and input connection).
+        sInstance.mToolbar = null;
 
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(ims);
@@ -671,6 +674,9 @@ public class KeyboardSwitcher implements
         mInputMethodService.mHandler.post(new Runnable() {
             public void run() {
                 if (mToolbar != null) {
+                    if (mToolbar.getParent() instanceof android.view.ViewGroup) {
+                        ((android.view.ViewGroup) mToolbar.getParent()).removeView(mToolbar);
+                    }
                     mInputMethodService.setInputView(mToolbar);
                 }
                 mInputMethodService.updateInputViewShown();
