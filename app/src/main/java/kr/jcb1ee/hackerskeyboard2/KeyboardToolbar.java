@@ -413,10 +413,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         final EmojiAdapter adapter = new EmojiAdapter();
         grid.setAdapter(adapter);
         grid.setOnItemClickListener((parent, view, position, id) -> {
-            String emoji = adapter.getItem(position);
+            String emoji = withTone(adapter.getItem(position));
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-            mIme.onText(emoji);
-            addRecent(emoji);
+            typeEmoji(emoji);
+        });
+        grid.setOnItemLongClickListener((parent, view, position, id) -> {
+            String base = baseOf(adapter.getItem(position));
+            String[] tones = mTones.get(base);
+            if (tones == null) return false;
+            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            showTonePicker(view, base, tones, adapter);
+            return true;
         });
         panel.addView(grid, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1));
 
@@ -482,20 +489,127 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            TextView v = convertView instanceof TextView ? (TextView) convertView : null;
+            EmojiCell v = convertView instanceof EmojiCell ? (EmojiCell) convertView : null;
             if (v == null) {
-                v = new TextView(getContext());
+                v = new EmojiCell(getContext());
                 v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
                 v.setGravity(Gravity.CENTER);
                 v.setLayoutParams(new GridView.LayoutParams(GridView.LayoutParams.MATCH_PARENT, dp(46)));
             }
-            v.setText(mEmoji[position]);
+            v.setText(withTone(mEmoji[position]));
+            v.mHasTones = mTones.containsKey(baseOf(mEmoji[position]));
             return v;
         }
     }
 
+    // ------------------------------------------------------------------ skin tones
+
+    /** Emoji -> its five skin-tone variants; variant -> its emoji. */
+    private final java.util.HashMap<String, String[]> mTones = new java.util.HashMap<>();
+    private final java.util.HashMap<String, String> mToneBase = new java.util.HashMap<>();
+
+    /** An emoji cell; emoji that come in skin tones get a small corner mark, as in Gboard. */
+    private final class EmojiCell extends TextView {
+        boolean mHasTones;
+        private final android.graphics.Paint mMarkPaint = new android.graphics.Paint(
+                android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Path mMark = new android.graphics.Path();
+
+        EmojiCell(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            if (!mHasTones) return;
+            float size = dp(5), right = getWidth() - dp(6), bottom = getHeight() - dp(4);
+            mMark.reset();
+            mMark.moveTo(right, bottom - size);
+            mMark.lineTo(right, bottom);
+            mMark.lineTo(right - size, bottom);
+            mMark.close();
+            mMarkPaint.setColor(faded(mForeground));
+            canvas.drawPath(mMark, mMarkPaint);
+        }
+    }
+
+    private String baseOf(String emoji) {
+        String base = mToneBase.get(emoji);
+        return base != null ? base : emoji;
+    }
+
+    /** The emoji in the skin tone last chosen for it, or as is. */
+    private String withTone(String emoji) {
+        String base = baseOf(emoji);
+        if (!mTones.containsKey(base)) return emoji;
+        return privatePrefs().getString("emoji_tone_" + base, emoji);
+    }
+
+    private void typeEmoji(String emoji) {
+        mIme.onText(emoji);
+        addRecent(emoji);
+    }
+
+    private void showTonePicker(View anchor, final String base, String[] tones,
+            final EmojiAdapter adapter) {
+        final android.widget.PopupWindow popup = new android.widget.PopupWindow(getContext());
+        LinearLayout row = row();
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(10));
+        bg.setColor(blend(mBackground, mForeground, 0.15f));
+        row.setBackground(bg);
+        row.setPadding(dp(4), dp(4), dp(4), dp(4));
+        List<String> options = new ArrayList<>();
+        options.add(base);
+        options.addAll(Arrays.asList(tones));
+        for (final String option : options) {
+            TextView t = new TextView(getContext());
+            t.setText(option);
+            t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
+            t.setGravity(Gravity.CENTER);
+            t.setBackground(cellBackground(false));
+            t.getBackground().setAlpha(option.equals(withTone(base)) ? 255 : 0);
+            t.setOnClickListener(v -> {
+                v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                privatePrefs().edit().putString("emoji_tone_" + base, option).apply();
+                typeEmoji(option);
+                adapter.notifyDataSetChanged();
+                popup.dismiss();
+            });
+            row.addView(t, new LinearLayout.LayoutParams(dp(48), dp(52)));
+        }
+        popup.setContentView(row);
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        popup.setOutsideTouchable(true);
+        popup.setFocusable(false);
+        popup.setWidth(dp(48) * options.size() + dp(8));
+        popup.setHeight(dp(60));
+        int[] loc = new int[2];
+        anchor.getLocationInWindow(loc);
+        int width = popup.getWidth();
+        int x = Math.max(0, Math.min(loc[0] + anchor.getWidth() / 2 - width / 2,
+                getWidth() - width));
+        popup.showAtLocation(anchor, Gravity.NO_GRAVITY, x, loc[1] - dp(62));
+    }
+
     private void loadEmoji() {
         if (mGroups != null) return;
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                getContext().getAssets().open("emoji_tones.txt"), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                if (line.startsWith("#")) continue;
+                int tab = line.indexOf('\t');
+                if (tab <= 0) continue;
+                String base = line.substring(0, tab);
+                String[] variants = line.substring(tab + 1).split(" ");
+                mTones.put(base, variants);
+                for (String v : variants) mToneBase.put(v, base);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("HK/Toolbar", "Could not load emoji tones", e);
+        }
         mGroupNames = new ArrayList<>();
         mGroups = new ArrayList<>();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(

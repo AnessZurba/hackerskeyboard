@@ -36,6 +36,22 @@ public class LayoutOutputTest {
         }
     }
 
+    /** The Fn numpad's 0 is double width; Num Lock and Scroll Lock share a key. */
+    @Test
+    public void fnNumpadBottomRow() {
+        Context c = ApplicationProvider.getApplicationContext();
+        for (int layout : new int[] {R.xml.kbd_full_fn, R.xml.kbd_full_swap_fn}) {
+            Keyboard kb = new LatinKeyboard(c, layout);
+            Keyboard.Key zero = withLabel(kb, "0"), dot = withLabel(kb, "."), comma = withLabel(kb, ",");
+            assertNotNull(zero);
+            assertEquals(2.0 * dot.width + dot.gap, zero.width + 0.0, 3);
+            org.junit.Assert.assertTrue("comma left of 0", comma.x < zero.x);
+            assertEquals(zero.y, comma.y);
+            assertNotNull(withLabel(kb, "Num\nScrL"));
+            assertNull(withLabel(kb, "ScrL"));
+        }
+    }
+
     /** The Arabic lam-alef keys type two letters, not presentation-form ligatures. */
     @Test
     @Config(qualifiers = "ar")
