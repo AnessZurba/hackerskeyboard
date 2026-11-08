@@ -637,6 +637,10 @@
     <string name="main_setup_input_lang">Input languages</string>
     <string name="main_setup_settings">Settings</string>
     <string name="main_setup_test">Test</string>
+    <string name="main_test_type_text">Text</string>
+    <string name="main_test_type_lines">Lines</string>
+    <string name="main_test_type_number">Number</string>
+    <string name="main_test_type_password">Password</string>
     <string name="main_body"><Data>
       <![CDATA["
         <h2>Enabling Hacker's Keyboard</h2>

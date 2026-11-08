@@ -320,12 +320,82 @@
             app:strokeColor="@color/setup_text_muted"
             app:cardBackgroundColor="@color/setup_surface">
 
-            <com.google.android.material.textfield.TextInputLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:hint="Tap here to test the keyboard"
+                android:orientation="vertical"
                 android:padding="8dp">
+
+            <!-- Field type: the keyboard shows the layout an app's field of that type gets. -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/main_test_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@+id/main_test_type_text">
+
+                <Button
+                    android:id="@+id/main_test_type_text"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingLeft="0dp"
+                    android:paddingRight="0dp"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0"
+                    android:textSize="14sp"
+                    android:text="@string/main_test_type_text" />
+
+                <Button
+                    android:id="@+id/main_test_type_lines"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingLeft="0dp"
+                    android:paddingRight="0dp"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0"
+                    android:textSize="14sp"
+                    android:text="@string/main_test_type_lines" />
+
+                <Button
+                    android:id="@+id/main_test_type_number"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingLeft="0dp"
+                    android:paddingRight="0dp"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0"
+                    android:textSize="14sp"
+                    android:text="@string/main_test_type_number" />
+
+                <Button
+                    android:id="@+id/main_test_type_password"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingLeft="0dp"
+                    android:paddingRight="0dp"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0"
+                    android:textSize="14sp"
+                    android:text="@string/main_test_type_password" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/main_test_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="Tap here to test the keyboard">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/main_setup_edit_test"
@@ -335,6 +405,8 @@
                     android:imeOptions="flagNoFullscreen" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 

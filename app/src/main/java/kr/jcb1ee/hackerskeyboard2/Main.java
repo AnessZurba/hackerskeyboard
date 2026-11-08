@@ -19,6 +19,7 @@ package kr.jcb1ee.hackerskeyboard2;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -56,6 +57,32 @@ public class Main extends AppCompatActivity {
         setup4.setOnClickListener(v ->
             startActivity(new Intent(this, InputLanguageSelection.class))
         );
+
+        // The test field can pose as other kinds of field (numbers get the numpad).
+        final EditText test = findViewById(R.id.main_setup_edit_test);
+        com.google.android.material.button.MaterialButtonToggleGroup type =
+                findViewById(R.id.main_test_type);
+        type.addOnButtonCheckedListener((group, id, checked) -> {
+            if (!checked) return;
+            int inputType = InputType.TYPE_CLASS_TEXT;
+            if (id == R.id.main_test_type_lines) {
+                inputType |= InputType.TYPE_TEXT_FLAG_MULTI_LINE;
+            } else if (id == R.id.main_test_type_number) {
+                inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                        | InputType.TYPE_NUMBER_FLAG_SIGNED;
+            } else if (id == R.id.main_test_type_password) {
+                inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+            }
+            int start = test.getSelectionStart(), end = test.getSelectionEnd();
+            test.setInputType(inputType); // also sets single/multi-line and password dots
+            test.setMinLines(id == R.id.main_test_type_lines ? 3 : 1);
+            String text = test.getText().toString();
+            if (start >= 0 && end <= text.length()) test.setSelection(start, end);
+            test.requestFocus();
+            InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            mgr.restartInput(test);
+            mgr.showSoftInput(test, 0);
+        });
 
         final Button setup5 = findViewById(R.id.main_setup_btn_settings);
         setup5.setOnClickListener(v ->
