@@ -625,6 +625,13 @@ public class KeyboardSwitcher implements
         return mInputView;
     }
 
+    private KeyboardToolbar mToolbar;
+
+    /** The view given to the system: the toolbar with the keyboard below it. */
+    public KeyboardToolbar getInputContainer() {
+        return mToolbar;
+    }
+
     public void recreateInputView() {
         changeLatinKeyboardView(mLayoutId, true);
     }
@@ -658,11 +665,13 @@ public class KeyboardSwitcher implements
             mInputView.setOnKeyboardActionListener(mInputMethodService);
             mInputView.setPadding(0, 0, 0, 0);
             mLayoutId = newLayout;
+            if (mToolbar == null) mToolbar = new KeyboardToolbar(mInputMethodService);
+            mToolbar.setKeyboardView(mInputView);
         }
         mInputMethodService.mHandler.post(new Runnable() {
             public void run() {
-                if (mInputView != null) {
-                    mInputMethodService.setInputView(mInputView);
+                if (mToolbar != null) {
+                    mInputMethodService.setInputView(mToolbar);
                 }
                 mInputMethodService.updateInputViewShown();
             }

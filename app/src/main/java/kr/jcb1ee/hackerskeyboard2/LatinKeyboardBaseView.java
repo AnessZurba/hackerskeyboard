@@ -1319,6 +1319,14 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     }
 
     private boolean openPopupIfRequired(int keyIndex, PointerTracker tracker) {
+        // Holding the space bar starts the cursor slider instead of a popup.
+        Key held = tracker.getKey(keyIndex);
+        if (held != null && held.codes != null && held.codes.length > 0
+                && held.codes[0] == LatinIME.ASCII_SPACE
+                && tracker.startCursorSlide()) {
+            dismissKeyPreview();
+            return true;
+        }
         // Check if we have a popup layout specified first.
         if (mPopupLayout == 0) {
             return false;

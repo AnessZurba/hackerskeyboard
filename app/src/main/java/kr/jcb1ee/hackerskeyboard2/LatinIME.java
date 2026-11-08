@@ -366,6 +366,8 @@ public class LatinIME extends InputMethodService implements
         super.onCreate();
         sInstance = this;
         mAdaptive = AdaptiveKeyTargets.get(this);
+        ClipboardHistory.get(this).setEnabled(PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(ClipboardHistory.PREF_ENABLED, true));
         // setStatusIcon(R.drawable.ime_qwerty);
         mResources = getResources();
         final Configuration conf = mResources.getConfiguration();
@@ -722,7 +724,7 @@ public class LatinIME extends InputMethodService implements
         mKeyboardSwitcher.makeKeyboards(true);
         mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_TEXT, 0,
                 shouldShowVoiceButton(getCurrentInputEditorInfo()));
-        return mKeyboardSwitcher.getInputView();
+        return mKeyboardSwitcher.getInputContainer();
     }
 
     @Override
@@ -1005,6 +1007,9 @@ public class LatinIME extends InputMethodService implements
     @Override
     public void onFinishInputView(boolean finishingInput) {
         super.onFinishInputView(finishingInput);
+        if (mKeyboardSwitcher.getInputContainer() != null) {
+            mKeyboardSwitcher.getInputContainer().closePanel();
+        }
         // Remove penging messages related to update suggestions
         mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
         mHandler.removeMessages(MSG_UPDATE_OLD_SUGGESTIONS);
@@ -2626,13 +2631,13 @@ public class LatinIME extends InputMethodService implements
     private void switchToKeyboardView() {
         mHandler.post(new Runnable() {
             public void run() {
-                LatinKeyboardView view = mKeyboardSwitcher.getInputView(); 
+                View view = mKeyboardSwitcher.getInputContainer();
                 if (view != null) {
                     ViewParent p = view.getParent();
                     if (p != null && p instanceof ViewGroup) {
                         ((ViewGroup) p).removeView(view);
                     }
-                    setInputView(mKeyboardSwitcher.getInputView());
+                    setInputView(view);
                 }
                 setCandidatesViewShown(true);
                 updateInputViewShown();
@@ -3101,6 +3106,9 @@ public class LatinIME extends InputMethodService implements
         // Apply globally handled shared prefs
         sKeyboardSettings.sharedPreferenceChanged(sharedPreferences, key);
         mAdaptive.loadSettings(sharedPreferences);
+        if (ClipboardHistory.PREF_ENABLED.equals(key)) {
+            ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
+        }
         if (sKeyboardSettings.hasFlag(GlobalKeyboardSettings.FLAG_PREF_NEED_RELOAD)) {
             needReload = true;
         }
@@ -3242,9 +3250,10 @@ public class LatinIME extends InputMethodService implements
                 mKeyboardModeOverrideLandscape = (mKeyboardModeOverrideLandscape + 1) % mNumKeyboardModes;
             }
             toggleLanguage(true, true);
-        } else if (action.equals("extension")) {
-            sKeyboardSettings.useExtension = !sKeyboardSettings.useExtension;
-            reloadKeyboards();
+        } else if (action.equals("extension") || action.equals("toolbar")) {
+            // "extension" used to toggle the F-key row; the toolbar replaces it.
+            KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+            if (toolbar != null) toolbar.toggleToolbar();
         } else if (action.equals("height_up")) {
             if (isPortrait()) {
                 mHeightPortrait += 5;

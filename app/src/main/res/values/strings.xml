@@ -575,7 +575,7 @@
         <string-array name="swipe_action_entries">
         <item>(no action)</item>
         <item>Close keyboard</item>
-        <item>Toggle extension row</item>
+        <item>Show/hide toolbar</item>
         <item>Launch Settings</item>
         <item>Toggle suggestions</item>
         <item>Voice input</item>
@@ -588,7 +588,7 @@
     <string-array name="swipe_action_values">
         <item>none</item>
         <item>close</item>
-        <item>extension</item>
+        <item>toolbar</item>
         <item>settings</item>
         <item>suggestions</item>
         <item>voice_input</item>
@@ -598,7 +598,7 @@
         <item>lang_prev</item>
 -       <item>lang_next</item>
     </string-array>    
-    <string name="default_swipe_up">extension</string>
+    <string name="default_swipe_up">toolbar</string>
     <string name="default_swipe_down">close</string>
     <string name="default_swipe_left">none</string>
     <string name="default_swipe_right">none</string>
@@ -711,4 +711,21 @@
 
     <string name="title_hide_dpad_center">Hide the ○ key</string>
     <string name="summary_hide_dpad_center">Remove the D-pad Center key next to Fn (it also opens Compose on long press); the space bar takes its room.</string>
+
+    <!-- Toolbar above the keyboard (swipe up to show or hide) -->
+    <string name="toolbar_category">Toolbar</string>
+    <string name="toolbar_select">Select</string>
+    <string name="toolbar_clipboard">Clipboard</string>
+    <string name="toolbar_emoji">Emoji</string>
+    <string name="toolbar_select_all">All</string>
+    <string name="toolbar_copy">Copy</string>
+    <string name="toolbar_cut">Cut</string>
+    <string name="toolbar_paste">Paste</string>
+    <string name="toolbar_undo">Undo</string>
+    <string name="toolbar_redo">Redo</string>
+    <string name="toolbar_clipboard_empty">Text you copy appears here. Tap to paste, long-press to pin.</string>
+    <string name="toolbar_clipboard_off">Clipboard history is turned off in settings.</string>
+    <string name="toolbar_clipboard_clear">Clear (keeps pinned)</string>
+    <string name="title_clipboard_history">Clipboard history</string>
+    <string name="summary_clipboard_history">Keep the last 50 copied texts for the toolbar\'s clipboard panel. Texts apps mark as sensitive (passwords) are never kept. Swipe up on the keyboard to show or hide the toolbar.</string>
 </resources>

@@ -25,7 +25,9 @@ import kr.jcb1ee.hackerskeyboard2.LatinKeyboardBaseView.UIHandler;
 import android.content.res.Resources;
 import kr.jcb1ee.hackerskeyboard2.Keyboard.Key;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
+import android.view.View;
 
 public class PointerTracker {
     private static final String TAG = "PointerTracker";
@@ -57,6 +59,14 @@ public class PointerTracker {
 
     private Key[] mKeys;
     private int mKeyHysteresisDistanceSquared = -1;
+
+    // Space-bar cursor slider: holding space without sliding, then sliding, moves the
+    // cursor one character per step by sending the arrow keys.
+    private boolean mCursorSlide;
+    private int mCursorLastX;
+    private int mDownX;
+    private final int mCursorStep;
+    private final int mCursorSlop;
 
     private final KeyState mKeyState;
 
@@ -183,6 +193,9 @@ public class PointerTracker {
         mHasDistinctMultitouch = proxy.hasDistinctMultitouch();
         mDelayBeforeKeyRepeatStart = res.getInteger(R.integer.config_delay_before_key_repeat_start);
         mMultiTapKeyTimeout = res.getInteger(R.integer.config_multi_tap_key_timeout);
+        float density = res.getDisplayMetrics().density;
+        mCursorStep = Math.max(1, Math.round(10 * density));
+        mCursorSlop = Math.round(12 * density);
         sSlideKeyHack = slideKeyHack;
         resetMultiTap();
     }
@@ -298,6 +311,8 @@ public class PointerTracker {
         mKeyAlreadyProcessed = false;
         mIsRepeatableKey = false;
         mIsInSlidingKeyInput = false;
+        endCursorSlide();
+        mDownX = x;
         checkMultiTap(eventTime, keyIndex);
         if (mListener != null) {
             if (isValidKeyIndex(keyIndex)) {
@@ -365,6 +380,10 @@ public class PointerTracker {
             debugLog("onMoveEvent:", x, y);
         if (mKeyAlreadyProcessed)
             return;
+        if (mCursorSlide) {
+            moveCursor(x);
+            return;
+        }
         final KeyState keyState = mKeyState;
         int keyIndex = keyState.onMoveKey(x, y);
         final Key oldKey = getKey(keyState.getKeyIndex());
@@ -434,6 +453,11 @@ public class PointerTracker {
         mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);
         mIsInSlidingKeyInput = false;
+        if (mCursorSlide) {
+            endCursorSlide();
+            clearSlideKeys();
+            return; // the hold-and-slide typed nothing
+        }
         sendSlideKeys();
         if (mKeyAlreadyProcessed)
             return;
@@ -455,6 +479,7 @@ public class PointerTracker {
     public void onCancelEvent(int x, int y, long eventTime) {
         if (DEBUG)
             debugLog("onCancelEvt:", x, y);
+        endCursorSlide();
         mHandler.cancelKeyTimers();
         mHandler.cancelPopupPreview();
         showKeyPreviewAndUpdateKey(NOT_A_KEY);
@@ -462,6 +487,49 @@ public class PointerTracker {
         int keyIndex = mKeyState.getKeyIndex();
         if (isValidKeyIndex(keyIndex))
            mProxy.invalidateKey(mKeys[keyIndex]);
+    }
+
+    /**
+     * Called when the long-press timer fires on the space bar. Starts the cursor slider
+     * unless the finger has already slid (that is a language-switch slide).
+     */
+    boolean startCursorSlide() {
+        int x = mKeyState.getLastX();
+        if (Math.abs(x - mDownX) > mCursorSlop) return false;
+        mCursorSlide = true;
+        mCursorLastX = x;
+        if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
+            ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(true);
+        }
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        return true;
+    }
+
+    boolean isCursorSliding() {
+        return mCursorSlide;
+    }
+
+    private void endCursorSlide() {
+        if (!mCursorSlide) return;
+        mCursorSlide = false;
+        if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
+            ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(false);
+        }
+    }
+
+    private void moveCursor(int x) {
+        int steps = (x - mCursorLastX) / mCursorStep;
+        if (steps == 0 || mListener == null) return;
+        mCursorLastX += steps * mCursorStep;
+        // Arrow keys rather than setSelection: they work in terminals, apply Shift/Ctrl
+        // held on other keys (select, word jumps), and follow the text visually in RTL.
+        int code = steps < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
+        for (int i = Math.abs(steps); i > 0; i--) {
+            mListener.onKey(code, null, x, mKeyState.getLastY());
+        }
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
     }
 
     public void repeatKey(int keyIndex) {

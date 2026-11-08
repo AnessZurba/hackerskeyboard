@@ -279,6 +279,18 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+            android:title="@string/toolbar_category"
+            android:key="toolbar_settings">
+        <CheckBoxPreference
+            android:key="pref_clipboard_history"
+            android:title="@string/title_clipboard_history"
+            android:summary="@string/summary_clipboard_history"
+            android:persistent="true"
+            android:defaultValue="true"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
             android:title="@string/adaptive_category"
             android:key="adaptive_settings">
 
