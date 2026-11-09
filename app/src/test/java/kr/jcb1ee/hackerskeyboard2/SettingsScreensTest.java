@@ -47,6 +47,29 @@ public class SettingsScreensTest {
         }
     }
 
+    /** Hebrew is listed once in the input languages (it had "he" and "iw" entries). */
+    @Test
+    public void hebrewListedOnce() {
+        InputLanguageSelection a = Robolectric.buildActivity(InputLanguageSelection.class).setup().get();
+        androidx.preference.PreferenceFragmentCompat f = (androidx.preference.PreferenceFragmentCompat)
+                a.getSupportFragmentManager().findFragmentById(android.R.id.content);
+        int hebrew = 0;
+        androidx.preference.PreferenceGroup g = f.getPreferenceScreen();
+        for (int i = 0; i < g.getPreferenceCount(); i++) {
+            String title = String.valueOf(g.getPreference(i).getTitle());
+            if (title.contains("[iw") || title.contains("[he")) hebrew++;
+        }
+        org.junit.Assert.assertEquals(1, hebrew);
+    }
+
+    /** A saved "he" (the dropped entry) is read as "iw", so a chosen Hebrew keyboard stays. */
+    @Test
+    public void savedHebrewKept() {
+        org.junit.Assert.assertEquals("en_US,iw,ar", LanguageSwitcher.normalizeLanguages("en_US,he,ar"));
+        org.junit.Assert.assertEquals("iw", LanguageSwitcher.normalizeLanguages("he,iw"));
+        org.junit.Assert.assertEquals("iw_IL", LanguageSwitcher.normalizeLanguages("he_IL"));
+    }
+
     private static void collectIntents(androidx.preference.PreferenceGroup g,
             java.util.List<android.content.Intent> out) {
         for (int i = 0; i < g.getPreferenceCount(); i++) {

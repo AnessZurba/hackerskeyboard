@@ -59,8 +59,8 @@ public class LanguageSwitcher {
      * @return whether there was any change
      */
     public boolean loadLocales(SharedPreferences sp) {
-        String selectedLanguages = sp.getString(LatinIME.PREF_SELECTED_LANGUAGES, null);
-        String currentLanguage   = sp.getString(LatinIME.PREF_INPUT_LANGUAGE, null);
+        String selectedLanguages = normalizeLanguages(sp.getString(LatinIME.PREF_SELECTED_LANGUAGES, null));
+        String currentLanguage   = normalizeLanguages(sp.getString(LatinIME.PREF_INPUT_LANGUAGE, null));
         if (selectedLanguages == null || selectedLanguages.length() < 1) {
             loadDefaults();
             if (mLocales.length == 0) {
@@ -88,6 +88,21 @@ public class LanguageSwitcher {
             // If we didn't find the index, use the first one
         }
         return true;
+    }
+
+    /**
+     * Hebrew had two entries ("he", the modern code, and "iw", the one Android's Java
+     * still reports), with identical layouts; only "iw" is offered now. Saved language lists
+     * naming "he" are read as "iw" (once each), so a chosen Hebrew keyboard stays.
+     */
+    static String normalizeLanguages(String languages) {
+        if (languages == null || languages.isEmpty()) return languages;
+        java.util.LinkedHashSet<String> out = new java.util.LinkedHashSet<>();
+        for (String l : languages.split(",")) {
+            if (l.equals("he") || l.startsWith("he_")) l = "iw" + l.substring(2);
+            if (!l.isEmpty()) out.add(l);
+        }
+        return android.text.TextUtils.join(",", out);
     }
 
     private void loadDefaults() {
