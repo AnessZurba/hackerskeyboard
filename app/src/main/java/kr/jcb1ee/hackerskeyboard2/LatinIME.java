@@ -2364,6 +2364,7 @@ public class LatinIME extends InputMethodService implements
     @androidx.annotation.RequiresApi(30)
     public android.view.inputmethod.InlineSuggestionsRequest onCreateInlineSuggestionsRequest(
             android.os.Bundle uiExtras) {
+        if (isTerminalField()) return null; // see isTerminalField
         KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
         int height = toolbar != null ? toolbar.chipHeight()
                 : Math.round(36 * getResources().getDisplayMetrics().density);
@@ -2444,6 +2445,11 @@ public class LatinIME extends InputMethodService implements
             android.view.inputmethod.InlineSuggestionsResponse response) {
         final KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
         if (toolbar == null) return false;
+        if (isTerminalField()) { // in case chips come anyway
+            mAutofillGeneration++;
+            toolbar.showChips(java.util.Collections.<View>emptyList());
+            return true;
+        }
         final List<android.view.inputmethod.InlineSuggestion> suggestions =
                 response.getInlineSuggestions();
         if (suggestions.isEmpty()) {
@@ -2480,6 +2486,17 @@ public class LatinIME extends InputMethodService implements
     }
 
     private int mAutofillGeneration; // latest response; older chips arriving late are dropped
+
+    /**
+     * A field that hides its text from the keyboard, like Termux's terminal. Termux tells
+     * autofill its terminal can take a password (for its long-press "Autofill password"),
+     * so password managers offered their chips on every visit; the keyboard doesn't ask
+     * for them there, and the normal toolbar stays. Termux's own menu still works.
+     */
+    private boolean isTerminalField() {
+        EditorInfo ei = getCurrentInputEditorInfo();
+        return ei != null && (ei.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_NULL;
+    }
 
     private void clearAutofillChips() {
         mAutofillGeneration++;

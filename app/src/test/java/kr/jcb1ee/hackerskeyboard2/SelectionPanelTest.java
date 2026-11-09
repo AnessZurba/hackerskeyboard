@@ -834,6 +834,17 @@ public class SelectionPanelTest {
         assertEquals(2, history.clips().size());
     }
 
+    /** No password-manager chips in terminals (Termux); text fields still get them. */
+    @Test
+    public void noAutofillChipsInTerminals() {
+        mIme.onCreateInputView();
+        idle();
+        sInputType = InputType.TYPE_NULL; // a terminal: hides its text from the keyboard
+        assertEquals(null, mIme.onCreateInlineSuggestionsRequest(new android.os.Bundle()));
+        sInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD;
+        assertTrue(mIme.onCreateInlineSuggestionsRequest(new android.os.Bundle()) != null);
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }
