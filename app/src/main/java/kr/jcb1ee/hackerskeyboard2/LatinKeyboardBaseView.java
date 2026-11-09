@@ -921,83 +921,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             onBufferDraw(canvas);
         }
         if (mBuffer != null) canvas.drawBitmap(mBuffer, 0, 0, null);
-        if (isTrackpadActive()) {
-            // The space-bar trackpad is on: fade the keys, as iOS does.
-            KeyboardToolbar toolbar = KeyboardSwitcher.getInstance().getInputContainer();
-            int colour = toolbar != null ? toolbar.backgroundColour() : 0xFF000000;
-            canvas.drawColor((colour & 0x00FFFFFF) | 0xD0000000);
-        }
-        drawGestureOverlay(canvas);
     }
 
-    // What an active gesture (space-bar trackpad, backspace swipe) is doing, and how it works.
-    private String mOverlayStatus, mOverlayHint;
-    private final Paint mOverlayPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RectF mOverlayRect = new RectF();
-
-    /** The gesture label's status line, or null (tests). */
-    String gestureOverlayStatus() {
-        return mOverlayStatus;
-    }
-
-    /** Shows (or, with a null status, hides) the gesture label in the middle of the keys. */
-    void setGestureOverlay(String status, String hint) {
-        if (android.text.TextUtils.equals(status, mOverlayStatus)
-                && android.text.TextUtils.equals(hint, mOverlayHint)) {
-            return;
-        }
-        mOverlayStatus = status;
-        mOverlayHint = hint;
-        invalidate();
-    }
-
-    private void drawGestureOverlay(Canvas canvas) {
-        if (mOverlayStatus == null) return;
-        float density = getResources().getDisplayMetrics().density;
-        float scaled = getResources().getDisplayMetrics().scaledDensity;
-        float statusSize = 20 * scaled, hintSize = 13 * scaled, pad = 14 * density, gap = 4 * density;
-        mOverlayPaint.setTextAlign(Paint.Align.CENTER);
-        mOverlayPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        mOverlayPaint.setTextSize(statusSize);
-        float width = mOverlayPaint.measureText(mOverlayStatus);
-        float height = statusSize;
-        if (mOverlayHint != null) {
-            mOverlayPaint.setTypeface(android.graphics.Typeface.DEFAULT);
-            mOverlayPaint.setTextSize(hintSize);
-            float hintWidth = mOverlayPaint.measureText(mOverlayHint);
-            float room = getWidth() - 4 * pad;
-            if (hintWidth > room && room > 0) { // narrow screen: a smaller hint, one line
-                hintSize *= room / hintWidth;
-                hintWidth = room;
-            }
-            width = Math.max(width, hintWidth);
-            height += gap + hintSize;
-        }
-        width = Math.min(width + 2 * pad, getWidth() - 2 * pad);
-        float cx = getWidth() / 2f, cy = getHeight() / 2f;
-        mOverlayRect.set(cx - width / 2, cy - height / 2 - pad, cx + width / 2, cy + height / 2 + pad);
-        mOverlayPaint.setColor(0xE0202124);
-        canvas.drawRoundRect(mOverlayRect, 16 * density, 16 * density, mOverlayPaint);
-        float y = mOverlayRect.top + pad + statusSize * 0.8f;
-        mOverlayPaint.setColor(0xFFFFFFFF);
-        mOverlayPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        mOverlayPaint.setTextSize(statusSize);
-        canvas.drawText(mOverlayStatus, cx, y, mOverlayPaint);
-        if (mOverlayHint != null) {
-            mOverlayPaint.setTypeface(android.graphics.Typeface.DEFAULT);
-            mOverlayPaint.setTextSize(hintSize);
-            mOverlayPaint.setColor(0xFFBDC1C6);
-            canvas.drawText(mOverlayHint, cx, y + gap + hintSize, mOverlayPaint);
-        }
-    }
-
-    private boolean isTrackpadActive() {
-        for (PointerTracker t : mPointerTrackers) {
-            if (t.isCursorSliding()) return true;
-        }
-        return false;
-    }
-    
     private void drawDeadKeyLabel(Canvas canvas, String hint, int x, float baseline, Paint paint) {
         char c = hint.charAt(0);
         String accent = DeadAccentSequence.getSpacing(c);

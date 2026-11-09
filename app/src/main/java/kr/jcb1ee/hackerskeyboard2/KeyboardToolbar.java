@@ -69,6 +69,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final LatinIME mIme;
     private final LinearLayout mBar;
     private final FrameLayout mBody;
+    private final GestureLabel mGestureLabel; // over the keys or panel during a gesture
     private final ImageView[] mButtons = new ImageView[3];
     private final List<View> mCells = new ArrayList<>();
     private final HorizontalScrollView mChipScroll;
@@ -166,7 +167,19 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
         addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight));
 
-        mBody = new FrameLayout(ime);
+        mGestureLabel = new GestureLabel(ime);
+        // The body draws the gesture label over the keys or panel (not a child: touches
+        // and the panels' layout stay as they are).
+        mBody = new FrameLayout(ime) {
+            @Override
+            protected void dispatchDraw(Canvas canvas) {
+                super.dispatchDraw(canvas);
+                if (mGestureLabel.status() != null) {
+                    mGestureLabel.layout(0, 0, getWidth(), getHeight());
+                    mGestureLabel.draw(canvas);
+                }
+            }
+        };
         addView(mBody, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ime);
@@ -177,6 +190,20 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mBar.setVisibility(mToolbarShown ? VISIBLE : INVISIBLE);
         mBarSpaceGiven = !mToolbarShown;
         ClipboardHistory.get(ime).setListener(this);
+    }
+
+    /**
+     * While a gesture runs (trackpad, backspace swipe), fades the keys or panel and labels
+     * what it's doing and how it works; a null status ends it.
+     */
+    void setGestureLabel(String status, String hint) {
+        mGestureLabel.set(status, hint, (mBackground & 0x00FFFFFF) | 0xD0000000);
+        mBody.invalidate();
+    }
+
+    /** The gesture label's status line, or null (tests). */
+    String gestureLabelStatus() {
+        return mGestureLabel.status();
     }
 
     /** Puts a (new) keyboard view below the toolbar, e.g. after a theme change. */
@@ -498,6 +525,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             active[0] = true;
             dragging[0] = ime().getCurrentInputConnection() != null
                     && ime().beginCursorDrag(selectButton && mSelecting);
+            setGestureLabel(mIme.getString(selectButton && mSelecting
+                            ? R.string.gesture_selecting : R.string.gesture_moving_cursor),
+                    mIme.getString(R.string.gesture_trackpad_hint));
             cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             cell.setAlpha(0.6f);
         };
@@ -543,6 +573,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     mHandler.removeCallbacks(start);
                     view.setPressed(false);
                     cell.setAlpha(1f);
+                    if (active[0]) setGestureLabel(null, null);
                     if (dragging[0]) ime().mCursorDrag.end();
                     dragging[0] = false;
                     if (!active[0] && e.getActionMasked() == MotionEvent.ACTION_UP) tap.run();

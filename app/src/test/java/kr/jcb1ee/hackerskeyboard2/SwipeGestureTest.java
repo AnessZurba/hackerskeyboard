@@ -228,10 +228,10 @@ public class SwipeGestureTest {
             mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, p(0, at, 0)));
         }
         org.junit.Assert.assertEquals("label while the trackpad is on", "Moving the cursor",
-                mView.gestureOverlayStatus());
+                mToolbar.gestureLabelStatus());
         mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP,
                 p(0, new float[] {space[0] + 60, space[1]}, 0)));
-        org.junit.Assert.assertNull("label gone after", mView.gestureOverlayStatus());
+        org.junit.Assert.assertNull("label gone after", mToolbar.gestureLabelStatus());
         idle();
         int arrows = 0;
         for (int code : mTyped) {

@@ -562,11 +562,11 @@ public class SelectionPanelTest {
                     MotionEvent.ACTION_MOVE, x0 - px * i / steps, y, 0));
         }
         int selected = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
-        mLastOverlay = view.gestureOverlayStatus();
+        mLastOverlay = mIme.mKeyboardSwitcher.getInputContainer().gestureLabelStatus();
         view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
                 MotionEvent.ACTION_UP, x0 - px, y, 0));
         idle();
-        assertEquals("label gone after", null, view.gestureOverlayStatus());
+        assertEquals("label gone after", null, mIme.mKeyboardSwitcher.getInputContainer().gestureLabelStatus());
         return selected;
     }
 
@@ -687,6 +687,47 @@ public class SelectionPanelTest {
         idle();
     }
 
+    /** The label on the panel mid-gesture (before the finger lifts). */
+    private static String labelMidDrag(View v, float dx, boolean hold, KeyboardToolbar t) {
+        long t0 = SystemClock.uptimeMillis();
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        if (hold) ShadowLooper.idleMainLooper(600, TimeUnit.MILLISECONDS);
+        for (int i = 1; i <= 6; i++) {
+            ShadowSystemClock.advanceBy(Duration.ofMillis(100));
+            v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, 100 + dx * i / 6, 10, 0));
+        }
+        String label = t.gestureLabelStatus();
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_UP, 100 + dx, 10, 0));
+        idle();
+        assertEquals("label gone after", null, t.gestureLabelStatus());
+        return label;
+    }
+
+    /** Panel keys label their gestures too: backspace, space, and the Select button. */
+    @Test
+    public void panelGesturesShowTheLabel() throws Exception {
+        float d = mIme.getResources().getDisplayMetrics().density;
+        KeyboardToolbar emoji = openPanel(2);
+        mField.setText("one two three four");
+        sConnection.setSelection(mField.length(), mField.length());
+        View panel = ((FrameLayout) emoji.getChildAt(1)).getChildAt(1);
+        assertEquals("2 words", labelMidDrag(find(panel, "⌫"), -40 * d, false, emoji));
+        View space = findByDescription(panel, mIme.getString(R.string.toolbar_emoji_space));
+        assertEquals("Moving the cursor", labelMidDrag(space, 40 * d, true, emoji));
+
+        emoji.closePanel();
+        LinearLayout bar = (LinearLayout) emoji.getChildAt(0);
+        ((ViewGroup) bar.getChildAt(0)).getChildAt(0).performClick(); // selection panel
+        idle();
+        layout(emoji);
+        TextView select = find(((FrameLayout) emoji.getChildAt(1)).getChildAt(1),
+                mIme.getString(R.string.toolbar_select));
+        tap(select); // Select on
+        assertEquals("Selecting", labelMidDrag(select, -30 * d, true, emoji));
+    }
+
     /** The selection panel's backspace swipes words away like the keyboard's. */
     @Test
     public void selectionPanelBackspaceSwipes() throws Exception {
@@ -697,6 +738,7 @@ public class SelectionPanelTest {
         float d = mIme.getResources().getDisplayMetrics().density;
         drag(del, -40 * d, 600, false); // two words, slowly
         assertEquals("one two ", mField.getText().toString());
+        assertEquals("label gone after the panel swipe", null, toolbar.gestureLabelStatus());
         del.dispatchTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 100, 10, 0));
         del.dispatchTouchEvent(MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, 100, 10, 0));
         idle();

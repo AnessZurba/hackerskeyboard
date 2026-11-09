@@ -2929,9 +2929,9 @@ public class LatinIME extends InputMethodService implements
 
     /** The keyboard's label for the backspace swipe: how many words, and how it works. */
     private void showDeleteSwipeStatus(int words) {
-        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        KeyboardToolbar view = mKeyboardSwitcher.getInputContainer();
         if (view == null) return;
-        view.setGestureOverlay(words == 0 ? getString(R.string.gesture_nothing_selected)
+        view.setGestureLabel(words == 0 ? getString(R.string.gesture_nothing_selected)
                         : getResources().getQuantityString(R.plurals.gesture_words, words, words),
                 getString(R.string.gesture_delete_hint));
     }
@@ -2954,8 +2954,8 @@ public class LatinIME extends InputMethodService implements
         }
         mDeleteSwipeText = null;
         mDeleteSwipeChars = 0;
-        LatinKeyboardView overlay = mKeyboardSwitcher.getInputView();
-        if (overlay != null) overlay.setGestureOverlay(null, null);
+        KeyboardToolbar label = mKeyboardSwitcher.getInputContainer();
+        if (label != null) label.setGestureLabel(null, null);
         mDeleteSwipeWords = 0;
         updateShiftKeyState(getCurrentInputEditorInfo());
     }
