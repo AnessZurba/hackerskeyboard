@@ -37,8 +37,8 @@ import android.widget.PopupWindow;
 final class CursorLoupe implements CursorDrag.Listener {
     static final String PREF = "pref_cursor_loupe";
     private static final int CONTEXT_CHARS = 18;
-    static final int WIDTH_DP = 117, HEIGHT_DP = 23, CORNER_DP = 7;
-    static final float TEXT_SP = 15.8f;
+    static final int WIDTH_DP = 117, HEIGHT_DP = 39, CORNER_DP = 11;
+    static final float TEXT_SP = 26.4f;
 
     private final LatinIME mIme;
     private PopupWindow mPopup;
@@ -184,13 +184,13 @@ final class CursorLoupe implements CursorDrag.Listener {
 
     private void create(Context context) {
         mView = new LoupeText(context);
-        // 60% of the previous size (195x39dp, 26.4sp text): 117x23dp with 15.8sp text.
-        // The height grows if the user's font scale makes the line taller than the bubble.
+        // Narrow (60% of the earlier 195dp width) but full height, with large text:
+        // 117x39dp, 26.4sp. The height grows if the user's font scale makes the line taller.
         mView.setTextSizeSp(TEXT_SP);
-        int pad = dp(6);
-        mView.setPadding(pad, dp(1), pad, dp(1));
+        int pad = dp(8);
+        mView.setPadding(pad, dp(2), pad, dp(2));
         mPopup = new PopupWindow(mView, dp(WIDTH_DP),
-                Math.max(dp(HEIGHT_DP), mView.lineHeight() + 2 * dp(1)));
+                Math.max(dp(HEIGHT_DP), mView.lineHeight() + 2 * dp(2)));
         mPopup.setClippingEnabled(false);
         mPopup.setTouchable(false);
         mPopup.setFocusable(false);

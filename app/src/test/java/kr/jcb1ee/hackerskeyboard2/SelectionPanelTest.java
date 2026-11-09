@@ -514,7 +514,7 @@ public class SelectionPanelTest {
         float density = mIme.getResources().getDisplayMetrics().density;
         android.widget.PopupWindow popup = mIme.mLoupe.popup();
         assertEquals(Math.round(117 * density), popup.getWidth());
-        assertTrue(popup.getHeight() >= Math.round(23 * density));
+        assertTrue("full height: only the width shrank", popup.getHeight() >= Math.round(39 * density));
         CursorLoupe.LoupeText view = (CursorLoupe.LoupeText) popup.getContentView();
         assertTrue("line fits between the paddings",
                 view.lineHeight() <= popup.getHeight() - view.getPaddingTop() - view.getPaddingBottom());
