@@ -15,7 +15,7 @@
 package kr.jcb1ee.hackerskeyboard2;
 
 /**
- * Backspace swipe distance to words, with the trackpad's acceleration: one word per 16dp
+ * Backspace swipe distance to words, with acceleration: one word per 14dp
  * when sliding slowly, up to 4x when fast; sliding back selects fewer, and back over the
  * key none. Used by the keyboard's backspace and the toolbar panels' backspace keys.
  */
@@ -28,7 +28,7 @@ final class DeleteSwipeAccel {
 
     DeleteSwipeAccel(float density) {
         mDensity = density;
-        mStep = Math.max(1f, 16 * density);
+        mStep = Math.max(1f, 14 * density);
     }
 
     /** How far left of the key the swipe starts. */
@@ -50,7 +50,8 @@ final class DeleteSwipeAccel {
             long dt = Math.max(1, time - mLastTime);
             float dx = mLastX - x; // leftwards = more words
             float speed = Math.abs(dx) / mDensity / dt;
-            float boost = 1 + Math.max(0f, Math.min(3f, (speed - 0.25f) * 3f));
+            // A bit livelier than the trackpad's: speeds up from a slower slide, and sooner.
+            float boost = 1 + Math.max(0f, Math.min(3f, (speed - 0.18f) * 4f));
             mWords = Math.max(0f, mWords + dx * boost / mStep);
         }
         mLastX = x;

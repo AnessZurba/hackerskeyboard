@@ -214,11 +214,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         }
         if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
         mKeyboardView = view;
-        // A little room under the toolbar, as each panel has above its first row (about 6dp
-        // from the toolbar to the first keys / buttons / tabs throughout).
+        // A little room under the toolbar, as each panel has above its first row: 7dp from
+        // the toolbar to the first keys / buttons / tabs throughout, the selection panel's
+        // spacing.
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(4);
+        lp.topMargin = dp(5);
         mBody.addView(view, 0, lp);
         applyColours(view.getBackground());
     }
@@ -446,7 +447,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private View buildSelectPanel() {
         LinearLayout grid = column();
-        grid.setPadding(dp(4), dp(3), dp(4), dp(4)); // 3dp + the cells' 3dp: ~6dp under the toolbar
+        grid.setPadding(dp(4), dp(4), dp(4), dp(4)); // 4dp + the cells' 3dp: 7dp under the toolbar
         // label, action; null action = spacer
         // Gboard/Samsung-style editing pad plus a fifth column: select the word or line at
         // the cursor, swap which end of the selection moves, and drop the selection.
@@ -1068,7 +1069,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private View buildEmojiPanel() {
         loadEmoji();
         LinearLayout panel = column();
-        panel.setPadding(0, dp(3), 0, 0); // with the tabs' own 3dp: ~6dp under the toolbar
+        panel.setPadding(0, dp(4), 0, 0); // with the tabs' own 3dp: 7dp under the toolbar
 
         // Sections: recents (if any), then each group.
         final List<Object> items = new ArrayList<>(); // String = emoji, Integer = header of section

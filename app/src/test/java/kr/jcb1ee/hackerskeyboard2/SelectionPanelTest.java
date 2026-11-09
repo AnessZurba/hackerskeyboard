@@ -574,7 +574,7 @@ public class SelectionPanelTest {
 
     @Test
     public void backspaceSwipeSlowIsOneWordPerStep() throws Exception {
-        assertEquals("4 words (16dp each): \"qq rr ss tt\"", 11, backspaceSwipe(64, 800));
+        assertEquals("4 words (14dp each): \"qq rr ss tt\"", 11, backspaceSwipe(64, 800));
         assertEquals("the keyboard says how many", "4 words", mLastOverlay);
         assertEquals("deleted on release", "aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp ",
                 mField.getText().toString());
