@@ -1,7 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -18,6 +17,11 @@
         </intent>
         <intent>
             <action android:name="org.pocketworkstation.DICT" />
+        </intent>
+        <!-- The mic key asks the system speech recogniser; without this the keyboard cannot
+             see whether one is installed (and Samsung's Bixby/Google split makes it matter). -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
         </intent>
     </queries>
 
