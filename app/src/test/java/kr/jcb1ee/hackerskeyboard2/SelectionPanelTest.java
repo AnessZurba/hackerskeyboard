@@ -466,6 +466,61 @@ public class SelectionPanelTest {
         assertTrue("gone after", !mIme.mLoupe.isShowing());
     }
 
+    /** The bubble stays still while the caret wobbles, and only follows when it really moves. */
+    @Test
+    public void loupePlacementIsSteady() {
+        CursorLoupe.Placer p = new CursorLoupe.Placer(1f);
+        int w = 117, h = 23, kb = 1000, screen = 1000;
+        float[] first = p.place(500, 300, 320, w, h, kb, screen);
+        assertEquals(500 - w / 2f, first[0], 0.01f);
+        assertEquals(300 - h - 10, first[1], 0.01f);
+        // Caret steps a character at a time within the dead zone, top jitters by a pixel or two.
+        float[] xs = {505, 498, 512, 490, 503, 497};
+        float[] tops = {301, 299, 302, 300, 298, 301};
+        for (int i = 0; i < xs.length; i++) {
+            float[] r = p.place(xs[i], tops[i], tops[i] + 20, w, h, kb, screen);
+            assertEquals("x steady " + i, first[0], r[0], 0.01f);
+            assertEquals("y steady " + i, first[1], r[1], 0.01f);
+        }
+        // Moving right past the dead zone drags the bubble along, caret at the zone's edge.
+        float[] r = p.place(600, 300, 320, w, h, kb, screen);
+        assertEquals(600 - w * 0.2f - w / 2f, r[0], 0.01f);
+        assertEquals(first[1], r[1], 0.01f);
+        // Back left a little: no move.
+        assertEquals(r[0], p.place(590, 300, 320, w, h, kb, screen)[0], 0.01f);
+        // A new line moves it vertically.
+        assertEquals(330 - h - 10, p.place(590, 330, 350, w, h, kb, screen)[1], 0.01f);
+        // Near the top: below the line, and it stays below with jitter around the threshold.
+        p.reset();
+        float y1 = p.place(500, 20, 40, w, h, kb, screen)[1];
+        assertEquals(40 + 10, y1, 0.01f);
+        assertEquals(y1, p.place(500, 25, 45, w, h, kb, screen)[1], 0.01f);
+        // Never off the screen sideways.
+        p.reset();
+        assertEquals(4f, p.place(2, 300, 320, w, h, kb, screen)[0], 0.01f);
+        assertEquals(screen - 4f - w, p.place(999, 300, 320, w, h, kb, screen)[0], 0.01f);
+    }
+
+    /** The bubble is 60% of the old size and its line of text fits inside. */
+    @Test
+    public void loupeIsSmallAndTheTextFits() {
+        sConnection = laggy();
+        sConnection.setSelection(15, 15);
+        settle();
+        attachKeyboard();
+        assertTrue(mIme.beginCursorDrag(false));
+        ShadowLooper.idleMainLooper(CursorLoupe.START_DELAY_MS + 100, TimeUnit.MILLISECONDS);
+        assertTrue(mIme.mLoupe.isShowing());
+        float density = mIme.getResources().getDisplayMetrics().density;
+        android.widget.PopupWindow popup = mIme.mLoupe.popup();
+        assertEquals(Math.round(117 * density), popup.getWidth());
+        assertTrue(popup.getHeight() >= Math.round(23 * density));
+        CursorLoupe.LoupeText view = (CursorLoupe.LoupeText) popup.getContentView();
+        assertTrue("line fits between the paddings",
+                view.lineHeight() <= popup.getHeight() - view.getPaddingTop() - view.getPaddingBottom());
+        mIme.mCursorDrag.end();
+    }
+
     @Test
     public void loupeCanBeTurnedOff() {
         sConnection = laggy();

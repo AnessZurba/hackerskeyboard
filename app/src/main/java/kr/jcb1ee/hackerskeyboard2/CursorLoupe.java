@@ -37,12 +37,16 @@ import android.widget.PopupWindow;
 final class CursorLoupe implements CursorDrag.Listener {
     static final String PREF = "pref_cursor_loupe";
     private static final int CONTEXT_CHARS = 18;
+    static final int WIDTH_DP = 117, HEIGHT_DP = 23, CORNER_DP = 7;
+    static final float TEXT_SP = 15.8f;
 
     private final LatinIME mIme;
     private PopupWindow mPopup;
     private LoupeText mView;
     private boolean mEnabled = true;
     private float mCaretX = Float.NaN, mCaretTop, mCaretBottom; // on screen
+    private Placer mPlacer; // made on first use: the service has no Context yet in its constructor
+    private int mPlacedX = Integer.MIN_VALUE, mPlacedY = Integer.MIN_VALUE;
 
     CursorLoupe(LatinIME ime) {
         mIme = ime;
@@ -61,6 +65,11 @@ final class CursorLoupe implements CursorDrag.Listener {
         return mPopup != null && mPopup.isShowing();
     }
 
+    /** The window (tests). */
+    PopupWindow popup() {
+        return mPopup;
+    }
+
     /** What the loupe shows (tests). */
     CharSequence text() {
         return mView == null ? "" : mView.getText();
@@ -68,6 +77,7 @@ final class CursorLoupe implements CursorDrag.Listener {
 
     @Override
     public void onCaretOnScreen(float x, float top, float bottom) {
+        if (x == mCaretX && top == mCaretTop && bottom == mCaretBottom) return;
         mCaretX = x;
         mCaretTop = top;
         mCaretBottom = bottom;
@@ -164,6 +174,8 @@ final class CursorLoupe implements CursorDrag.Listener {
         mFast = false;
         mText = null;
         mCaretX = Float.NaN;
+        if (mPlacer != null) mPlacer.reset();
+        mPlacedX = mPlacedY = Integer.MIN_VALUE;
     }
 
     void hide() {
@@ -172,12 +184,13 @@ final class CursorLoupe implements CursorDrag.Listener {
 
     private void create(Context context) {
         mView = new LoupeText(context);
-        // 75% of the first size (260x52dp), with text 20% larger (22sp): a smaller bubble
-        // that's easier to read. Little vertical padding, so the larger text fits.
-        mView.setTextSizeSp(26.4f);
-        int pad = dp(10);
-        mView.setPadding(pad, dp(2), pad, dp(2));
-        mPopup = new PopupWindow(mView, dp(195), dp(39));
+        // 60% of the previous size (195x39dp, 26.4sp text): 117x23dp with 15.8sp text.
+        // The height grows if the user's font scale makes the line taller than the bubble.
+        mView.setTextSizeSp(TEXT_SP);
+        int pad = dp(6);
+        mView.setPadding(pad, dp(1), pad, dp(1));
+        mPopup = new PopupWindow(mView, dp(WIDTH_DP),
+                Math.max(dp(HEIGHT_DP), mView.lineHeight() + 2 * dp(1)));
         mPopup.setClippingEnabled(false);
         mPopup.setTouchable(false);
         mPopup.setFocusable(false);
@@ -210,7 +223,7 @@ final class CursorLoupe implements CursorDrag.Listener {
                     s - from, e - from, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(dp(11));
+        bg.setCornerRadius(dp(CORNER_DP));
         bg.setColor(background | 0xFF000000);
         bg.setStroke(Math.max(1, dp(1) / 2), (foreground & 0x00FFFFFF) | 0x40000000);
         mView.setBackground(bg);
@@ -231,18 +244,83 @@ final class CursorLoupe implements CursorDrag.Listener {
         int originX = onScreen[0] - inWindow[0], originY = onScreen[1] - inWindow[1];
         int w = mPopup.getWidth(), h = mPopup.getHeight();
         int screenW = anchor.getResources().getDisplayMetrics().widthPixels;
-        float x, y;
+        if (mPlacer == null) mPlacer = new Placer(anchor.getResources().getDisplayMetrics().density);
+        float[] xy;
         if (!Float.isNaN(mCaretX) && mCaretBottom < onScreen[1]) {
-            x = mCaretX - w / 2f;
-            y = mCaretTop - h - dp(10);
-            if (y < dp(24)) y = mCaretBottom + dp(10); // no room above: below the line
-            if (y + h > onScreen[1]) y = onScreen[1] - h - dp(6);
+            xy = mPlacer.place(mCaretX, mCaretTop, mCaretBottom, w, h, onScreen[1], screenW);
         } else {
-            x = (screenW - w) / 2f;
-            y = onScreen[1] - h - dp(10);
+            xy = mPlacer.placeAboveKeyboard(w, h, onScreen[1], screenW);
         }
-        x = Math.max(dp(4), Math.min(x, screenW - w - dp(4)));
-        mPopup.update(Math.round(x) - originX, Math.round(y) - originY, w, h);
+        int x = Math.round(xy[0]) - originX, y = Math.round(xy[1]) - originY;
+        if (x == mPlacedX && y == mPlacedY) return; // nothing moved: don't touch the window
+        mPlacedX = x;
+        mPlacedY = y;
+        mPopup.update(x, y, w, h);
+    }
+
+    /**
+     * Decides where the loupe goes so that it stays steady while the caret moves. Plain
+     * numbers in, plain numbers out (screen pixels), so it can be tested without a window.
+     * <ul>
+     * <li>Horizontally the bubble stays put while the caret is inside a dead zone around
+     * its middle, and only moves (just far enough to keep the caret at the zone's edge) when
+     * the caret leaves it: the caret jumping a character at a time doesn't shake it.
+     * <li>Vertically it stays on the line it is on, and only moves when the caret's line
+     * really changes (by more than half a line), not on small differences in the reported
+     * caret top.
+     * <li>Above/below is sticky: it goes below only when there's no room above, and back
+     * above only when there is clearly room.
+     * </ul>
+     */
+    static final class Placer {
+        private final float mDp;
+        private boolean mHas, mBelow;
+        private float mCentre, mLineTop, mY;
+
+        Placer(float density) {
+            mDp = density;
+        }
+
+        void reset() {
+            mHas = false;
+            mBelow = false;
+        }
+
+        /** The bubble's top-left for a caret at {@code caretX} on a line from top to bottom. */
+        float[] place(float caretX, float top, float bottom, int w, int h, int keyboardTop,
+                int screenW) {
+            float dead = w * 0.2f, minTop = 24 * mDp;
+            // Vertical: only re-decide when the line changes.
+            if (!mHas || Math.abs(top - mLineTop) > Math.max(4 * mDp, (bottom - top) * 0.5f)) {
+                mLineTop = top;
+                float above = top - h - 10 * mDp;
+                if (!mBelow) {
+                    if (above < minTop) mBelow = true;
+                } else if (above >= minTop + 16 * mDp) {
+                    mBelow = false;
+                }
+                float y = mBelow ? bottom + 10 * mDp : above;
+                if (y + h > keyboardTop) y = keyboardTop - h - 6 * mDp;
+                mY = y;
+            }
+            // Horizontal: dead zone around the bubble's middle.
+            if (!mHas) {
+                mCentre = caretX;
+            } else if (caretX < mCentre - dead) {
+                mCentre = caretX + dead;
+            } else if (caretX > mCentre + dead) {
+                mCentre = caretX - dead;
+            }
+            mCentre = Math.max(4 * mDp + w / 2f, Math.min(mCentre, screenW - 4 * mDp - w / 2f));
+            mHas = true;
+            return new float[] {mCentre - w / 2f, mY};
+        }
+
+        /** No caret position from the app: centred, just above the keyboard. */
+        float[] placeAboveKeyboard(int w, int h, int keyboardTop, int screenW) {
+            mHas = false;
+            return new float[] {(screenW - w) / 2f, keyboardTop - h - 10 * mDp};
+        }
     }
 
     private int dp(int value) {
@@ -268,6 +346,12 @@ final class CursorLoupe implements CursorDrag.Listener {
 
         void setTextSizeSp(float sp) {
             mTextPaint.setTextSize(sp * getResources().getDisplayMetrics().scaledDensity);
+        }
+
+        /** Height of one line of text at the current size, in pixels. */
+        int lineHeight() {
+            Paint.FontMetrics fm = mTextPaint.getFontMetrics();
+            return (int) Math.ceil(fm.descent - fm.ascent);
         }
 
         void setTextColor(int colour) {
@@ -310,7 +394,9 @@ final class CursorLoupe implements CursorDrag.Listener {
                 dx = left + avail / 2f - focusX;                    // cursor in the middle
                 dx = Math.min(left, Math.max(right - textWidth, dx)); // no empty edges
             }
-            float dy = (getHeight() - mLayout.getHeight()) / 2f;
+            // Whole pixels, so the text doesn't shimmer from sub-pixel rounding.
+            dx = Math.round(dx);
+            float dy = Math.round((getHeight() - mLayout.getHeight()) / 2f);
             canvas.save();
             canvas.clipRect(left, 0, right, getHeight());
             canvas.translate(dx, dy);

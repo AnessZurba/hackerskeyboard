@@ -335,7 +335,11 @@ final class CursorDrag {
     /** The editor's cursor position on screen, while monitoring (multi-line fields). */
     void onUpdateCursorAnchorInfo(CursorAnchorInfo info) {
         if (!mActive) return;
-        if (mListener != null && !Float.isNaN(info.getInsertionMarkerHorizontal())) {
+        // Updates lag behind the drag; one for a cursor position we've already left would
+        // pull the loupe back for a moment, so only use the one for where the cursor is now.
+        boolean current = info.getSelectionStart() - mOffset == mFocus
+                || info.getSelectionEnd() - mOffset == mFocus;
+        if (mListener != null && current && !Float.isNaN(info.getInsertionMarkerHorizontal())) {
             float[] pts = {info.getInsertionMarkerHorizontal(), info.getInsertionMarkerTop(),
                     info.getInsertionMarkerHorizontal(), info.getInsertionMarkerBottom()};
             info.getMatrix().mapPoints(pts); // editor -> screen
