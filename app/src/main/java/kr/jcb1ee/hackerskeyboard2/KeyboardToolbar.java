@@ -104,7 +104,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         super(ime);
         mIme = ime;
         setOrientation(VERTICAL);
-        mBarHeight = dp(42);
+        mBarHeight = dp(45);
 
         mBar = new LinearLayout(ime);
         mBar.setOrientation(HORIZONTAL);
@@ -214,8 +214,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         }
         if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
         mKeyboardView = view;
-        mBody.addView(view, 0, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+        // A little room under the toolbar, as each panel has above its first row (about 6dp
+        // from the toolbar to the first keys / buttons / tabs throughout).
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(4);
+        mBody.addView(view, 0, lp);
         applyColours(view.getBackground());
     }
 
@@ -442,7 +446,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private View buildSelectPanel() {
         LinearLayout grid = column();
-        grid.setPadding(dp(4), dp(4), dp(4), dp(4));
+        grid.setPadding(dp(4), dp(3), dp(4), dp(4)); // 3dp + the cells' 3dp: ~6dp under the toolbar
         // label, action; null action = spacer
         // Gboard/Samsung-style editing pad plus a fifth column: select the word or line at
         // the cursor, swap which end of the selection moves, and drop the selection.
@@ -798,7 +802,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mClipHeader = row();
         mClipHeader.setGravity(Gravity.CENTER_VERTICAL);
         mClipHeader.setPadding(dp(4), 0, dp(4), 0);
-        panel.addView(mClipHeader, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(44)));
+        panel.addView(mClipHeader, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(30)));
 
         FrameLayout body = new FrameLayout(getContext());
         GridView grid = new GridView(getContext());
@@ -930,7 +934,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         v.setBackground(states);
         v.setClickable(true);
         v.setOnClickListener(onClick);
-        v.setLayoutParams(new LinearLayout.LayoutParams(dp(40), dp(40)));
+        v.setLayoutParams(new LinearLayout.LayoutParams(dp(30), dp(30)));
         return v;
     }
 
@@ -1064,6 +1068,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private View buildEmojiPanel() {
         loadEmoji();
         LinearLayout panel = column();
+        panel.setPadding(0, dp(3), 0, 0); // with the tabs' own 3dp: ~6dp under the toolbar
 
         // Sections: recents (if any), then each group.
         final List<Object> items = new ArrayList<>(); // String = emoji, Integer = header of section

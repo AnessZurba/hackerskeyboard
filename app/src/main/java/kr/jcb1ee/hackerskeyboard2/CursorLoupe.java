@@ -172,10 +172,12 @@ final class CursorLoupe implements CursorDrag.Listener {
 
     private void create(Context context) {
         mView = new LoupeText(context);
-        mView.setTextSizeSp(22);
-        int pad = dp(14);
-        mView.setPadding(pad, dp(6), pad, dp(6));
-        mPopup = new PopupWindow(mView, dp(260), dp(52));
+        // 75% of the first size (260x52dp), with text 20% larger (22sp): a smaller bubble
+        // that's easier to read. Little vertical padding, so the larger text fits.
+        mView.setTextSizeSp(26.4f);
+        int pad = dp(10);
+        mView.setPadding(pad, dp(2), pad, dp(2));
+        mPopup = new PopupWindow(mView, dp(195), dp(39));
         mPopup.setClippingEnabled(false);
         mPopup.setTouchable(false);
         mPopup.setFocusable(false);
@@ -208,7 +210,7 @@ final class CursorLoupe implements CursorDrag.Listener {
                     s - from, e - from, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(dp(14));
+        bg.setCornerRadius(dp(11));
         bg.setColor(background | 0xFF000000);
         bg.setStroke(Math.max(1, dp(1) / 2), (foreground & 0x00FFFFFF) | 0x40000000);
         mView.setBackground(bg);
