@@ -900,6 +900,39 @@ public class SelectionPanelTest {
         assertTrue(mIme.onCreateInlineSuggestionsRequest(new android.os.Bundle()) != null);
     }
 
+    /** Holding a backspace swipe at the screen's left edge keeps taking words. */
+    @Test
+    public void backspaceSwipeKeepsGoingAtTheEdge() throws Exception {
+        sConnection = mField.onCreateInputConnection(new EditorInfo());
+        StringBuilder words = new StringBuilder();
+        for (int w = 0; w < 300; w++) words.append("ab ");
+        mField.setText(words.toString().trim()); // more words than one slide across the keys
+        sConnection.setSelection(mField.length(), mField.length());
+        attachKeyboard();
+        java.lang.reflect.Field f = LatinIME.class.getDeclaredField("mDeleteSwipeField");
+        f.setAccessible(true);
+        f.setBoolean(mIme, true);
+        LatinKeyboardView view = mIme.mKeyboardSwitcher.getInputView();
+        Keyboard.Key del = null;
+        for (Keyboard.Key k : view.getKeyboard().getKeys()) {
+            if (k.codes != null && k.codes[0] == Keyboard.KEYCODE_DELETE) del = k;
+        }
+        float x0 = del.x + del.width / 2f, y = del.y + del.height / 2f;
+        long t0 = SystemClock.uptimeMillis();
+        view.onTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, x0, y, 0));
+        for (int i = 1; i <= 8; i++) { // slowly all the way to the left edge
+            ShadowSystemClock.advanceBy(Duration.ofMillis(250));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, x0 - (x0 - 2) * i / 8, y, 0));
+        }
+        int reached = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        ShadowLooper.idleMainLooper(1500, TimeUnit.MILLISECONDS);
+        int held = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        assertTrue("more words while held at the edge: " + reached + " -> " + held, held > reached);
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, 2, y, 0));
+        idle();
+    }
+
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }

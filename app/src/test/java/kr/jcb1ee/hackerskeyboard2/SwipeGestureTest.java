@@ -288,4 +288,39 @@ public class SwipeGestureTest {
         assertEquals("one popup key typed: " + mTyped, 1, mTyped.size());
         org.junit.Assert.assertNotEquals("a popup key, not the held key", (int) 'e', (int) mTyped.get(0));
     }
+
+    /** Resting at the screen's edge keeps the trackpad moving; leaving it stops. */
+    @Test
+    public void trackpadKeepsMovingAtTheScreenEdge() {
+        mTyped.clear();
+        float[] space = centre(' ');
+        long t0 = SystemClock.uptimeMillis();
+        mView.onTouchEvent(ev(t0, t0, MotionEvent.ACTION_DOWN, p(0, space, 0)));
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+        float edge = mView.getWidth() - 2;
+        for (int i = 1; i <= 4; i++) {
+            org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(100));
+            float[] at = {space[0] + (edge - space[0]) * i / 4, space[1]};
+            mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, p(0, at, 0)));
+        }
+        int reached = count(LatinKeyboardView.KEYCODE_DPAD_RIGHT);
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+        int held = count(LatinKeyboardView.KEYCODE_DPAD_RIGHT);
+        org.junit.Assert.assertTrue("keeps moving at the edge: " + reached + " -> " + held, held > reached + 5);
+        // Back from the edge: no more steps.
+        mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE,
+                p(0, new float[] {edge - 40, space[1]}, 0)));
+        int away = count(LatinKeyboardView.KEYCODE_DPAD_RIGHT);
+        org.robolectric.shadows.ShadowLooper.idleMainLooper(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+        org.junit.Assert.assertTrue("stops off the edge", count(LatinKeyboardView.KEYCODE_DPAD_RIGHT) <= away);
+        mView.onTouchEvent(ev(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP,
+                p(0, new float[] {edge - 40, space[1]}, 0)));
+        idle();
+    }
+
+    private int count(int code) {
+        int n = 0;
+        for (int c : mTyped) if (c == code) n++;
+        return n;
+    }
 }

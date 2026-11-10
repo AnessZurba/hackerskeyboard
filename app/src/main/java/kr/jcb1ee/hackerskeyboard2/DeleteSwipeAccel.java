@@ -43,6 +43,12 @@ final class DeleteSwipeAccel {
         mLastTime = time;
     }
 
+    /** One more word (the finger rests at the screen's edge); returns the count. */
+    int addWord() {
+        mWords = (int) mWords + 1;
+        return (int) mWords;
+    }
+
     int words(float x, long time) {
         if (x >= mDownX - mStep / 2) {
             mWords = 0; // back on the key: cancel

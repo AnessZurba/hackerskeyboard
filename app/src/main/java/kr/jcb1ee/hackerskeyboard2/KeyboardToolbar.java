@@ -64,6 +64,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     static final String PREF_SHOW_TOOLBAR = "pref_show_toolbar";
     private static final String PREF_EMOJI_RECENTS = "pref_emoji_recents";
     private static final int MAX_RECENTS = 40;
+    private static final int BAR_GAP_DP = 4; // under the toolbar's buttons, part of the row
     private static final int PANEL_NONE = 0, PANEL_SELECT = 1, PANEL_CLIPBOARD = 2, PANEL_EMOJI = 3;
 
     private final LatinIME mIme;
@@ -165,7 +166,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         });
         mChipsDismiss.setVisibility(GONE);
         mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
-        addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight));
+        // The room under the buttons belongs to the toolbar row (and goes with it when it's
+        // hidden), so the keyboard keeps its own size: 4dp, which with each panel's own first
+        // margin gives about 7dp to the first keys / buttons / tabs, the selection panel's look.
+        mBar.setPadding(0, 0, 0, dp(BAR_GAP_DP));
+        addView(mBar, new LayoutParams(LayoutParams.MATCH_PARENT, mBarHeight + dp(BAR_GAP_DP)));
 
         mGestureLabel = new GestureLabel(ime);
         // The body draws the gesture label over the keys or panel (not a child: touches
@@ -214,12 +219,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         }
         if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
         mKeyboardView = view;
-        // A little room under the toolbar, as each panel has above its first row: 7dp from
-        // the toolbar to the first keys / buttons / tabs throughout, the selection panel's
-        // spacing.
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(5);
         mBody.addView(view, 0, lp);
         applyColours(view.getBackground());
     }
@@ -447,7 +448,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private View buildSelectPanel() {
         LinearLayout grid = column();
-        grid.setPadding(dp(4), dp(4), dp(4), dp(4)); // 4dp + the cells' 3dp: 7dp under the toolbar
+        grid.setPadding(dp(4), 0, dp(4), dp(4)); // the cells' 3dp + the toolbar's 4dp: 7dp
         // label, action; null action = spacer
         // Gboard/Samsung-style editing pad plus a fifth column: select the word or line at
         // the cursor, swap which end of the selection moves, and drop the selection.
@@ -536,6 +537,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             cell.setAlpha(0.6f);
         };
+        final EdgeRepeat edgeChars = new EdgeRepeat(200, 110, 30);
+        final EdgeRepeat edgeLines = new EdgeRepeat(250, 220, 90);
         final CursorTrackpad.Mover mover = new CursorTrackpad.Mover() {
             @Override
             public boolean chars(int n) {
@@ -572,10 +575,30 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     if (active[0] && trackpad.move(e.getRawX(), e.getRawY(), e.getEventTime(), mover)) {
                         view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
                     }
+                    if (active[0]) {
+                        // At the screen's edge the finger can't go further: keep moving.
+                        edgeChars.set(EdgeRepeat.direction(e.getRawX(), 0, screenWidth(), edgeZone()),
+                                direction -> {
+                                    if (mover.chars(direction)) {
+                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                                    }
+                                });
+                        // The bottom edge only once the finger has gone down there.
+                        boolean low = e.getRawY() - down[1] > 24 * getResources().getDisplayMetrics().density
+                                && e.getRawY() >= screenBottom() - edgeZone();
+                        edgeLines.set(low ? 1 : 0,
+                                direction -> {
+                                    if (mover.lines(direction)) {
+                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                                    }
+                                });
+                    }
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     mHandler.removeCallbacks(start);
+                    edgeChars.stop();
+                    edgeLines.stop();
                     view.setPressed(false);
                     cell.setAlpha(1f);
                     if (active[0]) setGestureLabel(null, null);
@@ -722,6 +745,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private void setBackspace(final View v) {
         final Runnable delete = () -> ime().onKey(Keyboard.KEYCODE_DELETE, null, 0, 0);
         final DeleteSwipeAccel accel = new DeleteSwipeAccel(getResources().getDisplayMetrics().density);
+        final EdgeRepeat edge = new EdgeRepeat(250, 220, 70);
         final int slop = android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();
         final float[] downX = new float[1];
         // [0] deferred tap pending, [1] repeating, [2] swiping
@@ -760,13 +784,20 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         accel.start(downX[0], e.getRawX(), e.getEventTime());
                         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     }
-                    if (state[2]) ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getEventTime()));
+                    if (state[2]) {
+                        ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getEventTime()));
+                        // Resting at the screen's left edge keeps taking words.
+                        edge.set(e.getRawX() <= edgeZone() ? -1 : 0, direction -> {
+                            if (state[2]) ime().setDeleteSwipeWords(accel.addWord());
+                        });
+                    }
                     return true;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     boolean up = e.getActionMasked() == MotionEvent.ACTION_UP;
                     view.setPressed(false);
                     stopRepeat();
+                    edge.stop();
                     if (state[2]) {
                         ime().finishDeleteSwipe(up);
                     } else if (state[0] && up) {
@@ -778,6 +809,21 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                     return true;
             }
         });
+    }
+
+    private float edgeZone() {
+        return EdgeRepeat.EDGE_DP * getResources().getDisplayMetrics().density;
+    }
+
+    private int screenWidth() {
+        return getResources().getDisplayMetrics().widthPixels;
+    }
+
+    /** The bottom of the keyboard on screen: the lowest a finger can go on it. */
+    private int screenBottom() {
+        int[] at = new int[2];
+        getLocationOnScreen(at);
+        return at[1] + getHeight();
     }
 
     private void stopRepeat() {
@@ -803,7 +849,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mClipHeader = row();
         mClipHeader.setGravity(Gravity.CENTER_VERTICAL);
         mClipHeader.setPadding(dp(4), 0, dp(4), 0);
-        panel.addView(mClipHeader, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(30)));
+        panel.addView(mClipHeader, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(24)));
 
         FrameLayout body = new FrameLayout(getContext());
         GridView grid = new GridView(getContext());
@@ -935,7 +981,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         v.setBackground(states);
         v.setClickable(true);
         v.setOnClickListener(onClick);
-        v.setLayoutParams(new LinearLayout.LayoutParams(dp(30), dp(30)));
+        v.setLayoutParams(new LinearLayout.LayoutParams(dp(28), dp(24)));
         return v;
     }
 
@@ -1069,7 +1115,6 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private View buildEmojiPanel() {
         loadEmoji();
         LinearLayout panel = column();
-        panel.setPadding(0, dp(4), 0, 0); // with the tabs' own 3dp: 7dp under the toolbar
 
         // Sections: recents (if any), then each group.
         final List<Object> items = new ArrayList<>(); // String = emoji, Integer = header of section

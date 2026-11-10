@@ -407,6 +407,12 @@ public class PointerTracker {
         }
         if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide(x, eventTime))) {
             LatinIME.sInstance.setDeleteSwipeWords(deleteSwipeWords(x, eventTime));
+            // Resting at the screen's left edge keeps taking words.
+            mEdgeDelete.set(x <= EdgeRepeat.EDGE_DP * mDensity ? -1 : 0, direction -> {
+                if (mDeleteSlide && LatinIME.sInstance != null) {
+                    LatinIME.sInstance.setDeleteSwipeWords(mDeleteAccel.addWord());
+                }
+            });
             return;
         }
         final KeyState keyState = mKeyState;
@@ -485,6 +491,7 @@ public class PointerTracker {
         }
         if (mDeleteSlide) {
             mDeleteSlide = false;
+            mEdgeDelete.stop();
             LatinIME.sInstance.finishDeleteSwipe(true);
             return;
         }
@@ -518,6 +525,7 @@ public class PointerTracker {
         endCursorSlide();
         if (mDeleteSlide) {
             mDeleteSlide = false;
+            mEdgeDelete.stop();
             LatinIME.sInstance.finishDeleteSwipe(false);
         }
         mDeleteDeferred = false;
@@ -547,6 +555,7 @@ public class PointerTracker {
                     label.getContext().getString(R.string.gesture_trackpad_hint));
         }
         mTrackpad.start(x, mKeyState.getLastY(), android.os.SystemClock.uptimeMillis());
+        mSlideStartY = mKeyState.getLastY();
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
             ((LatinKeyboard) mKeyDetector.mKeyboard).setCursorSliding(true);
         }
@@ -570,6 +579,7 @@ public class PointerTracker {
     private void endCursorSlide() {
         if (!mCursorSlide) return;
         mCursorSlide = false;
+        stopEdgeRepeats();
         KeyboardToolbar label = mKeyboardSwitcher.getInputContainer();
         if (label != null) label.setGestureLabel(null, null);
         if (mCursorDragging && LatinIME.sInstance != null) LatinIME.sInstance.mCursorDrag.end();
@@ -586,34 +596,65 @@ public class PointerTracker {
      * one character per 6dp sideways and one line per 24dp up or down, and a faster finger
      * covers more ground (up to 4x).
      */
+    // The trackpad's moves, and the last finger position (for arrow keys in terminals).
+    private int mMoveX, mMoveY;
+    private int mSlideStartY; // where the trackpad drag began
+    private final CursorTrackpad.Mover mCursorMover = new CursorTrackpad.Mover() {
+        @Override
+        public boolean chars(int n) {
+            // Within the text, stopping at its ends: an arrow key at the start or end of a
+            // field moves focus to another view and closes the keyboard. Terminals don't
+            // expose their text, so they get arrow keys (Shift/Ctrl on other keys apply).
+            if (mCursorDragging) return LatinIME.sInstance.mCursorDrag.chars(n);
+            int code = n < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT
+                    : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
+            for (int i = Math.abs(n); i > 0; i--) mListener.onKey(code, null, mMoveX, mMoveY);
+            return true;
+        }
+
+        @Override
+        public boolean lines(int n) {
+            // Lines only in multi-line text fields: in a terminal a stray vertical drift
+            // would recall shell history.
+            return mCursorDragging && LatinIME.sInstance.mCursorDrag.lines(n);
+        }
+    };
+
+    // At the screen's edges the finger can't go further: the trackpad keeps moving that way.
+    private final EdgeRepeat mEdgeChars = new EdgeRepeat(200, 110, 30);
+    private final EdgeRepeat mEdgeLines = new EdgeRepeat(250, 220, 90);
+    private final EdgeRepeat mEdgeDelete = new EdgeRepeat(250, 220, 70);
+
     private void moveCursor(final int x, final int y) {
         if (mListener == null) return;
-        boolean moved = mTrackpad.move(x, y, android.os.SystemClock.uptimeMillis(),
-                new CursorTrackpad.Mover() {
-                    @Override
-                    public boolean chars(int n) {
-                        // Within the text, stopping at its ends: an arrow key at the start
-                        // or end of a field moves focus to another view and closes the
-                        // keyboard. Terminals don't expose their text, so they get arrow
-                        // keys (Shift/Ctrl on other keys apply).
-                        if (mCursorDragging) return LatinIME.sInstance.mCursorDrag.chars(n);
-                        int code = n < 0 ? LatinKeyboardView.KEYCODE_DPAD_LEFT
-                                : LatinKeyboardView.KEYCODE_DPAD_RIGHT;
-                        for (int i = Math.abs(n); i > 0; i--) mListener.onKey(code, null, x, y);
-                        return true;
-                    }
-
-                    @Override
-                    public boolean lines(int n) {
-                        // Lines only in multi-line text fields: in a terminal a stray
-                        // vertical drift would recall shell history.
-                        return mCursorDragging && LatinIME.sInstance.mCursorDrag.lines(n);
-                    }
-                });
-        if (moved) {
-            View view = mKeyboardSwitcher.getInputView();
-            if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+        mMoveX = x;
+        mMoveY = y;
+        boolean moved = mTrackpad.move(x, y, android.os.SystemClock.uptimeMillis(), mCursorMover);
+        if (moved) tick();
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) {
+            float zone = EdgeRepeat.EDGE_DP * mDensity;
+            mEdgeChars.set(EdgeRepeat.direction(x, 0, view.getWidth(), zone), direction -> {
+                if (mCursorMover.chars(direction)) tick();
+            });
+            // The bottom of the keys is the bottom of the screen (above the navigation row);
+            // only once the finger has gone down there (the space bar itself is near it).
+            boolean down = y - mSlideStartY > 24 * mDensity && y >= view.getHeight() - zone;
+            mEdgeLines.set(down ? 1 : 0, direction -> {
+                if (mCursorMover.lines(direction)) tick();
+            });
         }
+    }
+
+    private void tick() {
+        View view = mKeyboardSwitcher.getInputView();
+        if (view != null) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+    }
+
+    private void stopEdgeRepeats() {
+        mEdgeChars.stop();
+        mEdgeLines.stop();
+        mEdgeDelete.stop();
     }
 
     /** True while the key repeat must still see finger movement (backspace swipe). */
