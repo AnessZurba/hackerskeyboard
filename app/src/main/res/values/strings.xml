@@ -754,8 +754,23 @@
     <string name="gesture_delete_hint">Slide back for fewer · lift to delete · back to ⌫ to cancel</string>
     <string name="title_cursor_loupe">Cursor loupe</string>
     <string name="summary_cursor_loupe">While you hold the space bar (or the Select button) and drag the cursor, show the text around it, larger, above the cursor.</string>
+    <string name="title_edge_zone">Screen edge zone</string>
+    <string-array name="edge_zone_entries">
+        <item>Narrow (15dp)</item>
+        <item>20dp</item>
+        <item>Normal (25dp)</item>
+        <item>30dp</item>
+        <item>Wide (40dp)</item>
+    </string-array>
+    <string-array name="edge_zone_values" translatable="false">
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>40</item>
+    </string-array>
     <string name="title_delete_swipe">Backspace swipe</string>
-    <string name="summary_delete_swipe">Slide left from backspace to select whole words back from the cursor; slide back to select fewer, release to delete, return to backspace to cancel. A tap deletes when you lift your finger. Off in terminals.</string>
+    <string name="summary_delete_swipe">Slide left from backspace to select whole words back from the cursor; slide back to select fewer, release to delete, return to backspace to cancel. Hold at the screen\'s left edge to keep taking words, at the right edge to give them back. A tap deletes when you lift your finger. Off in terminals.</string>
     <string name="toolbar_no_connection">Toolbar: no connection to the text field</string>
     <string name="toolbar_word">Word</string>
     <string name="toolbar_line">Line</string>

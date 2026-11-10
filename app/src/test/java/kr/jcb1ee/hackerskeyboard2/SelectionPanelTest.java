@@ -156,6 +156,14 @@ public class SelectionPanelTest {
 
     /** {@code dropsSelection}: like some editors, Shift+arrow collapses the selection. */
     private InputConnection laggy(final boolean dropsSelection) {
+        return laggyText(LINES, dropsSelection);
+    }
+
+    private InputConnection laggyLines(String text) {
+        return laggyText(text, false);
+    }
+
+    private InputConnection laggyText(final String LINES, final boolean dropsSelection) {
         mField.setText(LINES);
         sInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE;
         final int[] reported = {0, 0};
@@ -931,6 +939,104 @@ public class SelectionPanelTest {
         assertTrue("more words while held at the edge: " + reached + " -> " + held, held > reached);
         view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, 2, y, 0));
         idle();
+    }
+
+    private Keyboard.Key keyWithCode(LatinKeyboardView view, int code) {
+        for (Keyboard.Key k : view.getKeyboard().getKeys()) {
+            if (k.codes != null && k.codes[0] == code) return k;
+        }
+        throw new AssertionError("no key " + code);
+    }
+
+    /** Dragging the space bar up to the top of the keys and holding keeps moving up lines. */
+    @Test
+    public void trackpadKeepsGoingUpAtTheTop() {
+        // 40 lines: more than a drag across the keys can reach.
+        StringBuilder lines = new StringBuilder();
+        for (int l = 0; l < 40; l++) lines.append(l == 0 ? "" : "\n").append("line ").append(l);
+        sConnection = laggyLines(lines.toString());
+        sConnection.setSelection(mField.length(), mField.length());
+        settle();
+        attachKeyboard();
+        LatinKeyboardView view = mIme.mKeyboardSwitcher.getInputView();
+        Keyboard.Key space = keyWithCode(view, ' ');
+        float x = space.x + space.width / 2f, y0 = space.y + space.height / 2f;
+        long t0 = SystemClock.uptimeMillis();
+        view.onTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, x, y0, 0));
+        ShadowLooper.idleMainLooper(600, TimeUnit.MILLISECONDS); // hold: the trackpad
+        for (int i = 1; i <= 6; i++) { // slowly up to the top of the keys
+            ShadowSystemClock.advanceBy(Duration.ofMillis(400));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, x, y0 - (y0 - 2) * i / 6, 0));
+            settle();
+        }
+        int reached = lineOf(android.text.Selection.getSelectionEnd(mField.getText()));
+        ShadowLooper.idleMainLooper(2000, TimeUnit.MILLISECONDS); // rest at the top
+        settle();
+        int held = lineOf(android.text.Selection.getSelectionEnd(mField.getText()));
+        assertTrue("keeps going up at the top: line " + reached + " -> " + held, held < reached - 2);
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x, 2, 0));
+        idle();
+    }
+
+    private int lineOf(int offset) {
+        String t = mField.getText().toString();
+        int n = 0;
+        for (int i = 0; i < offset && i < t.length(); i++) if (t.charAt(i) == '\n') n++;
+        return n;
+    }
+
+    /** Backspace swipe: at the right edge it gives words back; it resets only back on the key. */
+    @Test
+    public void backspaceSwipeGivesWordsBackAtTheRightEdge() throws Exception {
+        sConnection = mField.onCreateInputConnection(new EditorInfo());
+        StringBuilder words = new StringBuilder();
+        for (int w = 0; w < 100; w++) words.append("ab ");
+        mField.setText(words.toString().trim());
+        sConnection.setSelection(mField.length(), mField.length());
+        attachKeyboard();
+        java.lang.reflect.Field f = LatinIME.class.getDeclaredField("mDeleteSwipeField");
+        f.setAccessible(true);
+        f.setBoolean(mIme, true);
+        LatinKeyboardView view = mIme.mKeyboardSwitcher.getInputView();
+        Keyboard.Key del = keyWithCode(view, Keyboard.KEYCODE_DELETE);
+        float y = del.y + del.height / 2f;
+        float density = mIme.getResources().getDisplayMetrics().density;
+        float edgeStart = view.getWidth() - EdgeRepeat.zone(density);
+        // On the key (its middle, or left of the right-edge zone if that covers the middle).
+        float x0 = Math.min(del.x + del.width / 2f, edgeStart - 6 * density);
+        assertTrue("test needs the key to reach outside the edge zone", x0 > del.x + 2);
+        long t0 = SystemClock.uptimeMillis();
+        view.onTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, x0, y, 0));
+        float x = x0;
+        while (x > 2) { // left, slowly, to the left edge
+            x = Math.max(2, x - 25);
+            ShadowSystemClock.advanceBy(Duration.ofMillis(200));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, x, y, 0));
+        }
+        ShadowLooper.idleMainLooper(2500, TimeUnit.MILLISECONDS); // extra words at the left edge
+        int far = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        assertTrue("words selected", far > 0);
+        float edge = view.getWidth() - 2;
+        while (x < edge) { // back right, slowly, to the right edge
+            x = Math.min(edge, x + 25);
+            ShadowSystemClock.advanceBy(Duration.ofMillis(200));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
+                    MotionEvent.ACTION_MOVE, x, y, 0));
+        }
+        int atEdge = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        assertTrue("fewer than at the far left, but not reset at the edge: " + far + " -> " + atEdge,
+                atEdge > 0 && atEdge < far);
+        ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
+        int held = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
+        assertTrue("fewer words while held at the right edge: " + atEdge + " -> " + held, held < atEdge);
+        // Back where it started, outside the edge zone: cancelled.
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, x0, y, 0));
+        assertEquals(mField.getSelectionStart(), mField.getSelectionEnd());
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x0, y, 0));
+        idle();
+        assertEquals("nothing deleted", words.toString().trim(), mField.getText().toString());
     }
 
     private static void idle() {

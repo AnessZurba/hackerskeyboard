@@ -128,6 +128,15 @@
             android:defaultValue="true"
             />
 
+    <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
+            android:key="pref_edge_zone"
+            android:title="@string/title_edge_zone"
+            android:entries="@array/edge_zone_entries"
+            android:entryValues="@array/edge_zone_values"
+            android:defaultValue="25"
+            android:persistent="true"
+            />
+
     <CheckBoxPreference
             android:key="pref_delete_swipe"
             android:title="@string/title_delete_swipe"

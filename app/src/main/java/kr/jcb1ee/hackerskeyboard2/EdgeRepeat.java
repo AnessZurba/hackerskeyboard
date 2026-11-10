@@ -29,8 +29,15 @@ final class EdgeRepeat {
         void step(int direction);
     }
 
-    /** How close to an edge (dp) counts as at the edge. */
-    static final int EDGE_DP = 20;
+    static final String PREF = "pref_edge_zone";
+    static final int DEFAULT_DP = 25;
+
+    /** How close to an edge (dp) counts as at the edge; a setting. */
+    static int sEdgeDp = DEFAULT_DP;
+
+    static float zone(float density) {
+        return sEdgeDp * density;
+    }
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final long mFirstDelay, mSlowest, mFastest;

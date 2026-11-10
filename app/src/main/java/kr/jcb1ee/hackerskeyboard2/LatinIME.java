@@ -3794,6 +3794,7 @@ public class LatinIME extends InputMethodService implements
         mAdaptive.loadSettings(sharedPreferences);
         mDeleteSwipePref = sharedPreferences.getBoolean(PREF_DELETE_SWIPE, true);
         setLoupeEnabled(sharedPreferences.getBoolean(CursorLoupe.PREF, true));
+        EdgeRepeat.sEdgeDp = getPrefInt(sharedPreferences, EdgeRepeat.PREF, EdgeRepeat.DEFAULT_DP);
         if (ClipboardHistory.PREF_ENABLED.equals(key)) {
             ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
         }
@@ -4246,6 +4247,7 @@ public class LatinIME extends InputMethodService implements
         mAdaptive.loadSettings(sp);
         mDeleteSwipePref = sp.getBoolean(PREF_DELETE_SWIPE, true);
         setLoupeEnabled(sp.getBoolean(CursorLoupe.PREF, true));
+        EdgeRepeat.sEdgeDp = getPrefInt(sp, EdgeRepeat.PREF, EdgeRepeat.DEFAULT_DP);
         mVibrateOn = sp.getBoolean(PREF_VIBRATE_ON, false);
         mVibrateLen = getPrefInt(sp, PREF_VIBRATE_LEN, getResources().getString(R.string.vibrate_duration_ms));
         mSoundOn = sp.getBoolean(PREF_SOUND_ON, false);

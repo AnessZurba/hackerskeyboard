@@ -583,10 +583,14 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                                         view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
                                     }
                                 });
-                        // The bottom edge only once the finger has gone down there.
-                        boolean low = e.getRawY() - down[1] > 24 * getResources().getDisplayMetrics().density
+                        // The bottom edge (the keyboard's), and the top of the keyboard area
+                        // (and above), once the finger has gone that way.
+                        float moved = 24 * getResources().getDisplayMetrics().density;
+                        boolean low = e.getRawY() - down[1] > moved
                                 && e.getRawY() >= screenBottom() - edgeZone();
-                        edgeLines.set(low ? 1 : 0,
+                        boolean high = down[1] - e.getRawY() > moved
+                                && e.getRawY() <= screenTop() + edgeZone();
+                        edgeLines.set(low ? 1 : high ? -1 : 0,
                                 direction -> {
                                     if (mover.lines(direction)) {
                                         view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
@@ -782,14 +786,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         state[0] = false;
                         stopRepeat();
                         accel.start(downX[0], e.getRawX(), e.getEventTime());
+                        accel.setEdgeStart(screenWidth() - edgeZone());
                         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     }
                     if (state[2]) {
                         ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getEventTime()));
-                        // Resting at the screen's left edge keeps taking words.
-                        edge.set(e.getRawX() <= edgeZone() ? -1 : 0, direction -> {
-                            if (state[2]) ime().setDeleteSwipeWords(accel.addWord());
-                        });
+                        // Resting at the screen's left edge keeps taking words; right, fewer.
+                        edge.set(EdgeRepeat.direction(e.getRawX(), 0, screenWidth(), edgeZone()),
+                                direction -> {
+                                    if (state[2]) ime().setDeleteSwipeWords(direction < 0
+                                            ? accel.addWord() : accel.removeWord());
+                                });
                     }
                     return true;
                 case MotionEvent.ACTION_UP:
@@ -812,11 +819,18 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private float edgeZone() {
-        return EdgeRepeat.EDGE_DP * getResources().getDisplayMetrics().density;
+        return EdgeRepeat.zone(getResources().getDisplayMetrics().density);
     }
 
     private int screenWidth() {
         return getResources().getDisplayMetrics().widthPixels;
+    }
+
+    /** The top of the keyboard area (the toolbar row) on screen. */
+    private int screenTop() {
+        int[] at = new int[2];
+        getLocationOnScreen(at);
+        return at[1];
     }
 
     /** The bottom of the keyboard on screen: the lowest a finger can go on it. */

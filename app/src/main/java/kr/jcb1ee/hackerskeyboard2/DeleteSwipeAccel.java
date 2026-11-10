@@ -16,8 +16,8 @@ package kr.jcb1ee.hackerskeyboard2;
 
 /**
  * Backspace swipe distance to words, with acceleration: one word per 14dp
- * when sliding slowly, up to 4x when fast; sliding back selects fewer, and back over the
- * key none. Used by the keyboard's backspace and the toolbar panels' backspace keys.
+ * when sliding slowly, up to 4x when fast; sliding back selects fewer, and back where it
+ * started none (except in the screen's right-edge zone, where it gives words back). Used by the keyboard's backspace and the toolbar panels' backspace keys.
  */
 final class DeleteSwipeAccel {
     private final float mDensity;
@@ -49,9 +49,24 @@ final class DeleteSwipeAccel {
         return (int) mWords;
     }
 
+    // Where the screen's right-edge zone starts (the backspace key is at the right edge):
+    // back where the swipe started cancels, but not in the edge zone, where the swipe keeps
+    // giving words back instead (see EdgeRepeat).
+    private float mEdgeStart = Float.MAX_VALUE;
+
+    void setEdgeStart(float edgeStart) {
+        mEdgeStart = edgeStart;
+    }
+
+    /** One word fewer (the finger rests at the right edge); returns the count. */
+    int removeWord() {
+        mWords = Math.max(0, (float) Math.ceil(mWords) - 1);
+        return (int) mWords;
+    }
+
     int words(float x, long time) {
-        if (x >= mDownX - mStep / 2) {
-            mWords = 0; // back on the key: cancel
+        if (x >= mDownX - mStep / 2 && x < mEdgeStart) {
+            mWords = 0; // back where it started: cancel
         } else {
             long dt = Math.max(1, time - mLastTime);
             float dx = mLastX - x; // leftwards = more words

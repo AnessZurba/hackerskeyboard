@@ -407,10 +407,13 @@ public class PointerTracker {
         }
         if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide(x, eventTime))) {
             LatinIME.sInstance.setDeleteSwipeWords(deleteSwipeWords(x, eventTime));
-            // Resting at the screen's left edge keeps taking words.
-            mEdgeDelete.set(x <= EdgeRepeat.EDGE_DP * mDensity ? -1 : 0, direction -> {
+            // Resting at the screen's left edge keeps taking words; at the right edge, fewer.
+            View keys = mKeyboardSwitcher.getInputView();
+            int width = keys != null ? keys.getWidth() : Integer.MAX_VALUE;
+            mEdgeDelete.set(EdgeRepeat.direction(x, 0, width, EdgeRepeat.zone(mDensity)), direction -> {
                 if (mDeleteSlide && LatinIME.sInstance != null) {
-                    LatinIME.sInstance.setDeleteSwipeWords(mDeleteAccel.addWord());
+                    LatinIME.sInstance.setDeleteSwipeWords(direction < 0
+                            ? mDeleteAccel.addWord() : mDeleteAccel.removeWord());
                 }
             });
             return;
@@ -633,14 +636,16 @@ public class PointerTracker {
         if (moved) tick();
         View view = mKeyboardSwitcher.getInputView();
         if (view != null) {
-            float zone = EdgeRepeat.EDGE_DP * mDensity;
+            float zone = EdgeRepeat.zone(mDensity);
             mEdgeChars.set(EdgeRepeat.direction(x, 0, view.getWidth(), zone), direction -> {
                 if (mCursorMover.chars(direction)) tick();
             });
             // The bottom of the keys is the bottom of the screen (above the navigation row);
             // only once the finger has gone down there (the space bar itself is near it).
             boolean down = y - mSlideStartY > 24 * mDensity && y >= view.getHeight() - zone;
-            mEdgeLines.set(down ? 1 : 0, direction -> {
+            // The top of the keys too (and above, over the app): keep going up.
+            boolean up = mSlideStartY - y > 24 * mDensity && y <= zone;
+            mEdgeLines.set(down ? 1 : up ? -1 : 0, direction -> {
                 if (mCursorMover.lines(direction)) tick();
             });
         }
@@ -671,6 +676,9 @@ public class PointerTracker {
     private boolean startDeleteSlide(int x, long time) {
         if (mDeleteAccel == null) mDeleteAccel = new DeleteSwipeAccel(mDensity);
         mDeleteAccel.start(mDownX, x, time);
+        View keys = mKeyboardSwitcher.getInputView();
+        mDeleteAccel.setEdgeStart(keys != null
+                ? keys.getWidth() - EdgeRepeat.zone(mDensity) : Float.MAX_VALUE);
         if (!LatinIME.sInstance.startDeleteSwipe()) {
             mDownOnDelete = false;
             return false;
