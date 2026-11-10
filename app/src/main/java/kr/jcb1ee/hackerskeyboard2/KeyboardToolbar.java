@@ -786,13 +786,18 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         state[0] = false;
                         stopRepeat();
                         accel.start(downX[0], e.getRawX(), e.getEventTime());
-                        accel.setEdgeStart(screenWidth() - edgeZone());
+                        int[] at = new int[2];
+                        view.getLocationOnScreen(at);
+                        accel.setKey(at[0], at[1], at[0] + view.getWidth(), at[1] + view.getHeight());
                         view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     }
                     if (state[2]) {
-                        ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getEventTime()));
-                        // Resting at the screen's left edge keeps taking words; right, fewer.
-                        edge.set(EdgeRepeat.direction(e.getRawX(), 0, screenWidth(), edgeZone()),
+                        ime().setDeleteSwipeWords(accel.words(e.getRawX(), e.getRawY(), e.getEventTime()));
+                        // Resting at the screen's left edge keeps taking words; at the right
+                        // edge (but not back on the key, which cancels), it gives them back.
+                        int toEdge = EdgeRepeat.direction(e.getRawX(), 0, screenWidth(), edgeZone());
+                        if (toEdge > 0 && accel.backOnKey(e.getRawX(), e.getRawY())) toEdge = 0;
+                        edge.set(toEdge,
                                 direction -> {
                                     if (state[2]) ime().setDeleteSwipeWords(direction < 0
                                             ? accel.addWord() : accel.removeWord());

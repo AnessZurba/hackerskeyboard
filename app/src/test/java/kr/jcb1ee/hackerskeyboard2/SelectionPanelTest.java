@@ -69,6 +69,11 @@ public class SelectionPanelTest {
         sInputType = InputType.TYPE_CLASS_TEXT;
         sImages = false;
         ClipboardHistory.forget();
+        // Like any current phone, a screen that tells fingers apart (without it an old filter
+        // for jumpy touch input turns a quick long move into a lift and a new touch).
+        Shadows.shadowOf(ApplicationProvider.<android.app.Application>getApplicationContext()
+                .getPackageManager()).setSystemFeature(
+                android.content.pm.PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH_DISTINCT, true);
         mIme = Robolectric.buildService(TestIME.class).create().get();
     }
 
@@ -737,32 +742,40 @@ public class SelectionPanelTest {
     }
 
     private static void drag(View v, float dx, long ms, boolean hold) {
+        // Where the key really is on screen (the panel keys work with screen positions).
+        int[] at = new int[2];
+        v.getLocationOnScreen(at);
+        float sx = at[0] + v.getWidth() / 2f, sy = at[1] + v.getHeight() / 2f;
         long t0 = SystemClock.uptimeMillis();
-        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, sx, sy, 0));
         if (hold) ShadowLooper.idleMainLooper(600, TimeUnit.MILLISECONDS);
         for (int i = 1; i <= 6; i++) {
             ShadowSystemClock.advanceBy(Duration.ofMillis(ms / 6));
             v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                    MotionEvent.ACTION_MOVE, 100 + dx * i / 6, 10, 0));
+                    MotionEvent.ACTION_MOVE, sx + dx * i / 6, sy, 0));
         }
         v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                MotionEvent.ACTION_UP, 100 + dx, 10, 0));
+                MotionEvent.ACTION_UP, sx + dx, sy, 0));
         idle();
     }
 
     /** The label on the panel mid-gesture (before the finger lifts). */
     private static String labelMidDrag(View v, float dx, boolean hold, KeyboardToolbar t) {
+        // Where the key really is on screen (the panel keys work with screen positions).
+        int[] at = new int[2];
+        v.getLocationOnScreen(at);
+        float sx = at[0] + v.getWidth() / 2f, sy = at[1] + v.getHeight() / 2f;
         long t0 = SystemClock.uptimeMillis();
-        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, 100, 10, 0));
+        v.dispatchTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, sx, sy, 0));
         if (hold) ShadowLooper.idleMainLooper(600, TimeUnit.MILLISECONDS);
         for (int i = 1; i <= 6; i++) {
             ShadowSystemClock.advanceBy(Duration.ofMillis(100));
             v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                    MotionEvent.ACTION_MOVE, 100 + dx * i / 6, 10, 0));
+                    MotionEvent.ACTION_MOVE, sx + dx * i / 6, sy, 0));
         }
         String label = t.gestureLabelStatus();
         v.dispatchTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                MotionEvent.ACTION_UP, 100 + dx, 10, 0));
+                MotionEvent.ACTION_UP, sx + dx, sy, 0));
         idle();
         assertEquals("label gone after", null, t.gestureLabelStatus());
         return label;
@@ -986,9 +999,23 @@ public class SelectionPanelTest {
         return n;
     }
 
-    /** Backspace swipe: at the right edge it gives words back; it resets only back on the key. */
+    /**
+     * Backspace swipe: off the key, the right edge gives words back (also when the key itself
+     * is in the edge zone); back on the key cancels. Same with a normal and a wide zone.
+     */
     @Test
     public void backspaceSwipeGivesWordsBackAtTheRightEdge() throws Exception {
+        for (int zone : new int[] {25, 40}) {
+            EdgeRepeat.sEdgeDp = zone;
+            try {
+                rightEdgeGivesBack();
+            } finally {
+                EdgeRepeat.sEdgeDp = EdgeRepeat.DEFAULT_DP;
+            }
+        }
+    }
+
+    private void rightEdgeGivesBack() throws Exception {
         sConnection = mField.onCreateInputConnection(new EditorInfo());
         StringBuilder words = new StringBuilder();
         for (int w = 0; w < 100; w++) words.append("ab ");
@@ -1000,40 +1027,40 @@ public class SelectionPanelTest {
         f.setBoolean(mIme, true);
         LatinKeyboardView view = mIme.mKeyboardSwitcher.getInputView();
         Keyboard.Key del = keyWithCode(view, Keyboard.KEYCODE_DELETE);
-        float y = del.y + del.height / 2f;
-        float density = mIme.getResources().getDisplayMetrics().density;
-        float edgeStart = view.getWidth() - EdgeRepeat.zone(density);
-        // On the key (its middle, or left of the right-edge zone if that covers the middle).
-        float x0 = Math.min(del.x + del.width / 2f, edgeStart - 6 * density);
-        assertTrue("test needs the key to reach outside the edge zone", x0 > del.x + 2);
+        float x0 = del.x + del.width / 2f, y = del.y + del.height / 2f;
+        Keyboard.Key enter = keyWithCode(view, 10); // a row further down, also at the right
+        float yLow = enter.y + enter.height / 2f;
         long t0 = SystemClock.uptimeMillis();
         view.onTouchEvent(MotionEvent.obtain(t0, t0, MotionEvent.ACTION_DOWN, x0, y, 0));
         float x = x0;
         while (x > 2) { // left, slowly, to the left edge
             x = Math.max(2, x - 25);
             ShadowSystemClock.advanceBy(Duration.ofMillis(200));
-            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                    MotionEvent.ACTION_MOVE, x, y, 0));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, x, y, 0));
         }
         ShadowLooper.idleMainLooper(2500, TimeUnit.MILLISECONDS); // extra words at the left edge
         int far = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
         assertTrue("words selected", far > 0);
         float edge = view.getWidth() - 2;
-        while (x < edge) { // back right, slowly, to the right edge
+        // Down a row, then back right along it, slowly, to the right edge.
+        ShadowSystemClock.advanceBy(Duration.ofMillis(200));
+        view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, x, yLow, 0));
+        while (x < edge) {
             x = Math.min(edge, x + 25);
             ShadowSystemClock.advanceBy(Duration.ofMillis(200));
-            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(),
-                    MotionEvent.ACTION_MOVE, x, y, 0));
+            view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, x, yLow, 0));
         }
         int atEdge = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
-        assertTrue("fewer than at the far left, but not reset at the edge: " + far + " -> " + atEdge,
+        assertTrue("zone " + EdgeRepeat.sEdgeDp + ": fewer, but not reset at the edge: " + far + " -> " + atEdge,
                 atEdge > 0 && atEdge < far);
         ShadowLooper.idleMainLooper(400, TimeUnit.MILLISECONDS);
         int held = Math.abs(mField.getSelectionEnd() - mField.getSelectionStart());
-        assertTrue("fewer words while held at the right edge: " + atEdge + " -> " + held, held < atEdge);
-        // Back where it started, outside the edge zone: cancelled.
+        assertTrue("zone " + EdgeRepeat.sEdgeDp + ": fewer while held at the edge: " + atEdge + " -> " + held,
+                held < atEdge);
+        // Up onto the backspace key: cancelled at once.
+        ShadowSystemClock.advanceBy(Duration.ofMillis(100));
         view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_MOVE, x0, y, 0));
-        assertEquals(mField.getSelectionStart(), mField.getSelectionEnd());
+        assertEquals("back on the key: nothing selected", mField.getSelectionStart(), mField.getSelectionEnd());
         view.onTouchEvent(MotionEvent.obtain(t0, SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x0, y, 0));
         idle();
         assertEquals("nothing deleted", words.toString().trim(), mField.getText().toString());

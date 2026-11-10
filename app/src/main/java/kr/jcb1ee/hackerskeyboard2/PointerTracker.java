@@ -345,6 +345,7 @@ public class PointerTracker {
             Key downKey = mKeys[keyIndex];
             mDownOnDelete = downKey.codes != null && downKey.codes.length > 0
                     && downKey.codes[0] == Keyboard.KEYCODE_DELETE && LatinIME.deleteSwipeAvailable();
+            mDeleteKey = mDownOnDelete ? downKey : null;
             if (downKey.repeatable) {
                 if (mDownOnDelete) {
                     mDeleteDeferred = true; // sent on release unless the repeat or a slide starts
@@ -406,11 +407,14 @@ public class PointerTracker {
             return;
         }
         if (mDeleteSlide || (mDownOnDelete && mDownX - x > mDeleteStep && startDeleteSlide(x, eventTime))) {
-            LatinIME.sInstance.setDeleteSwipeWords(deleteSwipeWords(x, eventTime));
-            // Resting at the screen's left edge keeps taking words; at the right edge, fewer.
+            LatinIME.sInstance.setDeleteSwipeWords(mDeleteAccel.words(x, y, eventTime));
+            // Resting at the screen's left edge keeps taking words; at the right edge (but not
+            // back on the key, which cancels), it gives them back.
             View keys = mKeyboardSwitcher.getInputView();
             int width = keys != null ? keys.getWidth() : Integer.MAX_VALUE;
-            mEdgeDelete.set(EdgeRepeat.direction(x, 0, width, EdgeRepeat.zone(mDensity)), direction -> {
+            int edge = EdgeRepeat.direction(x, 0, width, EdgeRepeat.zone(mDensity));
+            if (edge > 0 && mDeleteAccel.backOnKey(x, y)) edge = 0;
+            mEdgeDelete.set(edge, direction -> {
                 if (mDeleteSlide && LatinIME.sInstance != null) {
                     LatinIME.sInstance.setDeleteSwipeWords(direction < 0
                             ? mDeleteAccel.addWord() : mDeleteAccel.removeWord());
@@ -668,17 +672,13 @@ public class PointerTracker {
     }
 
     private DeleteSwipeAccel mDeleteAccel;
-
-    private int deleteSwipeWords(int x, long time) {
-        return mDeleteAccel.words(x, time);
-    }
+    private Key mDeleteKey; // the backspace key the swipe started on
 
     private boolean startDeleteSlide(int x, long time) {
         if (mDeleteAccel == null) mDeleteAccel = new DeleteSwipeAccel(mDensity);
         mDeleteAccel.start(mDownX, x, time);
-        View keys = mKeyboardSwitcher.getInputView();
-        mDeleteAccel.setEdgeStart(keys != null
-                ? keys.getWidth() - EdgeRepeat.zone(mDensity) : Float.MAX_VALUE);
+        Key key = mDeleteKey; // the key pressed (the finger may be over the next one by now)
+        if (key != null) mDeleteAccel.setKey(key.x, key.y, key.x + key.width, key.y + key.height);
         if (!LatinIME.sInstance.startDeleteSwipe()) {
             mDownOnDelete = false;
             return false;

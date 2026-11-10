@@ -16,8 +16,8 @@ package kr.jcb1ee.hackerskeyboard2;
 
 /**
  * Backspace swipe distance to words, with acceleration: one word per 14dp
- * when sliding slowly, up to 4x when fast; sliding back selects fewer, and back where it
- * started none (except in the screen's right-edge zone, where it gives words back). Used by the keyboard's backspace and the toolbar panels' backspace keys.
+ * when sliding slowly, up to 4x when fast; sliding back selects fewer, and back on the key
+ * none (elsewhere at the screen's right edge it keeps giving words back). Used by the keyboard's backspace and the toolbar panels' backspace keys.
  */
 final class DeleteSwipeAccel {
     private final float mDensity;
@@ -49,13 +49,24 @@ final class DeleteSwipeAccel {
         return (int) mWords;
     }
 
-    // Where the screen's right-edge zone starts (the backspace key is at the right edge):
-    // back where the swipe started cancels, but not in the edge zone, where the swipe keeps
-    // giving words back instead (see EdgeRepeat).
-    private float mEdgeStart = Float.MAX_VALUE;
+    // The backspace key (in the same coordinates as the finger). Once the finger has left
+    // it, coming back onto it cancels; anywhere else, sliding right just gives words back
+    // (and at the screen's right edge keeps giving them back, see EdgeRepeat), even though
+    // the key itself sits at that edge.
+    private final android.graphics.RectF mKey = new android.graphics.RectF();
+    private boolean mHasKey, mLeftKey;
 
-    void setEdgeStart(float edgeStart) {
-        mEdgeStart = edgeStart;
+    void setKey(float left, float top, float right, float bottom) {
+        mKey.set(left, top, right, bottom);
+        mHasKey = true;
+        mLeftKey = false;
+    }
+
+    /** Whether the finger is back on the backspace key after having left it. */
+    boolean backOnKey(float x, float y) {
+        boolean on = mHasKey && mKey.contains(x, y);
+        if (!on) mLeftKey = true;
+        return on && mLeftKey;
     }
 
     /** One word fewer (the finger rests at the right edge); returns the count. */
@@ -64,9 +75,11 @@ final class DeleteSwipeAccel {
         return (int) mWords;
     }
 
-    int words(float x, long time) {
-        if (x >= mDownX - mStep / 2 && x < mEdgeStart) {
-            mWords = 0; // back where it started: cancel
+    int words(float x, float y, long time) {
+        // Back on the key, or (before leaving it) back where the swipe started: cancel.
+        boolean onKey = mHasKey && mKey.contains(x, y);
+        if (backOnKey(x, y) || (!mLeftKey && (!mHasKey || onKey) && x >= mDownX - mStep / 2)) {
+            mWords = 0;
         } else {
             long dt = Math.max(1, time - mLastTime);
             float dx = mLastX - x; // leftwards = more words
