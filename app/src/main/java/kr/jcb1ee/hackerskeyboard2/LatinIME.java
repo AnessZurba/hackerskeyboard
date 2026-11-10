@@ -2961,7 +2961,9 @@ public class LatinIME extends InputMethodService implements
         if (chars == mDeleteSwipeChars) return;
         mDeleteSwipeChars = chars;
         InputConnection ic = getCurrentInputConnection();
-        if (ic != null) ic.setSelection(mDeleteSwipeAnchor - chars, mDeleteSwipeAnchor);
+        // Anchored at the cursor, moving end at the start of the words: text fields keep the
+        // moving end in view, so the field scrolls along as the swipe takes lines back.
+        if (ic != null) ic.setSelection(mDeleteSwipeAnchor, mDeleteSwipeAnchor - chars);
         // The toolbar container: visible also while a panel hides the keys.
         View view = mKeyboardSwitcher.getInputContainer();
         if (view == null) view = mKeyboardSwitcher.getInputView();

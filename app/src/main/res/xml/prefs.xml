@@ -133,7 +133,7 @@
             android:title="@string/title_edge_zone"
             android:entries="@array/edge_zone_entries"
             android:entryValues="@array/edge_zone_values"
-            android:defaultValue="25"
+            android:defaultValue="35"
             android:persistent="true"
             />
 

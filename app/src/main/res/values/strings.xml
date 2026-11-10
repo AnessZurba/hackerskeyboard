@@ -756,18 +756,20 @@
     <string name="summary_cursor_loupe">While you hold the space bar (or the Select button) and drag the cursor, show the text around it, larger, above the cursor.</string>
     <string name="title_edge_zone">Screen edge zone</string>
     <string-array name="edge_zone_entries">
-        <item>Narrow (15dp)</item>
-        <item>20dp</item>
-        <item>Normal (25dp)</item>
+        <item>Narrow (20dp)</item>
+        <item>25dp</item>
         <item>30dp</item>
-        <item>Wide (40dp)</item>
+        <item>Normal (35dp)</item>
+        <item>45dp</item>
+        <item>Wide (55dp)</item>
     </string-array>
     <string-array name="edge_zone_values" translatable="false">
-        <item>15</item>
         <item>20</item>
         <item>25</item>
         <item>30</item>
-        <item>40</item>
+        <item>35</item>
+        <item>45</item>
+        <item>55</item>
     </string-array>
     <string name="title_delete_swipe">Backspace swipe</string>
     <string name="summary_delete_swipe">Slide left from backspace to select whole words back from the cursor; slide back to select fewer, release to delete, return to backspace to cancel. Hold at the screen\'s left edge to keep taking words, at the right edge to give them back. A tap deletes when you lift your finger. Off in terminals.</string>

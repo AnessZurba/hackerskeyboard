@@ -30,7 +30,7 @@ final class EdgeRepeat {
     }
 
     static final String PREF = "pref_edge_zone";
-    static final int DEFAULT_DP = 25;
+    static final int DEFAULT_DP = 35;
 
     /** How close to an edge (dp) counts as at the edge; a setting. */
     static int sEdgeDp = DEFAULT_DP;
