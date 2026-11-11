@@ -71,6 +71,8 @@ android.testOptions.unitTests.all {
     }
     if (project.hasProperty('renderOut')) systemProperty 'renderOut', project.property('renderOut')
     if (project.hasProperty('renderPanel')) systemProperty 'renderPanel', project.property('renderPanel')
+    // -PupdateGolden rewrites golden files (KeyOutputTest) instead of comparing with them.
+    if (project.hasProperty('updateGolden')) systemProperty 'updateGolden', 'true'
 }
 
 dependencies {

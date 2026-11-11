@@ -1,0 +1,63 @@
+# What each key sends to the app (KeyOutputTest). Regenerate with -PupdateGolden.
+
+## text field
+a                -> commit "a"
+Shift, code a    -> commit "a"
+1                -> down 1; up 1
+space            -> commit " "
+Enter            -> editorAction 0
+Tab              -> down TAB; up TAB
+Backspace        -> down DEL; up DEL
+Esc              -> down ESCAPE; up ESCAPE
+Del              -> down FORWARD_DEL; up FORWARD_DEL
+Left             -> down DPAD_LEFT; up DPAD_LEFT
+Up               -> down DPAD_UP; up DPAD_UP
+Home             -> down MOVE_HOME; up MOVE_HOME
+End              -> down MOVE_END; up MOVE_END
+PgUp             -> down PAGE_UP; up PAGE_UP
+Insert           -> down INSERT; up INSERT
+F1               -> down F1; up F1
+F12              -> down F12; up F12
+Ctrl c           -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a           -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl [           -> down CTRL_LEFT [Ctrl]; down LEFT_BRACKET [Ctrl]; up LEFT_BRACKET [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl space       -> down CTRL_LEFT [Ctrl]; down SPACE [Ctrl]; up SPACE [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl Left        -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Alt x            -> down ALT_LEFT [Alt]; down X [Alt]; up X [Alt]; up ALT_LEFT [Alt]
+Alt Left         -> down ALT_LEFT [Alt]; down DPAD_LEFT [Alt]; up DPAD_LEFT [Alt]; up ALT_LEFT [Alt]
+Meta x           -> down META_LEFT [Meta]; down X [Meta]; up X [Meta]; up META_LEFT [Meta]
+Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; up SHIFT_LEFT [Shift]
+Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
+Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
+Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
+
+## terminal field
+a                -> commit "a"
+Shift, code a    -> commit "a"
+1                -> down 1; up 1
+space            -> commit " "
+Enter            -> editorAction 0
+Tab              -> down TAB; up TAB
+Backspace        -> down DEL; up DEL
+Esc              -> down ESCAPE; up ESCAPE
+Del              -> down FORWARD_DEL; up FORWARD_DEL
+Left             -> down DPAD_LEFT; up DPAD_LEFT
+Up               -> down DPAD_UP; up DPAD_UP
+Home             -> down MOVE_HOME; up MOVE_HOME
+End              -> down MOVE_END; up MOVE_END
+PgUp             -> down PAGE_UP; up PAGE_UP
+Insert           -> down INSERT; up INSERT
+F1               -> down F1; up F1
+F12              -> down F12; up F12
+Ctrl c           -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a           -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl [           -> down CTRL_LEFT [Ctrl]; down LEFT_BRACKET [Ctrl]; up LEFT_BRACKET [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl space       -> down CTRL_LEFT [Ctrl]; down SPACE [Ctrl]; up SPACE [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl Left        -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Alt x            -> down ALT_LEFT [Alt]; down X [Alt]; up X [Alt]; up ALT_LEFT [Alt]
+Alt Left         -> down ALT_LEFT [Alt]; down DPAD_LEFT [Alt]; up DPAD_LEFT [Alt]; up ALT_LEFT [Alt]
+Meta x           -> down META_LEFT [Meta]; down X [Meta]; up X [Meta]; up META_LEFT [Meta]
+Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; up SHIFT_LEFT [Shift]
+Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
+Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
+Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
