@@ -32,6 +32,7 @@ public class PrefScreenView extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
                 .commit();
+        SystemBars.padContent(this); // edge to edge (Android 15+): keep clear of the bars
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat

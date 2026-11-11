@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 6-11 form of data_extraction_rules.xml: the same private files stay out. -->
+<full-backup-content>
+    <exclude domain="file" path="clipboard_history.json" />
+    <exclude domain="file" path="clip_images/" />
+    <exclude domain="file" path="adaptive_user_words.tsv" />
+    <exclude domain="file" path="last_crash.txt" />
+    <exclude domain="sharedpref" path="toolbar_private.xml" />
+    <exclude domain="sharedpref" path="clipboard_state.xml" />
+</full-backup-content>

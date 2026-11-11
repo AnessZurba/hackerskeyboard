@@ -29,6 +29,8 @@
             android:name=".CrashLog"
             android:allowBackup="true"
             android:backupAgent="LatinIMEBackupAgent"
+            android:dataExtractionRules="@xml/data_extraction_rules"
+            android:fullBackupContent="@xml/backup_rules"
             android:restoreAnyVersion="true"
             android:hardwareAccelerated="false"
             android:killAfterRestore="false"

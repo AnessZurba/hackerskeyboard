@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What leaves the device in backups and device-to-device transfers (Android 12+): the
+     settings yes; the clipboard history and its images, the learned words, the crash log
+     and other private state no. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="clipboard_history.json" />
+        <exclude domain="file" path="clip_images/" />
+        <exclude domain="file" path="adaptive_user_words.tsv" />
+        <exclude domain="file" path="last_crash.txt" />
+        <exclude domain="sharedpref" path="toolbar_private.xml" />
+        <exclude domain="sharedpref" path="clipboard_state.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="clipboard_history.json" />
+        <exclude domain="file" path="clip_images/" />
+        <exclude domain="file" path="adaptive_user_words.tsv" />
+        <exclude domain="file" path="last_crash.txt" />
+        <exclude domain="sharedpref" path="toolbar_private.xml" />
+        <exclude domain="sharedpref" path="clipboard_state.xml" />
+    </device-transfer>
+</data-extraction-rules>

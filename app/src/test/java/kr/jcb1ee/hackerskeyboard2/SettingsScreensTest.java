@@ -47,6 +47,19 @@ public class SettingsScreensTest {
         }
     }
 
+    /** Edge to edge (Android 15+): the settings list keeps clear of the system bars. */
+    @Test
+    public void settingsKeepClearOfTheSystemBars() {
+        LatinIMESettings a = Robolectric.buildActivity(LatinIMESettings.class).setup().get();
+        android.view.View content = a.findViewById(android.R.id.content);
+        androidx.core.view.WindowInsetsCompat insets = new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars(),
+                        androidx.core.graphics.Insets.of(0, 60, 0, 48))
+                .build();
+        androidx.core.view.ViewCompat.dispatchApplyWindowInsets(content, insets);
+        org.junit.Assert.assertEquals("above the navigation bar", 48, content.getPaddingBottom());
+    }
+
     /** Hebrew is listed once in the input languages (it had "he" and "iw" entries). */
     @Test
     public void hebrewListedOnce() {
