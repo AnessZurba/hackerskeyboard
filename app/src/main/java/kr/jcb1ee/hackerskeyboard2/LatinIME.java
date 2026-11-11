@@ -151,8 +151,6 @@ public class LatinIME extends InputMethodService implements
     static final int ASCII_PERIOD = '.';
 
     // Contextual menu positions
-    private static final int POS_METHOD = 0;
-    private static final int POS_SETTINGS = 1;
 
     // private LatinKeyboardView mInputView;
     private LinearLayout mCandidateViewContainer;
@@ -1623,25 +1621,16 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void onOptionKeyPressed() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // Input method selector is available as a button in the soft key area, so just launch
-            // HK settings directly. This also works around the alert dialog being clipped
-            // in Android O.
-            // Defer to avoid infinite recursion: launchSettings() calls handleClose() →
-            // dismissPopupKeyboard() → releaseAllPointersExcept() which re-triggers onKey()
-            // for any still-queued pointer, leading to a StackOverflowError.
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    launchSettings();
-                }
-            });
-        } else {
-            // Show an options menu with choices to change input method or open HK settings.
-            if (!isShowingOptionDialog()) {
-                 showOptionsMenu();
+        // The system offers the input method picker itself, so just open the settings.
+        // Deferred to avoid infinite recursion: launchSettings() calls handleClose() →
+        // dismissPopupKeyboard() → releaseAllPointersExcept() which re-triggers onKey()
+        // for any still-queued pointer, leading to a StackOverflowError.
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                launchSettings();
             }
-        }
+        });
     }
 
     private void onOptionKeyLongPressed() {
@@ -4306,41 +4295,6 @@ public class LatinIME extends InputMethodService implements
 
     private boolean isSuggestedPunctuation(int code) {
         return sKeyboardSettings.suggestedPunctuation.contains(String.valueOf((char) code));
-    }
-
-    private void showOptionsMenu() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(true);
-        builder.setIcon(R.drawable.ic_dialog_keyboard);
-        builder.setNegativeButton(android.R.string.cancel, null);
-        CharSequence itemSettings = getString(R.string.english_ime_settings);
-        CharSequence itemInputMethod = getString(R.string.selectInputMethod);
-        builder.setItems(new CharSequence[] { itemInputMethod, itemSettings },
-                new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface di, int position) {
-                        di.dismiss();
-                        switch (position) {
-                        case POS_SETTINGS:
-                            launchSettings();
-                            break;
-                        case POS_METHOD:
-                            ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
-                                    .showInputMethodPicker();
-                            break;
-                        }
-                    }
-                });
-        builder.setTitle(mResources
-                .getString(R.string.english_ime_input_options));
-        mOptionsDialog = builder.create();
-        Window window = mOptionsDialog.getWindow();
-        WindowManager.LayoutParams lp = window.getAttributes();
-        lp.token = mKeyboardSwitcher.getInputView().getWindowToken();
-        lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
-        window.setAttributes(lp);
-        window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-        mOptionsDialog.show();
     }
 
     public void changeKeyboardMode() {

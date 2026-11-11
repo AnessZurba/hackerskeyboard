@@ -23,7 +23,6 @@
     <!-- Title for Latin keyboard settings activity / dialog -->
     <string name="english_ime_settings">Настройки Hacker\'s Keyboard</string>
     <!-- Title for Latin keyboard input options dialog -->
-    <string name="english_ime_input_options">Параметры ввода</string>
 
     <!-- Various configuration titles -->
     <string name="title_keyboard_view_settings">Внешний вид</string>
@@ -276,7 +275,6 @@
     <string name="popular_domain_4">.org</string>
 
     <!-- Menu item for launching Input method picker -->
-    <string name="selectInputMethod">Выбрать способ ввода</string>
 
     <!-- Title for input language selection screen -->
     <string name="language_selection_title">Языки ввода</string>

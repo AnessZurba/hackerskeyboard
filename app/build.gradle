@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = 'kr.jcb1ee.hackerskeyboard2'
-    compileSdk = 36
+    compileSdk = 37
     // Pinned so native builds are reproducible (16 KB pages need r28+; see CMakeLists.txt).
     ndkVersion = '29.0.13599879'
     defaultConfig {
         applicationId = 'kr.jcb1ee.hackerskeyboard2.az'
         // Settings screens link to their sub-screens by package; see res/xml/prefs.xml.
         resValue 'string', 'app_package', applicationId
-        minSdk = 21
+        minSdk = 24
         targetSdk = 35
         versionCode = 2000000
         versionName = "v2.0.0"

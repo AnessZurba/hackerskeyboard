@@ -2,7 +2,7 @@
 
 A full-featured soft keyboard for power users and developers on Android.
 
-**Targets Android 5–14 (API 21–34).** Updated from the original [Hacker's Keyboard](https://github.com/klausw/hackerskeyboard) with all Android 12+ compatibility fixes applied.
+**Runs on Android 7 and later (API 24+); targets Android 15 (API 35).** Updated from the original [Hacker's Keyboard](https://github.com/klausw/hackerskeyboard) with all Android 12+ compatibility fixes applied.
 
 Are you missing the key layout you're used to from your computer when using an Android device? This software keyboard has separate number keys, punctuation in the usual places, and arrow keys. It supports multitouch for the modifier keys.
 

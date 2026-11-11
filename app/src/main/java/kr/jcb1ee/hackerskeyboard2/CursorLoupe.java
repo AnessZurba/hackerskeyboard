@@ -361,17 +361,12 @@ final class CursorLoupe implements CursorDrag.Listener {
         void setText(CharSequence text) {
             mText = text;
             int width = (int) Math.ceil(Layout.getDesiredWidth(text, mTextPaint)) + 1;
-            if (android.os.Build.VERSION.SDK_INT >= 23) {
-                // Direction from the text itself, so Arabic and Hebrew read right to left.
-                mLayout = android.text.StaticLayout.Builder.obtain(text, 0, text.length(),
-                                mTextPaint, Math.max(1, width))
-                        .setTextDirection(android.text.TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                        .setIncludePad(false)
-                        .build();
-            } else {
-                mLayout = new android.text.StaticLayout(text, mTextPaint, Math.max(1, width),
-                        Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
-            }
+            // Direction from the text itself, so Arabic and Hebrew read right to left.
+            mLayout = android.text.StaticLayout.Builder.obtain(text, 0, text.length(),
+                            mTextPaint, Math.max(1, width))
+                    .setTextDirection(android.text.TextDirectionHeuristics.FIRSTSTRONG_LTR)
+                    .setIncludePad(false)
+                    .build();
             invalidate();
         }
 

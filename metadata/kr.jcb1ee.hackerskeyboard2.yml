@@ -21,7 +21,7 @@ Description: |-
   and scripts such as Arabic, Cyrillic, Greek, Hebrew, and Hangul.
 
   Works great with ConnectBot and Termux. Based on the AOSP Gingerbread
-  keyboard, updated for Android 5–14 (API 21–34).
+  keyboard, updated for Android 7 and later (API 24+).
 
 Builds:
   - versionName: v2.0.0

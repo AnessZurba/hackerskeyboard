@@ -189,7 +189,7 @@ Effort: S = up to a day, M = 2–4 days, L = 1–2 weeks. Risk is to user-visibl
 | 0.6 | compileSdk/targetSdk → 35 (then 36); audit edge-to-edge on `Main`, settings activities, `ImagePickActivity`; add `dataExtractionRules` | M | medium | IME window insets (`onComputeInsets`, toolbar height, nav-bar padding) must be checked on a device/emulator with gesture and 3-button navigation — Robolectric will not catch this. |
 | 0.7 | Add the missing characterisation tests (list in §8) | M–L | none | Gate for Phases 2–4. |
 
-Decide in this phase: **minSdk 21 → 23 or 24.** Recommended 24: it unlocks current AndroidX, removes `SDK_INT` branches at 23/24/25 (`CursorLoupe.java:280`, `LatinIME.java:1602`, `2660`), and costs a negligible user share. Needs the owner's say.
+**Done: minSdk 24** (with AGP 9.5, compileSdk 37 and current AndroidX). Was: decide in this phase: **minSdk 21 → 23 or 24.** Recommended 24: it unlocks current AndroidX, removes `SDK_INT` branches at 23/24/25 (`CursorLoupe.java:280`, `LatinIME.java:1602`, `2660`), and costs a negligible user share. Needs the owner's say.
 
 ### Phase 1 — Delete verified-dead code (value high, risk low, no tests needed beyond the existing suite)
 

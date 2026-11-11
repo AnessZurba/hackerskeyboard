@@ -18,7 +18,6 @@ package kr.jcb1ee.hackerskeyboard2;
 
 import java.text.Normalizer;
 
-import android.os.Build;
 import android.util.Log;
 
 public class DeadAccentSequence extends ComposeSequence {
@@ -73,10 +72,7 @@ public class DeadAccentSequence extends ComposeSequence {
 
 	private static String doNormalise(String input)
 	{
-		if (Build.VERSION.SDK_INT >= 9) {
-			return Normalizer.normalize(input, Normalizer.Form.NFC);
-		}
-		return input;
+		return Normalizer.normalize(input, Normalizer.Form.NFC);
 	}
 
     public static String normalize(String input) {
