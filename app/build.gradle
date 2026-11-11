@@ -3,24 +3,24 @@ plugins {
 }
 
 android {
-    namespace 'kr.jcb1ee.hackerskeyboard2'
-    compileSdk 36
+    namespace = 'kr.jcb1ee.hackerskeyboard2'
+    compileSdk = 36
     // Pinned so native builds are reproducible (16 KB pages need r28+; see CMakeLists.txt).
-    ndkVersion '29.0.13599879'
+    ndkVersion = '29.0.13599879'
     defaultConfig {
-        applicationId 'kr.jcb1ee.hackerskeyboard2.az'
+        applicationId = 'kr.jcb1ee.hackerskeyboard2.az'
         // Settings screens link to their sub-screens by package; see res/xml/prefs.xml.
         resValue 'string', 'app_package', applicationId
-        minSdk 21
-        targetSdk 35
-        versionCode 2000000
-        versionName "v2.0.0"
+        minSdk = 21
+        targetSdk = 35
+        versionCode = 2000000
+        versionName = "v2.0.0"
         // Shown on the main screen and in settings.
         resValue 'string', 'auto_version', versionName
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags ""
+                cppFlags = ""
             }
         }
     }
@@ -30,34 +30,37 @@ android {
     signingConfigs {
         if (keystorePath) {
             release {
-                storeFile     file(keystorePath)
-                storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias      System.getenv("KEY_ALIAS")
-                keyPassword   System.getenv("KEY_PASSWORD")
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
             }
         }
     }
     buildTypes {
         release {
-            if (keystorePath) signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (keystorePath) signingConfig = signingConfigs.release
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     externalNativeBuild {
         cmake {
-            path "CMakeLists.txt"
+            path = "CMakeLists.txt"
         }
     }
+    buildFeatures {
+        resValues = true // app_package and auto_version below
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     lint {
         // Today's findings are recorded in lint-baseline.xml; only new ones fail the build.
         baseline = file("lint-baseline.xml")
-        checkReleaseBuilds true
-        abortOnError true
+        checkReleaseBuilds = true
+        abortOnError = true
     }
 }
 

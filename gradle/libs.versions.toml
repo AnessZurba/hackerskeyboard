@@ -1,6 +1,6 @@
 # Versions in one place. AndroidX versions are the newest that still support minSdk 21.
 [versions]
-agp = "8.13.2"
+agp = "9.5.1"
 appcompat = "1.7.0"
 core = "1.13.1"
 preference = "1.2.1"
