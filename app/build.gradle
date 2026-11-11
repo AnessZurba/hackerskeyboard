@@ -1,16 +1,22 @@
-apply plugin: 'com.android.application'
+plugins {
+    alias(libs.plugins.android.application)
+}
 
 android {
     namespace 'kr.jcb1ee.hackerskeyboard2'
-    compileSdkVersion 34
+    compileSdk 34
+    // Pinned so native builds are reproducible (16 KB pages need r28+; see CMakeLists.txt).
+    ndkVersion '29.0.13599879'
     defaultConfig {
         applicationId 'kr.jcb1ee.hackerskeyboard2.az'
         // Settings screens link to their sub-screens by package; see res/xml/prefs.xml.
         resValue 'string', 'app_package', applicationId
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdk 21
+        targetSdk 34
         versionCode 2000000
         versionName "v2.0.0"
+        // Shown on the main screen and in settings.
+        resValue 'string', 'auto_version', versionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -18,17 +24,22 @@ android {
             }
         }
     }
+    // Release signing only when the key is provided (the Build workflow sets these from the
+    // repo secrets); otherwise a release build is simply unsigned instead of failing late.
+    def keystorePath = System.getenv("KEYSTORE_PATH")
     signingConfigs {
-        release {
-            storeFile     file(System.getenv("KEYSTORE_PATH") ?: "release-hackerskeyboard2.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias      System.getenv("KEY_ALIAS") ?: "hackerskeyboard2"
-            keyPassword   System.getenv("KEY_PASSWORD") ?: ""
+        if (keystorePath) {
+            release {
+                storeFile     file(keystorePath)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias      System.getenv("KEY_ALIAS")
+                keyPassword   System.getenv("KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            if (keystorePath) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -38,35 +49,12 @@ android {
             path "CMakeLists.txt"
         }
     }
-    productFlavors {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
-    lintOptions {
+    lint {
         checkReleaseBuilds false
-    }
-}
-
-task generateVersionResource {
-    def versionName = android.defaultConfig.versionName
-    def outFile = file("src/main/res/values/auto-version.xml")
-    outputs.file outFile
-    doLast {
-        outFile.text = """<?xml version="1.0" encoding="utf-8"?>
-<!-- Auto-generated file, do not edit -->
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-   <string name="auto_version">${versionName}</string>
-</resources>
-"""
-    }
-}
-preBuild.dependsOn generateVersionResource
-
-configurations.all {
-    resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'org.jetbrains.kotlin' &&
-                (details.requested.name == 'kotlin-stdlib-jdk7' ||
-                 details.requested.name == 'kotlin-stdlib-jdk8')) {
-            details.useTarget("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
-        }
     }
 }
 
@@ -83,17 +71,17 @@ android.testOptions.unitTests.all {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core:1.12.0'
-    implementation 'androidx.preference:preference:1.2.1'
+    implementation libs.appcompat
+    implementation libs.core
+    implementation libs.preference
     // Inline autofill suggestions (password managers' chips in the toolbar), Android 11+.
-    implementation 'androidx.autofill:autofill:1.1.0'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.robolectric:robolectric:4.13'
-    testImplementation 'androidx.test:core:1.6.1'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation libs.autofill
+    implementation libs.material
+    implementation libs.recyclerview
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.androidx.test.junit
+    androidTestImplementation libs.espresso.core
 }
