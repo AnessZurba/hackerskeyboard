@@ -18,11 +18,6 @@ android {
         // Shown on the main screen and in settings.
         resValue 'string', 'auto_version', versionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags = ""
-            }
-        }
     }
     // Release signing only when the key is provided (the Build workflow sets these from the
     // repo secrets); otherwise a release build is simply unsigned instead of failing late.
