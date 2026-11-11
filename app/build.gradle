@@ -54,7 +54,10 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     lint {
-        checkReleaseBuilds false
+        // Today's findings are recorded in lint-baseline.xml; only new ones fail the build.
+        baseline = file("lint-baseline.xml")
+        checkReleaseBuilds true
+        abortOnError true
     }
 }
 
