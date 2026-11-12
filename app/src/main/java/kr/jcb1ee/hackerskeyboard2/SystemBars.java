@@ -24,23 +24,65 @@ import androidx.core.view.WindowInsetsCompat;
 /**
  * Apps targeting Android 15+ are drawn edge to edge, under the status and navigation bars.
  * This keeps a screen's content (the settings lists) clear of them: padding at the sides and
- * bottom, and at the top too when there is no action bar to take the status bar's place.
+ * bottom, and at the top whatever the action bar leaves uncovered or covers. How the action
+ * bar meets the content changed between AppCompat versions (1.8 lets it extend under the
+ * status bar), so the top is measured from where the action bar actually ends.
  */
 final class SystemBars {
     private SystemBars() {
     }
 
     static void padContent(final AppCompatActivity activity) {
-        View content = activity.findViewById(android.R.id.content);
+        final View content = activity.findViewById(android.R.id.content);
         if (content == null) return;
+        final int[] bars = new int[4];
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()
+            Insets i = insets.getInsets(WindowInsetsCompat.Type.systemBars()
                     | WindowInsetsCompat.Type.displayCutout());
-            boolean actionBar = activity.getSupportActionBar() != null
-                    && activity.getSupportActionBar().isShowing();
-            v.setPadding(bars.left, actionBar ? 0 : bars.top, bars.right, bars.bottom);
+            bars[0] = i.left;
+            bars[1] = i.top;
+            bars[2] = i.right;
+            bars[3] = i.bottom;
+            update(activity, content, bars);
             return insets;
         });
+        content.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) ->
+                update(activity, content, bars));
+        View actionBar = activity.findViewById(androidx.appcompat.R.id.action_bar_container);
+        if (actionBar != null) {
+            actionBar.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) ->
+                    update(activity, content, bars));
+        }
         ViewCompat.requestApplyInsets(content);
+    }
+
+    private static void update(AppCompatActivity activity, View content, int[] bars) {
+        int top = topOf(content, activity.findViewById(androidx.appcompat.R.id.action_bar_container),
+                activity.getSupportActionBar() != null && activity.getSupportActionBar().isShowing(),
+                bars[1]);
+        if (content.getPaddingLeft() != bars[0] || content.getPaddingTop() != top
+                || content.getPaddingRight() != bars[2] || content.getPaddingBottom() != bars[3]) {
+            content.setPadding(bars[0], top, bars[2], bars[3]);
+        }
+    }
+
+    /**
+     * The content's top padding: without an action bar, the status bar's height; with one, as
+     * much as the action bar reaches below the content's top (0 when it sits above it).
+     */
+    static int topOf(View content, View actionBar, boolean actionBarShown, int statusBar) {
+        if (!actionBarShown || actionBar == null) return statusBar;
+        if (actionBar.getHeight() == 0) return 0; // not laid out yet; measured again after
+        return Math.max(0, topInRoot(actionBar) + actionBar.getHeight() - topInRoot(content));
+    }
+
+    /** A view's top in its root view's coordinates (both views share the window's root). */
+    private static int topInRoot(View v) {
+        int y = 0;
+        for (View p = v; p != null; ) {
+            y += p.getTop() - (p == v ? 0 : p.getScrollY());
+            p = p.getParent() instanceof View ? (View) p.getParent() : null;
+        }
+        return y;
     }
 }
