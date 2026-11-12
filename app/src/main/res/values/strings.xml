@@ -351,22 +351,6 @@
     <string name="summary_touch_pos_true">Show feedback for touch screen location</string>
     <string name="summary_touch_pos_false">Off</string>
 
-    <string name="title_slide_keys">Sliding key events</string>
-    <!-- Values are a bitmap, see use in PointerTracker -->
-    <string-array name="slide_keys_entries">
-        <item>Ignore keys during sliding movement (Recommended)</item>
-        <item>Send first key touched</item>
-        <item>Send last key touched</item>
-        <item>Send first and last key</item>
-        <item>Send all keys touched during sliding movement</item>
-    </string-array>
-    <string-array name="slide_keys_values">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-    </string-array>
  
 
     <string name="title_top_row_scale">5th row height adjustment</string>

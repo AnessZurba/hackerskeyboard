@@ -16,8 +16,6 @@
 
 package kr.jcb1ee.hackerskeyboard2;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import kr.jcb1ee.hackerskeyboard2.LatinKeyboardBaseView.OnKeyboardActionListener;
 import kr.jcb1ee.hackerskeyboard2.LatinKeyboardBaseView.UIHandler;
@@ -101,8 +99,6 @@ public class PointerTracker {
     // pressed key
     private int mPreviousKey = NOT_A_KEY;
 
-    private static boolean sSlideKeyHack;
-    private static List<Key> sSlideKeys = new ArrayList<Key>(10);
 
     // This class keeps track of a key index and a position where this pointer is.
     private static class KeyState {
@@ -190,7 +186,7 @@ public class PointerTracker {
     }
 
     public PointerTracker(int id, UIHandler handler, KeyDetector keyDetector, UIProxy proxy,
-            Resources res, boolean slideKeyHack) {
+            Resources res) {
         if (proxy == null || handler == null || keyDetector == null)
             throw new NullPointerException();
         mPointerId = id;
@@ -207,7 +203,6 @@ public class PointerTracker {
         mDensity = density;
         mCursorSlop = Math.round(12 * density);
         mDeleteStep = Math.round(16 * density);
-        sSlideKeyHack = slideKeyHack;
         resetMultiTap();
     }
 
@@ -360,43 +355,6 @@ public class PointerTracker {
         showKeyPreviewAndUpdateKey(keyIndex);
     }
 
-    private static void addSlideKey(Key key) {
-        if (!sSlideKeyHack || LatinIME.sKeyboardSettings.sendSlideKeys == 0) return;
-        if (key == null) return;
-        if (key.modifier) {
-            clearSlideKeys();
-        } else {
-            sSlideKeys.add(key);
-        }
-    }
-    
-    /*package*/ static void clearSlideKeys() {
-        sSlideKeys.clear();
-    }
-    
-    void sendSlideKeys() {
-        if (!sSlideKeyHack) return;
-        int slideMode = LatinIME.sKeyboardSettings.sendSlideKeys;
-        if ((slideMode & 4) > 0) {
-            // send all
-            for (Key key : sSlideKeys) {
-                detectAndSendKey(key, key.x, key.y, -1);            
-            }
-        } else {
-            // Send first and/or last key only.
-            int n = sSlideKeys.size();
-            if (n > 0 && (slideMode & 1) > 0) {
-                Key key = sSlideKeys.get(0);
-                detectAndSendKey(key, key.x, key.y, -1);            
-            }
-            if (n > 1 && (slideMode & 2) > 0) {
-                Key key = sSlideKeys.get(n - 1);
-                detectAndSendKey(key, key.x, key.y, -1);            
-            }
-        }
-        clearSlideKeys();
-    }
-    
     public void onMoveEvent(int x, int y, long eventTime) {
         if (DEBUG_MOVE)
             debugLog("onMoveEvent:", x, y);
@@ -462,7 +420,6 @@ public class PointerTracker {
                         mKeyboardLayoutHasBeenChanged = false;
                         keyIndex = keyState.onMoveKey(x, y);
                     }
-                    addSlideKey(oldKey);
                 }
                 keyState.onMoveToNewKey(keyIndex, x, y);
                 startLongPressTimer(keyIndex);
@@ -493,7 +450,6 @@ public class PointerTracker {
         mIsInSlidingKeyInput = false;
         if (mCursorSlide) {
             endCursorSlide();
-            clearSlideKeys();
             return; // the hold-and-slide typed nothing
         }
         if (mDeleteSlide) {
@@ -508,7 +464,6 @@ public class PointerTracker {
             if (isValidKeyIndex(index)) detectAndSendKey(index, x, y, eventTime);
             return;
         }
-        sendSlideKeys();
         if (mKeyAlreadyProcessed)
             return;
         int keyIndex = mKeyState.onUpKey(x, y);

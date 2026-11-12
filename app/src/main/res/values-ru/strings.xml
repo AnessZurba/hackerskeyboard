@@ -270,15 +270,6 @@
     <string name="summary_touch_pos_true">Показывать точки нажатий и жесты</string>
     <string name="summary_touch_pos_false">Выключено</string>
 
-    <string name="title_slide_keys">Действие при скольжении</string>
-    <!-- Values are a bitmap, see use in PointerTracker -->
-    <string-array name="slide_keys_entries">
-        <item>Игнорировать (рекомендуется)</item>
-        <item>Вводить первый символ</item>
-        <item>Вводить последний символ</item>
-        <item>Вводить первый и последний символ</item>
-        <item>Вводить все затронутые символы</item>
-    </string-array>
 
 
     <string name="title_top_row_scale">Высота 5-го ряда</string>

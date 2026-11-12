@@ -198,14 +198,7 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
     }
 
     @Override
-    /*package*/ boolean enableSlideKeyHack() {
-        return true;
-    }
-
-    @Override
     protected boolean onLongPress(Key key) {
-        PointerTracker.clearSlideKeys();
-
         int primaryCode = key.codes[0];
         if (primaryCode == KEYCODE_OPTIONS) {
             return invokeOnKey(KEYCODE_OPTIONS_LONGPRESS);

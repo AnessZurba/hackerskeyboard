@@ -222,14 +222,6 @@
             android:defaultValue="@string/default_chording_meta_key"
             />
 
-    <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
-            android:key="pref_slide_keys_int"
-            android:title="@string/title_slide_keys"
-            android:persistent="true" 
-            android:entries="@array/slide_keys_entries"
-            android:entryValues="@array/slide_keys_values"
-            android:defaultValue="0"
-            />
     </PreferenceCategory>
 
     <PreferenceCategory
