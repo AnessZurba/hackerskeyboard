@@ -56,6 +56,9 @@ android {
         baseline = file("lint-baseline.xml")
         checkReleaseBuilds = true
         abortOnError = true
+        // New strings start in English; the old translations aren't maintained, and a
+        // missing one falls back to English, so this shouldn't fail the build.
+        warning += 'MissingTranslation'
     }
 }
 
@@ -69,6 +72,8 @@ android.testOptions.unitTests.all {
     }
     if (project.hasProperty('renderOut')) systemProperty 'renderOut', project.property('renderOut')
     if (project.hasProperty('renderPanel')) systemProperty 'renderPanel', project.property('renderPanel')
+    if (project.hasProperty('renderTheme')) systemProperty 'renderTheme', project.property('renderTheme')
+    if (project.hasProperty('renderBorders')) systemProperty 'renderBorders', project.property('renderBorders')
     // -PupdateGolden rewrites golden files (KeyOutputTest) instead of comparing with them.
     if (project.hasProperty('updateGolden')) systemProperty 'updateGolden', 'true'
 }

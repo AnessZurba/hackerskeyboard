@@ -630,6 +630,7 @@ public class LatinIME extends InputMethodService implements
         mConfigurationChanging = true;
         super.onConfigurationChanged(conf);
         mConfigurationChanging = false;
+        mKeyboardSwitcher.refreshThemeColours();
     }
 
     @Override
@@ -686,6 +687,8 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
+        // Material You: the wallpaper or light/dark mode may have changed while hidden.
+        mKeyboardSwitcher.refreshThemeColours();
         if (mSearchConnection != null && mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel(); // ends the emoji search
         }

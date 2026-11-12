@@ -78,7 +78,15 @@ public class KeyboardSwitcher implements
         R.layout.input_material_light,
         R.layout.input_ics_darker,
         R.layout.input_material_black,
+        // 8-10: Material You, AMOLED black, high contrast. Colour themes (KeyboardTheme)
+        // are drawn over input_material_dark or _light, see themeLayout().
+        R.layout.input_material_dark,
+        R.layout.input_material_dark,
+        R.layout.input_material_dark,
     };
+
+    /** The colour theme in use, or null for an image theme. */
+    private KeyboardTheme mTheme;
 
     // Tables which contains resource ids for each character theme color
     private static final int KBD_PHONE = R.xml.kbd_phone;
@@ -645,7 +653,7 @@ public class KeyboardSwitcher implements
             for (int i = 0; i < LatinIMEUtil.GCUtils.GC_TRY_LOOP_MAX && tryGC; ++i) {
                 try {
                     mInputView = (LatinKeyboardView) mInputMethodService
-                            .getLayoutInflater().inflate(THEMES[newLayout],
+                            .getLayoutInflater().inflate(themeLayout(newLayout),
                                     null);
                     tryGC = false;
                 } catch (OutOfMemoryError e) {
@@ -655,6 +663,10 @@ public class KeyboardSwitcher implements
                     tryGC = LatinIMEUtil.GCUtils.getInstance().tryGCOrWait(
                             mLayoutId + "," + newLayout, e);
                 }
+            }
+            if (mTheme != null) {
+                mInputView.applyTheme(mTheme, PreferenceManager.getDefaultSharedPreferences(
+                        mInputMethodService).getBoolean(KeyboardTheme.PREF_KEY_BORDERS, true));
             }
             mInputView.setOnKeyboardActionListener(mInputMethodService);
             mInputView.setPadding(0, 0, 0, 0);
@@ -675,11 +687,32 @@ public class KeyboardSwitcher implements
         });
     }
 
+    /** The layout to inflate for a theme id; sets {@link #mTheme} for colour themes. */
+    private int themeLayout(int id) {
+        mTheme = KeyboardTheme.forId(mInputMethodService, id);
+        if (mTheme != null) {
+            return mTheme.light ? R.layout.input_material_light : R.layout.input_material_dark;
+        }
+        return THEMES[id];
+    }
+
+    /**
+     * Redraws the keyboard if its colours have moved on: Material You follows the wallpaper
+     * and the system's light or dark mode, which can change while the keyboard is hidden.
+     */
+    void refreshThemeColours() {
+        if (mInputView == null || mLayoutId != KeyboardTheme.MATERIAL_YOU) return;
+        KeyboardTheme now = KeyboardTheme.forId(mInputMethodService, mLayoutId);
+        if (now != null && !now.sameAs(mTheme)) changeLatinKeyboardView(mLayoutId, true);
+    }
+
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
             String key) {
         if (PREF_KEYBOARD_LAYOUT.equals(key)) {
             changeLatinKeyboardView(Integer.valueOf(sharedPreferences
                     .getString(key, DEFAULT_LAYOUT_ID)), true);
+        } else if (KeyboardTheme.PREF_KEY_BORDERS.equals(key)) {
+            changeLatinKeyboardView(mLayoutId, true);
         } else if (LatinIMESettings.PREF_SETTINGS_KEY.equals(key)) {
             updateSettingsKeyState(sharedPreferences);
             recreateInputView();

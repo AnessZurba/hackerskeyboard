@@ -69,6 +69,14 @@
             android:key="pref_keyboard_layout"
             android:persistent="true"
             android:title="@string/keyboard_layout" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_key_borders"
+            android:persistent="true"
+            android:summaryOn="@string/summary_key_borders_on"
+            android:summaryOff="@string/summary_key_borders_off"
+            android:title="@string/title_key_borders" />
         
         <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_render_mode"

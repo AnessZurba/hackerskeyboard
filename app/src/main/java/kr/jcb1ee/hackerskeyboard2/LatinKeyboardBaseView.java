@@ -187,6 +187,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     private int mShadowColor;
     private float mShadowRadius;
     private Drawable mKeyBackground;
+    /** The colour theme drawn over the layout's own look, or null for an image theme. */
+    private KeyboardTheme mTheme;
     private int mBackgroundAlpha;
     private float mBackgroundDimAmount;
     private float mKeyHysteresisDistance;
@@ -1351,6 +1353,31 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         return result;
     }
 
+    /**
+     * Draws this keyboard (and its popups) in a colour theme instead of the layout's images.
+     * Call before the keyboard is first shown.
+     */
+    void applyTheme(KeyboardTheme theme, boolean borders) {
+        mTheme = theme;
+        setBackground(theme.keyboardBackground());
+        setKeyColours(theme.keyBackground(getContext(), borders), theme);
+    }
+
+    private void setKeyColours(Drawable keyBackground, KeyboardTheme theme) {
+        mKeyBackground = keyBackground;
+        mPadding.set(0, 0, 0, 0);
+        mKeyBackground.getPadding(mPadding);
+        mKeyTextColor = theme.text;
+        mKeyHintColor = theme.hint;
+        mKeyCursorColor = theme.hint;
+        mKeyboardChanged = true;
+        invalidateAllKeys();
+    }
+
+    KeyboardTheme getTheme() {
+        return mTheme;
+    }
+
     private void inflateMiniKeyboardContainer() {
         //Log.i(TAG, "inflateMiniKeyboardContainer(), mPopupLayout=" + mPopupLayout + " from " + this);
         LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(
@@ -1359,6 +1386,10 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
         mMiniKeyboard =
                 (LatinKeyboardBaseView)container.findViewById(R.id.LatinKeyboardBaseView);
+        if (mTheme != null) {
+            container.setBackground(mTheme.popupPanel(getContext()));
+            mMiniKeyboard.setKeyColours(mTheme.popupKeyBackground(getContext()), mTheme);
+        }
         mMiniKeyboard.mDetectSwipes = false;
         mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
             public void onKey(int primaryCode, int[] keyCodes, int x, int y) {

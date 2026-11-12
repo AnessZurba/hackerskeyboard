@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.View;
 
+import androidx.test.core.app.ApplicationProvider;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -25,6 +27,17 @@ public class RenderKeyboardTest {
     public void render() throws Exception {
         String out = System.getProperty("renderOut");
         org.junit.Assume.assumeTrue("set -PrenderOut to render", out != null);
+        // -PrenderTheme=<theme id> and -PrenderBorders=false pick the look.
+        android.content.SharedPreferences prefs = androidx.preference.PreferenceManager
+                .getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
+        if (System.getProperty("renderTheme") != null) {
+            prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT,
+                    System.getProperty("renderTheme")).commit();
+        }
+        if (System.getProperty("renderBorders") != null) {
+            prefs.edit().putBoolean(KeyboardTheme.PREF_KEY_BORDERS,
+                    Boolean.parseBoolean(System.getProperty("renderBorders"))).commit();
+        }
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
         KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
