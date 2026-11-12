@@ -19,7 +19,7 @@ Insert           -> down INSERT; up INSERT
 F1               -> down F1; up F1
 F12              -> down F12; up F12
 Ctrl c           -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a           -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a           -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl [           -> down CTRL_LEFT [Ctrl]; down LEFT_BRACKET [Ctrl]; up LEFT_BRACKET [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl space       -> down CTRL_LEFT [Ctrl]; down SPACE [Ctrl]; up SPACE [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl Left        -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
@@ -30,9 +30,7 @@ Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; u
 Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
 Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
 Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
-Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a, alone    -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a, allowed  -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down A [Ctrl+Alt]; up A [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
 Ctrl i           -> down CTRL_LEFT [Ctrl]; down I [Ctrl]; up I [Ctrl]; up CTRL_LEFT [Ctrl]
 Alt Tab          -> down ALT_LEFT [Alt]; down TAB [Alt]; up TAB [Alt]; up ALT_LEFT [Alt]
 hold Ctrl: c c   -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]; down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
@@ -60,7 +58,7 @@ Insert           -> down INSERT; up INSERT
 F1               -> down F1; up F1
 F12              -> down F12; up F12
 Ctrl c           -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a           -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a           -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl [           -> down CTRL_LEFT [Ctrl]; down LEFT_BRACKET [Ctrl]; up LEFT_BRACKET [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl space       -> down CTRL_LEFT [Ctrl]; down SPACE [Ctrl]; up SPACE [Ctrl]; up CTRL_LEFT [Ctrl]
 Ctrl Left        -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
@@ -71,9 +69,7 @@ Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; u
 Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
 Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
 Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
-Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a, alone    -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
-Ctrl a, allowed  -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down A [Ctrl+Alt]; up A [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
 Ctrl i           -> down CTRL_LEFT [Ctrl]; down I [Ctrl]; up I [Ctrl]; up CTRL_LEFT [Ctrl]
 Alt Tab          -> down ALT_LEFT [Alt]; down TAB [Alt]; up TAB [Alt]; up ALT_LEFT [Alt]
 hold Ctrl: c c   -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]; down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
@@ -113,8 +109,6 @@ Shift Left       -> down DPAD_LEFT; up DPAD_LEFT
 Ctrl Shift Left  -> down DPAD_LEFT; up DPAD_LEFT
 Ctrl Alt Del     -> commit "\x1b"; commit "\x1b"; commit "[3~"
 Ctrl Alt a       -> commit "\x1b"; commit "\x01"
-Ctrl a, alone    -> commit "\x01"
-Ctrl a, allowed  -> commit "\x01"
 Ctrl i           -> down DPAD_CENTER; up DPAD_CENTER; down I; up I
 Alt Tab          -> commit "\x1b"; down DPAD_CENTER; up DPAD_CENTER; down I; up I
 hold Ctrl: c c   -> commit "\x03"; commit "\x03"

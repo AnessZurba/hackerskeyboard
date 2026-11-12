@@ -76,10 +76,6 @@ public class KeyOutputTest {
         return new Hold(code);
     }
 
-    private static Setting ctrlA(int override) {
-        return s -> s.ctrlAOverride = override;
-    }
-
     private static Setting ctrlKeyCode(int code) {
         return s -> s.chordingCtrlKey = code;
     }
@@ -123,8 +119,6 @@ public class KeyOutputTest {
             {"Ctrl Alt Del", LatinKeyboardView.KEYCODE_CTRL_LEFT, LatinKeyboardView.KEYCODE_ALT_LEFT,
                     LatinKeyboardView.KEYCODE_FORWARD_DEL},
             {"Ctrl Alt a", LatinKeyboardView.KEYCODE_CTRL_LEFT, LatinKeyboardView.KEYCODE_ALT_LEFT, 'a'},
-            {"Ctrl a, alone", ctrlA(1), LatinKeyboardView.KEYCODE_CTRL_LEFT, 'a'},
-            {"Ctrl a, allowed", ctrlA(2), LatinKeyboardView.KEYCODE_CTRL_LEFT, 'a'},
             {"Ctrl i", LatinKeyboardView.KEYCODE_CTRL_LEFT, 'i'},
             {"Alt Tab", LatinKeyboardView.KEYCODE_ALT_LEFT, 9},
             // Chording: the modifier is held while the other keys are tapped.
@@ -254,7 +248,6 @@ public class KeyOutputTest {
             ime.onKey(code, new int[] {code}, 0, 0);
             ime.onRelease(code);
         }
-        LatinIME.sKeyboardSettings.ctrlAOverride = 0;
         LatinIME.sKeyboardSettings.chordingCtrlKey = 0;
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         return mLog.isEmpty() ? "(nothing)" : String.join("; ", mLog);

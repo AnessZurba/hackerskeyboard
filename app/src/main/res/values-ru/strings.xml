@@ -208,14 +208,7 @@
         <item>5 рядов (Полная, поменять местами клавиши Ctrl/Esc)</item>
     </string-array>
 
-    <string name="title_ctrl_a_override">Настройки Ctrl-A</string>
-    <string name="toast_ctrl_a_override_info">Ctrl-A отключен! Используйте Ctrl-Alt-A или включите Ctrl-A в настройках.</string>
 
-    <string-array name="ctrl_a_override_entries">
-        <item>Отключить Ctrl-A, использовать Ctrl-Alt-A</item>
-        <item>Отключить Ctrl-A полностью</item>
-        <item>Использовать Ctrl-A</item>
-    </string-array>
 
     <string name="title_chording_ctrl_key">Код клавиши Ctrl</string>
 

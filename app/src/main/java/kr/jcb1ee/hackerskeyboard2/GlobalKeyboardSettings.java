@@ -45,7 +45,6 @@ public final class GlobalKeyboardSettings {
     public int keyboardModePortrait = 0;
     public int keyboardModeLandscape = 2;
     public boolean compactModeEnabled = true;  // always on
-    public int ctrlAOverride = 0;
     public int chordingCtrlKey = 0;
     public int chordingAltKey = 0;
     public int chordingMetaKey = 0;
@@ -176,11 +175,6 @@ public final class GlobalKeyboardSettings {
             public int getFlags() { return FLAG_PREF_RESET_KEYBOARDS; }
         });
 
-        addStringPref("pref_ctrl_a_override", new StringPref() {
-            public void set(String val) { ctrlAOverride = Integer.valueOf(val); }
-            public String getDefault() { return res.getString(R.string.default_ctrl_a_override); }
-            public int getFlags() { return FLAG_PREF_RESET_KEYBOARDS; }
-        });
 
         addStringPref("pref_chording_ctrl_key", new StringPref() {
             public void set(String val) { chordingCtrlKey = Integer.valueOf(val); }
