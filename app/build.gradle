@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = 'kr.jcb1ee.hackerskeyboard2'
-    compileSdk = 36
+    compileSdk = 37
     // Pinned so native builds are reproducible (16 KB pages need r28+; see CMakeLists.txt).
     ndkVersion = '29.0.13599879'
     defaultConfig {
