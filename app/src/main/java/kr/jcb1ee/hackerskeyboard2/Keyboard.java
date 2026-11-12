@@ -153,12 +153,10 @@ public class Keyboard {
     /** Keyboard mode, or zero, if none.  */
     private int mKeyboardMode;
     
-    private boolean mUseExtension;
 
     public int mLayoutRows;
     public int mLayoutColumns;
     public int mRowCount = 1;
-    public int mExtensionRowCount = 0;
 
     // Variables for pre-computing nearest keys.
     private int mCellWidth;
@@ -191,7 +189,6 @@ public class Keyboard {
         /** The keyboard mode for this row */
         public int mode;
         
-        public boolean extension;
 
         private Keyboard parent;
 
@@ -220,16 +217,12 @@ public class Keyboard {
                     R.styleable.Keyboard_Row);
             mode = a.getResourceId(R.styleable.Keyboard_Row_keyboardMode,
                     0);
-            extension = a.getBoolean(R.styleable.Keyboard_Row_extension, false);
 
-            if (parent.mLayoutRows >= 5 || extension) {
-                // Apply optional scale factor to top (5th) row and/or extension row. If extension
-                // row is visible on a 5-row keyboard, both use the smaller size.
-                boolean isTop = (extension || parent.mRowCount - parent.mExtensionRowCount <= 0);
+            if (parent.mLayoutRows >= 5) {
+                // Apply the optional scale factor to the top (5th) row, and redistribute the
+                // saved space to the remaining rows.
+                boolean isTop = parent.mRowCount <= 0;
                 float topScale = LatinIME.sKeyboardSettings.topRowScale;
-                // Apply scale factor to the top row(s), and redistribute the saved space to the
-                // remaining rows. Saved space from the extension row doesn't count here since
-                // the extension row is not part of the configured height percentage.
                 float scale = isTop ?
                         topScale :
                         1.0f + (1.0f - topScale) / (parent.mLayoutRows - 1);
@@ -857,7 +850,6 @@ public class Keyboard {
         mKeys = new ArrayList<Key>();
         mModifierKeys = new ArrayList<Key>();
         mKeyboardMode = modeId;
-        mUseExtension = LatinIME.sKeyboardSettings.useExtension;
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
         setEdgeFlags();
         fixAltChars(LatinIME.sKeyboardSettings.inputLocale);
@@ -1199,13 +1191,6 @@ public class Keyboard {
                         mRowStart = mKeys.size();
                         currentRow = createRowFromXml(res, parser);
                         skipRow = currentRow.mode != 0 && currentRow.mode != mKeyboardMode;
-                        if (currentRow.extension) {
-                            if (mUseExtension) {
-                                ++mExtensionRowCount;
-                            } else {
-                                skipRow = true;
-                            }
-                        }
                         if (skipRow) {
                             skipToEndOfRow(parser);
                             inRow = false;

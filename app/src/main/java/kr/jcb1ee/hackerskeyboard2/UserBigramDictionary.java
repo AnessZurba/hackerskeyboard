@@ -46,7 +46,6 @@ public class UserBigramDictionary extends ExpandableDictionary {
 
     /**
      * If this pair is typed 6 times, it would be suggested.
-     * Should be smaller than ContactsDictionary.FREQUENCY_FOR_CONTACTS_BIGRAM
      */
     protected static final int SUGGEST_THRESHOLD = 6 * FREQUENCY_FOR_TYPED;
 

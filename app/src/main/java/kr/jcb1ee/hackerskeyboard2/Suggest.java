@@ -73,7 +73,6 @@ public class Suggest implements Dictionary.WordCallback {
 
     private Dictionary mAutoDictionary;
 
-    private Dictionary mContactsDictionary;
 
     private Dictionary mUserBigramDictionary;
 
@@ -158,13 +157,6 @@ public class Suggest implements Dictionary.WordCallback {
         mUserDictionary = userDictionary;
     }
 
-    /**
-     * Sets an optional contacts dictionary resource to be loaded.
-     */
-    public void setContactsDictionary(Dictionary userDictionary) {
-        mContactsDictionary = userDictionary;
-    }
-    
     public void setAutoDictionary(Dictionary autoDictionary) {
         mAutoDictionary = autoDictionary;
     }
@@ -262,10 +254,6 @@ public class Suggest implements Dictionary.WordCallback {
                     mUserBigramDictionary.getBigrams(wordComposer, prevWordForBigram, this,
                             mNextLettersFrequencies);
                 }
-                if (mContactsDictionary != null) {
-                    mContactsDictionary.getBigrams(wordComposer, prevWordForBigram, this,
-                            mNextLettersFrequencies);
-                }
                 if (mMainDict != null) {
                     mMainDict.getBigrams(wordComposer, prevWordForBigram, this,
                             mNextLettersFrequencies);
@@ -291,13 +279,8 @@ public class Suggest implements Dictionary.WordCallback {
 
         } else if (wordComposer.size() > 1) {
             // At second character typed, search the unigrams (scores being affected by bigrams)
-            if (mUserDictionary != null || mContactsDictionary != null) {
-                if (mUserDictionary != null) {
-                    mUserDictionary.getWords(wordComposer, this, mNextLettersFrequencies);
-                }
-                if (mContactsDictionary != null) {
-                    mContactsDictionary.getWords(wordComposer, this, mNextLettersFrequencies);
-                }
+            if (mUserDictionary != null) {
+                mUserDictionary.getWords(wordComposer, this, mNextLettersFrequencies);
 
                 if (mSuggestions.size() > 0 && isValidWord(mOriginalWord)
                         && (mCorrectionMode == CORRECTION_FULL
@@ -509,8 +492,7 @@ public class Suggest implements Dictionary.WordCallback {
         }
         return mMainDict.isValidWord(word)
                 || (mUserDictionary != null && mUserDictionary.isValidWord(word))
-                || (mAutoDictionary != null && mAutoDictionary.isValidWord(word))
-                || (mContactsDictionary != null && mContactsDictionary.isValidWord(word));
+                || (mAutoDictionary != null && mAutoDictionary.isValidWord(word));
     }
     
     private void collectGarbage(ArrayList<CharSequence> suggestions, int prefMaxSuggestions) {

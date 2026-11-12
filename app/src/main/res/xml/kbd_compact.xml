@@ -27,19 +27,6 @@
     android:layoutRows="5"
     android:layoutColumns="11"
  >
-    <Row android:extension="true">
-        <Key android:codes="@integer/key_escape" android:keyLabel="Esc" android:isModifier="true" />
-        <Key android:keyLabel="`" android:shiftLabel="~" />
-        <Key android:keyLabel="-" android:shiftLabel="_" />
-        <Key android:keyLabel="\\" android:shiftLabel="|" />
-        <Key android:keyLabel=";" android:shiftLabel=":" />
-        <Key android:keyLabel="=" android:shiftLabel="+" />        
-        <Key android:keyLabel="[" android:shiftLabel="{" />
-        <Key android:keyLabel="]" android:shiftLabel="}" />
-	<Key android:codes="@integer/key_home" android:isModifier="true" android:keyLabel="Home" />
-	<Key android:codes="@integer/key_end" android:isModifier="true" android:keyLabel="End" />
-	<Key android:codes="@integer/key_forward_del" android:isModifier="true" android:keyLabel="Del" />
-    </Row>
 
     <Row>
         <Key

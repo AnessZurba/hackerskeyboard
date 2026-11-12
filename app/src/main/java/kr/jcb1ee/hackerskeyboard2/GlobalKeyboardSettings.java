@@ -66,7 +66,6 @@ public final class GlobalKeyboardSettings {
     //
     // Read by KeyboardSwitcher
     public int keyboardMode = 0;
-    public boolean useExtension = false;
     public boolean hideDpadCenter = false;
     //
     // Read by LatinKeyboardView and KeyboardSwitcher

@@ -25,18 +25,6 @@
     android:verticalGap="@dimen/key_bottom_gap"
 >
 
-    <Row android:extension="true" >
-        <Key android:keyLabel="ç" />
-        <Key android:keyLabel="ğ" />
-        <Key android:keyLabel="ş" />
-        <Key android:keyLabel="ı" />
-        <Key android:keyLabel="i" />
-        <Key android:keyLabel="ö" />
-        <Key android:keyLabel="ü" />
-        <Key android:keyLabel="!" android:shiftLabel=":"  />
-        <Key android:keyLabel="\?" android:shiftLabel=";"  />
-        <Key android:keyLabel="\'" android:shiftLabel="&quot;" />
-    </Row>
     <Row>
         <Key
             android:keyLabel="q"

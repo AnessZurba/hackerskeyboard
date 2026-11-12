@@ -242,7 +242,6 @@ public class KeyboardSwitcher implements
         public final boolean mEnableShiftLock;
         public final boolean mHasVoice;
         public final float mKeyboardHeightPercent;
-        public final boolean mUsingExtension;
 
         private final int mHashCode;
 
@@ -253,7 +252,6 @@ public class KeyboardSwitcher implements
             this.mEnableShiftLock = enableShiftLock;
             this.mHasVoice = hasVoice;
             this.mKeyboardHeightPercent = LatinIME.sKeyboardSettings.keyboardHeightPercent;
-            this.mUsingExtension = LatinIME.sKeyboardSettings.useExtension;
 
             this.mHashCode = Arrays.hashCode(new Object[] { xml, mode,
                     enableShiftLock, hasVoice });
@@ -268,7 +266,6 @@ public class KeyboardSwitcher implements
             return other != null
                     && other.mXml == this.mXml
                     && other.mKeyboardMode == this.mKeyboardMode
-                    && other.mUsingExtension == this.mUsingExtension
                     && other.mEnableShiftLock == this.mEnableShiftLock
                     && other.mHasVoice == this.mHasVoice;
         }
@@ -349,13 +346,6 @@ public class KeyboardSwitcher implements
                     id.mKeyboardMode, id.mKeyboardHeightPercent);
             keyboard.setVoiceMode(hasVoiceButton(id.mXml == R.xml.kbd_symbols), mHasVoice);
             keyboard.setLanguageSwitcher(mLanguageSwitcher, mIsAutoCompletionActive);
-//            if (isFullMode()) {
-//                keyboard.setExtension(new LatinKeyboard(mInputMethodService,
-//                        R.xml.kbd_extension_full, 0, id.mRowHeightPercent));
-//            } else if (isAlphabetMode()) { // TODO: not in full keyboard mode? Per-mode extension kbd?
-//                keyboard.setExtension(new LatinKeyboard(mInputMethodService,
-//                        R.xml.kbd_extension, 0, id.mRowHeightPercent));
-//            }
 
             if (id.mEnableShiftLock) {
                 keyboard.enableShiftLock();
@@ -664,7 +654,6 @@ public class KeyboardSwitcher implements
                             mLayoutId + "," + newLayout, e);
                 }
             }
-            mInputView.setExtensionLayoutResId(THEMES[newLayout]);
             mInputView.setOnKeyboardActionListener(mInputMethodService);
             mInputView.setPadding(0, 0, 0, 0);
             mLayoutId = newLayout;
