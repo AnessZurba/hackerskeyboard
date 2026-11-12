@@ -24,9 +24,6 @@ import kr.jcb1ee.hackerskeyboard2.LatinIMEUtil.RingCharBuffer;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.AlertDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -40,14 +37,11 @@ import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -90,8 +84,6 @@ public class LatinIME extends InputMethodService implements
         LatinKeyboardBaseView.OnKeyboardActionListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = "PCKeyboardIME";
-    private static final String NOTIFICATION_CHANNEL_ID = "PCKeyboard";
-    private static final int NOTIFICATION_ONGOING_ID = 1001;
     static Map<Integer, String> ESC_SEQUENCES;
     static Map<Integer, Integer> CTRL_SEQUENCES;
 
@@ -119,7 +111,6 @@ public class LatinIME extends InputMethodService implements
     private static final String PREF_RECORRECTION_ENABLED = "recorrection_enabled";
     static final String PREF_FULLSCREEN_OVERRIDE = "fullscreen_override";
     static final String PREF_FORCE_KEYBOARD_ON = "force_keyboard_on";
-    static final String PREF_KEYBOARD_NOTIFICATION = "keyboard_notification";
     static final String PREF_CONNECTBOT_TAB_HACK = "connectbot_tab_hack";
     static final String PREF_FULL_KEYBOARD_IN_PORTRAIT = "full_keyboard_in_portrait";
     static final String PREF_SUGGESTIONS_IN_LANDSCAPE = "suggestions_in_landscape";
@@ -132,8 +123,6 @@ public class LatinIME extends InputMethodService implements
     static final String PREF_SWIPE_DOWN = "pref_swipe_down";
     static final String PREF_SWIPE_LEFT = "pref_swipe_left";
     static final String PREF_SWIPE_RIGHT = "pref_swipe_right";
-    static final String PREF_VOL_UP = "pref_vol_up";
-    static final String PREF_VOL_DOWN = "pref_vol_down";
 
     private static final int MSG_UPDATE_SUGGESTIONS = 0;
     private static final int MSG_START_TUTORIAL = 1;
@@ -211,7 +200,6 @@ public class LatinIME extends InputMethodService implements
     private boolean mConnectbotTabHack;
     private boolean mFullscreenOverride;
     private boolean mForceKeyboardOn;
-    private boolean mKeyboardNotification;
     private boolean mSuggestionsInLandscape;
     private boolean mSuggestionForceOn;
     private boolean mSuggestionForceOff;
@@ -219,8 +207,6 @@ public class LatinIME extends InputMethodService implements
     private String mSwipeDownAction;
     private String mSwipeLeftAction;
     private String mSwipeRightAction;
-    private String mVolUpAction;
-    private String mVolDownAction;
 
     public static final GlobalKeyboardSettings sKeyboardSettings = new GlobalKeyboardSettings(); 
     static LatinIME sInstance;
@@ -287,7 +273,6 @@ public class LatinIME extends InputMethodService implements
     private ArrayList<WordAlternatives> mWordHistory = new ArrayList<WordAlternatives>();
     
     private PluginManager mPluginManager;
-    private NotificationReceiver mNotificationReceiver;
 
 
     public abstract static class WordAlternatives {
@@ -391,8 +376,6 @@ public class LatinIME extends InputMethodService implements
                 res.getBoolean(R.bool.default_fullscreen_override));
         mForceKeyboardOn = prefs.getBoolean(PREF_FORCE_KEYBOARD_ON,
                 res.getBoolean(R.bool.default_force_keyboard_on));
-        mKeyboardNotification = prefs.getBoolean(PREF_KEYBOARD_NOTIFICATION,
-                res.getBoolean(R.bool.default_keyboard_notification));
         mSuggestionsInLandscape = prefs.getBoolean(PREF_SUGGESTIONS_IN_LANDSCAPE,
                 res.getBoolean(R.bool.default_suggestions_in_landscape));
         mHeightPortrait = getHeight(prefs, PREF_HEIGHT_PORTRAIT, res.getString(R.string.default_height_portrait));
@@ -404,8 +387,6 @@ public class LatinIME extends InputMethodService implements
         mSwipeDownAction = prefs.getString(PREF_SWIPE_DOWN, res.getString(R.string.default_swipe_down));
         mSwipeLeftAction = prefs.getString(PREF_SWIPE_LEFT, res.getString(R.string.default_swipe_left));
         mSwipeRightAction = prefs.getString(PREF_SWIPE_RIGHT, res.getString(R.string.default_swipe_right));
-        mVolUpAction = prefs.getString(PREF_VOL_UP, res.getString(R.string.default_vol_up));
-        mVolDownAction = prefs.getString(PREF_VOL_DOWN, res.getString(R.string.default_vol_down));
         sKeyboardSettings.initPrefs(prefs, res);
 
         updateKeyboardOptions();
@@ -439,7 +420,6 @@ public class LatinIME extends InputMethodService implements
         ContextCompat.registerReceiver(this, mReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
 
         prefs.registerOnSharedPreferenceChangeListener(this);
-        setNotification(mKeyboardNotification);
     }
 
     private int getKeyboardModeNum(int origMode, int override) {
@@ -467,88 +447,6 @@ public class LatinIME extends InputMethodService implements
         LatinIME.sKeyboardSettings.keyboardHeightPercent = (float) screenHeightPercent;
     }
 
-    private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = getString(R.string.notification_channel_name);
-            String description = getString(R.string.notification_channel_description);
-            int importance = NotificationManager.IMPORTANCE_LOW;
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
-
-    private void setNotification(boolean visible) {
-        String ns = Context.NOTIFICATION_SERVICE;
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
-
-        if (visible && mNotificationReceiver == null) {
-            createNotificationChannel();
-            int icon = R.drawable.icon;
-            CharSequence text = "Keyboard notification enabled.";
-            long when = System.currentTimeMillis();
-
-            // TODO: clean this up?
-            mNotificationReceiver = new NotificationReceiver(this);
-            final IntentFilter pFilter = new IntentFilter(NotificationReceiver.ACTION_SHOW);
-            pFilter.addAction(NotificationReceiver.ACTION_SETTINGS);
-            ContextCompat.registerReceiver(this, mNotificationReceiver, pFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
-            
-            Intent notificationIntent = new Intent(NotificationReceiver.ACTION_SHOW);
-            PendingIntent contentIntent = PendingIntent.getBroadcast(getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-            //PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-            Intent configIntent = new Intent(NotificationReceiver.ACTION_SETTINGS);
-            PendingIntent configPendingIntent =
-                    PendingIntent.getBroadcast(getApplicationContext(), 2, configIntent, PendingIntent.FLAG_IMMUTABLE);
-
-            String title = "Show Hacker's Keyboard";
-            String body = "Select this to open the keyboard. Disable in settings.";
-
-            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.icon_hk_notification)
-                    .setColor(0xff220044)
-                    .setAutoCancel(false) //Make this notification automatically dismissed when the user touches it -> false.
-                    .setTicker(text)
-                    .setContentTitle(title)
-                    .setContentText(body)
-                    .setContentIntent(contentIntent)
-                    .setOngoing(true)
-                    .addAction(R.drawable.icon_hk_notification, getString(R.string.notification_action_settings),
-                            configPendingIntent)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-            /*
-            Notification notification = new Notification.Builder(getApplicationContext())
-                    .setAutoCancel(false) //Make this notification automatically dismissed when the user touches it -> false.
-                    .setTicker(text)
-                    .setContentTitle(title)
-                    .setContentText(body)
-                    .setWhen(when)
-                    .setSmallIcon(icon)
-                    .setContentIntent(contentIntent)
-                    .getNotification();
-            notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
-            mNotificationManager.notify(ID, notification);
-            */
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-
-            // notificationId is a unique int for each notification that you must define
-            notificationManager.notify(NOTIFICATION_ONGOING_ID, mBuilder.build());
-
-        } else if (mNotificationReceiver != null) {
-            mNotificationManager.cancel(NOTIFICATION_ONGOING_ID);
-            unregisterReceiver(mNotificationReceiver);
-            mNotificationReceiver = null;
-        }
-    }
-    
     private boolean isPortrait() {
         return (mOrientation == Configuration.ORIENTATION_PORTRAIT);
     }
@@ -712,10 +610,6 @@ public class LatinIME extends InputMethodService implements
         //}
         unregisterReceiver(mReceiver);
         unregisterReceiver(mPluginManager);
-        if (mNotificationReceiver != null) {
-        	unregisterReceiver(mNotificationReceiver);
-            mNotificationReceiver = null;
-        }
         super.onDestroy();
     }
 
@@ -763,23 +657,6 @@ public class LatinIME extends InputMethodService implements
         return mKeyboardSwitcher.getInputContainer();
     }
 
-    @Override
-    public AbstractInputMethodImpl onCreateInputMethodInterface() {
-    	return new MyInputMethodImpl();
-    }
-    
-    IBinder mToken;
-    public class MyInputMethodImpl extends InputMethodImpl {
-    	@Override
-    	public void attachToken(IBinder token) {
-    		super.attachToken(token);
-    		Log.i(TAG, "attachToken " + token);
-    		if (mToken == null) {
-    			mToken = token;
-    		}
-    	}
-    }
-    
     @Override
     public View onCreateCandidatesView() {
         //Log.i(TAG, "onCreateCandidatesView(), mCandidateViewContainer=" + mCandidateViewContainer);
@@ -1294,12 +1171,6 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
-    public boolean isKeyboardVisible() {
-        return (mKeyboardSwitcher != null
-                && mKeyboardSwitcher.getInputView() != null
-                && mKeyboardSwitcher.getInputView().isShown());
-    }
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
@@ -1314,16 +1185,6 @@ public class LatinIME extends InputMethodService implements
                 if (mKeyboardSwitcher.getInputView().handleBack()) {
                     return true;
                 }
-            }
-            break;
-        case KeyEvent.KEYCODE_VOLUME_UP:
-            if (!mVolUpAction.equals("none") && isKeyboardVisible()) {
-                return true;
-            }
-            break;
-        case KeyEvent.KEYCODE_VOLUME_DOWN:
-            if (!mVolDownAction.equals("none") && isKeyboardVisible()) {
-                return true;
             }
             break;
         }
@@ -1350,16 +1211,6 @@ public class LatinIME extends InputMethodService implements
                 if (ic != null)
                     ic.sendKeyEvent(event);
                 return true;
-            }
-            break;
-        case KeyEvent.KEYCODE_VOLUME_UP:
-            if (!mVolUpAction.equals("none") && isKeyboardVisible()) {
-                return doSwipeAction(mVolUpAction);
-            }
-            break;
-        case KeyEvent.KEYCODE_VOLUME_DOWN:
-            if (!mVolDownAction.equals("none") && isKeyboardVisible()) {
-                return doSwipeAction(mVolDownAction);
             }
             break;
         }
@@ -3808,11 +3659,6 @@ public class LatinIME extends InputMethodService implements
                     PREF_FORCE_KEYBOARD_ON, res
                             .getBoolean(R.bool.default_force_keyboard_on));
             needReload = true;
-        } else if (PREF_KEYBOARD_NOTIFICATION.equals(key)) {
-            mKeyboardNotification = sharedPreferences.getBoolean(
-                    PREF_KEYBOARD_NOTIFICATION, res
-                            .getBoolean(R.bool.default_keyboard_notification));
-            setNotification(mKeyboardNotification);
         } else if (PREF_SUGGESTIONS_IN_LANDSCAPE.equals(key)) {
             mSuggestionsInLandscape = sharedPreferences.getBoolean(
                     PREF_SUGGESTIONS_IN_LANDSCAPE, res
@@ -3855,10 +3701,6 @@ public class LatinIME extends InputMethodService implements
             mSwipeLeftAction = sharedPreferences.getString(PREF_SWIPE_LEFT, res.getString(R.string.default_swipe_left));
         } else if (PREF_SWIPE_RIGHT.equals(key)) {
             mSwipeRightAction = sharedPreferences.getString(PREF_SWIPE_RIGHT, res.getString(R.string.default_swipe_right));
-        } else if (PREF_VOL_UP.equals(key)) {
-            mVolUpAction = sharedPreferences.getString(PREF_VOL_UP, res.getString(R.string.default_vol_up));
-        } else if (PREF_VOL_DOWN.equals(key)) {
-            mVolDownAction = sharedPreferences.getString(PREF_VOL_DOWN, res.getString(R.string.default_vol_down));
         } else if (PREF_VIBRATE_LEN.equals(key)) {
             mVibrateLen = getPrefInt(sharedPreferences, PREF_VIBRATE_LEN, getResources().getString(R.string.vibrate_duration_ms));
         }

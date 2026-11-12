@@ -55,25 +55,4 @@
             android:persistent="true"
             android:title="@string/title_swipe_right" />
     </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="key_actions"
-        android:title="@string/title_hardware_key_actions" >
-
-        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
-            android:defaultValue="@string/default_vol_up"
-            android:entries="@array/swipe_action_entries"
-            android:entryValues="@array/swipe_action_values"
-            android:key="pref_vol_up"
-            android:persistent="true"
-            android:title="@string/title_vol_up" />
-
-        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
-            android:defaultValue="@string/default_vol_down"
-            android:entries="@array/swipe_action_entries"
-            android:entryValues="@array/swipe_action_values"
-            android:key="pref_vol_down"
-            android:persistent="true"
-            android:title="@string/title_vol_down" />
-    </PreferenceCategory>
 </PreferenceScreen>

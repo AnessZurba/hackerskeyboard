@@ -37,7 +37,6 @@
     <string name="title_input_connection_details">Input connection details</string>
     <string name="title_version">Version</string>
     <string name="title_swipe_gestures">Swipe gestures (experimental)</string>
-    <string name="title_hardware_key_actions">Hardware key actions</string>
 
     <!-- Option to provide vibrate/haptic feedback on keypress -->
     <string name="vibrate_on_keypress">Vibrate on keypress</string>
@@ -322,9 +321,6 @@
     <string name="summary_force_keyboard_on_true">Always</string>
     <string name="summary_force_keyboard_on_false">When no hardware keyboard is available</string>
 
-    <string name="title_keyboard_notification">Use permanent notification</string>
-    <string name="summary_keyboard_notification_true">Activate the keyboard by tapping the notification</string>
-    <string name="summary_keyboard_notification_false">No notification</string>
 
     <string name="title_application_category">Application-specific settings</string>
     
@@ -421,8 +417,6 @@
     <string name="title_swipe_down">Swipe down</string>
     <string name="title_swipe_left">Swipe left</string>
     <string name="title_swipe_right">Swipe right</string>
-    <string name="title_vol_up">Volume up</string>
-    <string name="title_vol_down">Volume down</string>
         <string-array name="swipe_action_entries">
         <item>(no action)</item>
         <item>Close keyboard</item>
@@ -453,8 +447,6 @@
     <string name="default_swipe_down">close</string>
     <string name="default_swipe_left">none</string>
     <string name="default_swipe_right">none</string>
-    <string name="default_vol_up">none</string>
-    <string name="default_vol_down">none</string>
         
     <string name="title_popup_content">Popup mini-keyboard contents</string>
     <string-array name="popup_content_entries">
@@ -489,9 +481,6 @@
     <string name="seek_pref_0">0%</string>
     <string name="seek_pref_val">x%</string>
     <string name="seek_pref_max">100%</string>
-    <string name="notification_channel_name">Hacker\'s Keyboard</string>
-    <string name="notification_channel_description">Hacker\'s Keyboard</string>
-    <string name="notification_action_settings">Settings</string>
 
     <!-- Adaptive key targets -->
     <string name="adaptive_category">Adaptive key targets</string>

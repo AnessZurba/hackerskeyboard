@@ -37,7 +37,6 @@
     <string name="title_input_connection_details">Где печатаем:</string>
     <string name="title_version">Версия</string>
     <string name="title_swipe_gestures">Жесты</string>
-    <string name="title_hardware_key_actions">Кнопки</string>
 
     <!-- Option to provide vibrate/haptic feedback on keypress -->
     <string name="vibrate_on_keypress">Виброотклик клавиш</string>
@@ -246,9 +245,6 @@
     <string name="summary_force_keyboard_on_true">Клавиатура всегда на экране</string>
     <string name="summary_force_keyboard_on_false">Скрывать клавиатуру при наличии внешней</string>
 
-    <string name="title_keyboard_notification">Показать уведомление</string>
-    <string name="summary_keyboard_notification_true">Включать клавиатуру при нажатии на уведомление</string>
-    <string name="summary_keyboard_notification_false">Уведомление отключено</string>
 
     <string name="title_application_category">Настройки совместимости</string>
 
@@ -319,8 +315,6 @@
     <string name="title_swipe_down">Провести вниз</string>
     <string name="title_swipe_left">Провести влево</string>
     <string name="title_swipe_right">Провести вправо</string>
-    <string name="title_vol_up">Громкость +</string>
-    <string name="title_vol_down">громкость -</string>
     <string-array name="swipe_action_entries">
         <item>(нет действия)</item>
         <item>Закрыть клавиатуру</item>
