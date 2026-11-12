@@ -80,8 +80,8 @@ public class InputLanguageSelection extends AppCompatActivity {
             "ja", "zh"
         };
 
-        // Run the GetLanguages.sh script to update the following lists based on
-        // the available keyboard resources and dictionaries.
+        // Languages with keyboard resources (values-*/donottranslate-keymap.xml, xml-*/);
+        // update these lists by hand when adding a layout. LayoutLoadTest loads them all.
         private static final String[] KBD_LOCALIZATIONS = {
             "ar", "bg", "bg_ST", "ca", "cs", "cs_QY", "da", "de", "de_NE",
             "el", "en", "en_CX", "en_DV", "en_GB", "es", "es_LA", "es_US",
@@ -287,7 +287,7 @@ public class InputLanguageSelection extends AppCompatActivity {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
             Editor editor = sp.edit();
             editor.putString(LatinIME.PREF_SELECTED_LANGUAGES, checkedLanguages);
-            SharedPreferencesCompat.apply(editor);
+            editor.apply();
         }
 
         private static String asString(Set<String> set) {
