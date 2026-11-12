@@ -27,8 +27,8 @@ import java.util.List;
 
 /**
  * Characterisation tests: what the keyboard sends to the app for each key (and modifier
- * combination), in an ordinary text field, in a terminal (a field that hides its text,
- * like Termux) and in ConnectBot (which gets its own encoding). This is the keyboard's core for SSH and terminal use; the
+ * combination), in an ordinary text field and in a terminal (a field that hides its text,
+ * like Termux or ConnectBot). This is the keyboard's core for SSH and terminal use; the
  * golden transcript (src/test/resources/key_output_golden.txt) records today's behaviour so
  * that refactoring can't change it unnoticed.
  *
@@ -135,7 +135,7 @@ public class KeyOutputTest {
     public void keyOutputMatchesTheGoldenTranscript() throws Exception {
         StringBuilder transcript = new StringBuilder();
         transcript.append("# What each key sends to the app (KeyOutputTest). Regenerate with -PupdateGolden.\n");
-        for (String field : new String[] {"text", "terminal", "connectbot"}) {
+        for (String field : new String[] {"text", "terminal"}) {
             transcript.append("\n## ").append(field).append(" field\n");
             for (Object[] keys : KEYS) {
                 transcript.append(String.format("%-16s -> %s\n", keys[0], type(field, keys)));
@@ -156,8 +156,6 @@ public class KeyOutputTest {
     private String type(String field, Object[] keys) {
         SelectionPanelTest.sInputType = field.equals("text")
                 ? InputType.TYPE_CLASS_TEXT : InputType.TYPE_NULL;
-        SelectionPanelTest.sPackageName = field.equals("connectbot")
-                ? "org.connectbot" : "com.example.chat";
         EditText edit = new EditText(ApplicationProvider.getApplicationContext());
         edit.setText("hello world");
         edit.setSelection(5);
