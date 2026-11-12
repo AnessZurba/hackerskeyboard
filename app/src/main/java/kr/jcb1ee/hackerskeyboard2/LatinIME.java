@@ -860,7 +860,7 @@ public class LatinIME extends InputMethodService implements
         int variation = attribute.inputType & EditorInfo.TYPE_MASK_VARIATION;
         if (variation == EditorInfo.TYPE_TEXT_VARIATION_PASSWORD
                 || variation == EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                || variation == 0xe0 /* EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD */
+                || variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD
         ) {
             if ((attribute.inputType & EditorInfo.TYPE_MASK_CLASS) == EditorInfo.TYPE_CLASS_TEXT) {
                 mPasswordText = true;
@@ -2076,7 +2076,7 @@ public class LatinIME extends InputMethodService implements
         if (isConnectbot()) {
             sendKeyChar((char) 27);
         } else {
-            sendModifiedKeyDownUp(111 /*KeyEvent.KEYCODE_ESCAPE */);
+            sendModifiedKeyDownUp(KeyEvent.KEYCODE_ESCAPE);
         }
     }
 

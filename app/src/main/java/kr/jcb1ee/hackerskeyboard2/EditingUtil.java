@@ -21,8 +21,6 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
 /**
@@ -34,10 +32,6 @@ public class EditingUtil {
      */
     private static final int LOOKBACK_CHARACTER_NUM = 15;
 
-    // Cache Method pointers
-    private static boolean sMethodsInitialized;
-    private static Method sMethodGetSelectedText;
-    private static Method sMethodSetComposingRegion;
 
     private EditingUtil() {};
 
@@ -290,73 +284,13 @@ public class EditingUtil {
         return null;
     }
 
-    /**
-     * Cache method pointers for performance
-     */
-    private static void initializeMethodsForReflection() {
-        try {
-            // These will either both exist or not, so no need for separate try/catch blocks.
-            // If other methods are added later, use separate try/catch blocks.
-            sMethodGetSelectedText = InputConnection.class.getMethod("getSelectedText", int.class);
-            sMethodSetComposingRegion = InputConnection.class.getMethod("setComposingRegion",
-                    int.class, int.class);
-        } catch (NoSuchMethodException exc) {
-            // Ignore
-        }
-        sMethodsInitialized = true;
-    }
-
-    /**
-     * Returns the selected text between the selStart and selEnd positions.
-     */
+    /** Returns the selected text between the selStart and selEnd positions. */
     private static CharSequence getSelectedText(InputConnection ic, int selStart, int selEnd) {
-        // Use reflection, for backward compatibility
-        CharSequence result = null;
-        if (!sMethodsInitialized) {
-            initializeMethodsForReflection();
-        }
-        if (sMethodGetSelectedText != null) {
-            try {
-                result = (CharSequence) sMethodGetSelectedText.invoke(ic, 0);
-                return result;
-            } catch (InvocationTargetException exc) {
-                // Ignore
-            } catch (IllegalArgumentException e) {
-                // Ignore
-            } catch (IllegalAccessException e) {
-                // Ignore
-            }
-        }
-        // Reflection didn't work, try it the poor way, by moving the cursor to the start,
-        // getting the text after the cursor and moving the text back to selected mode.
-        // TODO: Verify that this works properly in conjunction with 
-        // LatinIME#onUpdateSelection
-        ic.setSelection(selStart, selEnd);
-        result = ic.getTextAfterCursor(selEnd - selStart, 0);
-        ic.setSelection(selStart, selEnd);
-        return result;
+        return ic.getSelectedText(0);
     }
 
-    /**
-     * Tries to set the text into composition mode if there is support for it in the framework.
-     */
+    /** Marks the word as composing text, which underlines it. */
     public static void underlineWord(InputConnection ic, SelectedWord word) {
-        // Use reflection, for backward compatibility
-        // If method not found, there's nothing we can do. It still works but just wont underline
-        // the word.
-        if (!sMethodsInitialized) {
-            initializeMethodsForReflection();
-        }
-        if (sMethodSetComposingRegion != null) {
-            try {
-                sMethodSetComposingRegion.invoke(ic, word.start, word.end);
-            } catch (InvocationTargetException exc) {
-                // Ignore
-            } catch (IllegalArgumentException e) {
-                // Ignore
-            } catch (IllegalAccessException e) {
-                // Ignore
-            }
-        }
+        ic.setComposingRegion(word.start, word.end);
     }
 }

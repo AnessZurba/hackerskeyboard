@@ -21,7 +21,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 public class PrefScreenView extends AppCompatActivity {
@@ -38,7 +37,6 @@ public class PrefScreenView extends AppCompatActivity {
     public static class SettingsFragment extends PreferenceFragmentCompat
             implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-        private ListPreference mRenderModePreference;
 
         private static void removeIconSpace(androidx.preference.PreferenceGroup group) {
             for (int i = 0; i < group.getPreferenceCount(); i++) {
@@ -67,7 +65,6 @@ public class PrefScreenView extends AppCompatActivity {
             removeIconSpace(getPreferenceScreen());
             SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
             prefs.registerOnSharedPreferenceChangeListener(this);
-            mRenderModePreference = (ListPreference) findPreference(LatinIME.PREF_RENDER_MODE);
         }
 
         @Override
@@ -79,15 +76,6 @@ public class PrefScreenView extends AppCompatActivity {
 
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             (new BackupManager(requireContext())).dataChanged();
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-            if (LatinKeyboardBaseView.sSetRenderMode == null) {
-                mRenderModePreference.setEnabled(false);
-                mRenderModePreference.setSummary(R.string.render_mode_unavailable);
-            }
         }
     }
 }

@@ -54,8 +54,6 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -312,7 +310,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     // Distance from horizontal center of the key, proportional to key label text height.
     private final float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
-    /* package */ static Method sSetRenderMode;
     private static int sPrevRenderMode = -1;
 
     private static final float[] INVERTING_MATRIX = {
@@ -482,35 +479,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         }
     }
 
-    static {
-        initCompatibility();
-    }
-    
-    static void initCompatibility() {
-        try {
-            sSetRenderMode = View.class.getMethod("setLayerType", int.class, Paint.class);
-            Log.i(TAG, "setRenderMode is supported");
-        } catch (SecurityException e) {
-            Log.w(TAG, "unexpected SecurityException", e);
-        } catch (NoSuchMethodException e) {
-            // ignore, not supported by API level pre-Honeycomb
-            Log.i(TAG, "ignoring render mode, not supported");
-        }
-    }
-    
     private void setRenderModeIfPossible(int mode) {
-        if (sSetRenderMode != null && mode != sPrevRenderMode) {
-            try {
-                sSetRenderMode.invoke(this, mode, null);
-                sPrevRenderMode = mode;
-                Log.i(TAG, "render mode set to " + LatinIME.sKeyboardSettings.renderMode);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
+        if (mode != sPrevRenderMode) {
+            setLayerType(mode, null);
+            sPrevRenderMode = mode;
+            Log.i(TAG, "render mode set to " + LatinIME.sKeyboardSettings.renderMode);
         }
     }
     
