@@ -67,9 +67,11 @@ public class KeyboardSwitcher implements
 
     public static final String DEFAULT_LAYOUT_ID = "0";
     public static final String PREF_KEYBOARD_LAYOUT = "pref_keyboard_layout";
+    // Indexed by the stored theme number, so entries must never move. 1 was Gingerbread
+    // (removed); a saved 1 now gets ICS, the closest look.
     private static final int[] THEMES = new int[] {
         R.layout.input_ics,
-        R.layout.input_gingerbread,
+        R.layout.input_ics,
         R.layout.input_stone_bold,
         R.layout.input_trans_neon,
         R.layout.input_material_dark,

@@ -217,7 +217,6 @@
     <!-- Description for keyboard theme switcher -->
     <string name="keyboard_layout">Keyboard Theme</string>
     <string name="layout_stone_bold"  translatable="false">Stone (bold)</string>
-    <string name="layout_gingerbread"  translatable="false">Gingerbread</string>
     <string name="layout_ics"  translatable="false">Ice Cream Sandwich (bright hints)</string>
     <string name="layout_ics_darker"  translatable="false">Ice Cream Sandwich (dark hints)</string>
     <string name="layout_trans_neon"  translatable="false">Transparent (experimental)</string>
@@ -231,7 +230,6 @@
 		<item>@string/layout_material_black</item>
         <item>@string/layout_material_dark</item>
         <item>@string/layout_material_light</item>
-        <item>@string/layout_gingerbread</item>
         <item>@string/layout_stone_bold</item>
         <item>@string/layout_trans_neon</item>
     </string-array>
@@ -248,7 +246,6 @@
         <item>7</item>
         <item>4</item>
         <item>5</item>
-        <item>1</item>
         <item>2</item>
         <item>3</item>
     </string-array>

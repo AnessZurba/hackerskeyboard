@@ -190,7 +190,6 @@
     <!-- Description for keyboard theme switcher -->
     <string name="keyboard_layout">Тема клавиатуры</string>
     <string name="layout_stone_bold"  translatable="false">Кость (жирный)</string>
-    <string name="layout_gingerbread"  translatable="false">Имбирный пряник</string>
     <string name="layout_ics"  translatable="false">Сэндвич с мороженым (светлые подсказки)</string>
     <string name="layout_ics_darker"  translatable="false">Сэндвич с мороженым (тёмн. подсказки)</string>
     <string name="layout_trans_neon"  translatable="false">Прозрачная (эксперимент)</string>
