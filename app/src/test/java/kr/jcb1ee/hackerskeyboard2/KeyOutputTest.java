@@ -11,6 +11,7 @@ import android.widget.EditText;
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
@@ -26,8 +27,8 @@ import java.util.List;
 
 /**
  * Characterisation tests: what the keyboard sends to the app for each key (and modifier
- * combination), in an ordinary text field and in a terminal (a field that hides its text,
- * like Termux or ConnectBot). This is the keyboard's core for SSH and terminal use; the
+ * combination), in an ordinary text field, in a terminal (a field that hides its text,
+ * like Termux) and in ConnectBot (which gets its own encoding). This is the keyboard's core for SSH and terminal use; the
  * golden transcript (src/test/resources/key_output_golden.txt) records today's behaviour so
  * that refactoring can't change it unnoticed.
  *
@@ -41,13 +42,52 @@ public class KeyOutputTest {
 
     private final List<String> mLog = new ArrayList<>();
 
+    @Before
+    public void distinctMultitouch() {
+        // Like any current phone: without it, holding a modifier can't chord.
+        Shadows.shadowOf(ApplicationProvider.<android.app.Application>getApplicationContext()
+                .getPackageManager()).setSystemFeature(
+                        android.content.pm.PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH_DISTINCT, true);
+    }
+
     @After
     public void reset() {
         SelectionPanelTest.sConnection = null;
         SelectionPanelTest.sInputType = InputType.TYPE_CLASS_TEXT;
+        SelectionPanelTest.sPackageName = "com.example.chat";
+        SelectionPanelTest.sEditorInfo = null;
     }
 
-    /** Key sequences: a name, then key codes (pressed one after another, like taps). */
+    /** A modifier held down while the following keys are tapped (chording), released last. */
+    private static final class Hold {
+        final int code;
+
+        Hold(int code) {
+            this.code = code;
+        }
+    }
+
+    /** Applied to the keyboard's settings before typing. */
+    private interface Setting {
+        void apply(GlobalKeyboardSettings s);
+    }
+
+    private static Hold hold(int code) {
+        return new Hold(code);
+    }
+
+    private static Setting ctrlA(int override) {
+        return s -> s.ctrlAOverride = override;
+    }
+
+    private static Setting ctrlKeyCode(int code) {
+        return s -> s.chordingCtrlKey = code;
+    }
+
+    /**
+     * Key sequences: a name, then key codes (tapped one after another), {@link Hold}s (held
+     * while the rest is typed) and {@link Setting}s.
+     */
     private static final Object[][] KEYS = {
             {"a", 'a'},
             // The key view itself turns letters into capitals while Shift is on; here the
@@ -82,13 +122,26 @@ public class KeyOutputTest {
                     LatinKeyboardView.KEYCODE_DPAD_LEFT},
             {"Ctrl Alt Del", LatinKeyboardView.KEYCODE_CTRL_LEFT, LatinKeyboardView.KEYCODE_ALT_LEFT,
                     LatinKeyboardView.KEYCODE_FORWARD_DEL},
+            {"Ctrl Alt a", LatinKeyboardView.KEYCODE_CTRL_LEFT, LatinKeyboardView.KEYCODE_ALT_LEFT, 'a'},
+            {"Ctrl a, alone", ctrlA(1), LatinKeyboardView.KEYCODE_CTRL_LEFT, 'a'},
+            {"Ctrl a, allowed", ctrlA(2), LatinKeyboardView.KEYCODE_CTRL_LEFT, 'a'},
+            {"Ctrl i", LatinKeyboardView.KEYCODE_CTRL_LEFT, 'i'},
+            {"Alt Tab", LatinKeyboardView.KEYCODE_ALT_LEFT, 9},
+            // Chording: the modifier is held while the other keys are tapped.
+            {"hold Ctrl: c c", hold(LatinKeyboardView.KEYCODE_CTRL_LEFT), 'c', 'c'},
+            {"hold Ctrl: Left", hold(LatinKeyboardView.KEYCODE_CTRL_LEFT),
+                    LatinKeyboardView.KEYCODE_DPAD_LEFT},
+            {"hold Shift: a b", hold(Keyboard.KEYCODE_SHIFT), 'a', 'b'},
+            {"hold Alt: x", hold(LatinKeyboardView.KEYCODE_ALT_LEFT), 'x'},
+            {"hold Ctrl=113: c", ctrlKeyCode(KeyEvent.KEYCODE_CTRL_LEFT),
+                    hold(LatinKeyboardView.KEYCODE_CTRL_LEFT), 'c'},
     };
 
     @Test
     public void keyOutputMatchesTheGoldenTranscript() throws Exception {
         StringBuilder transcript = new StringBuilder();
         transcript.append("# What each key sends to the app (KeyOutputTest). Regenerate with -PupdateGolden.\n");
-        for (String field : new String[] {"text", "terminal"}) {
+        for (String field : new String[] {"text", "terminal", "connectbot"}) {
             transcript.append("\n## ").append(field).append(" field\n");
             for (Object[] keys : KEYS) {
                 transcript.append(String.format("%-16s -> %s\n", keys[0], type(field, keys)));
@@ -107,14 +160,26 @@ public class KeyOutputTest {
 
     /** Types one sequence into a fresh keyboard and field; returns what the app received. */
     private String type(String field, Object[] keys) {
-        SelectionPanelTest.sInputType = field.equals("terminal")
-                ? InputType.TYPE_NULL : InputType.TYPE_CLASS_TEXT;
+        SelectionPanelTest.sInputType = field.equals("text")
+                ? InputType.TYPE_CLASS_TEXT : InputType.TYPE_NULL;
+        SelectionPanelTest.sPackageName = field.equals("connectbot")
+                ? "org.connectbot" : "com.example.chat";
         EditText edit = new EditText(ApplicationProvider.getApplicationContext());
         edit.setText("hello world");
         edit.setSelection(5);
         mLog.clear();
-        SelectionPanelTest.sConnection = new InputConnectionWrapper(
-                edit.onCreateInputConnection(new EditorInfo()), true) {
+        EditorInfo appInfo = new EditorInfo();
+        SelectionPanelTest.sEditorInfo = appInfo;
+        android.view.inputmethod.InputConnection target;
+        if (field.equals("text")) {
+            target = edit.onCreateInputConnection(appInfo);
+        } else {
+            // A terminal view (Termux, ConnectBot) hides its text behind a plain connection.
+            appInfo.inputType = InputType.TYPE_NULL;
+            appInfo.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
+            target = new android.view.inputmethod.BaseInputConnection(edit, true);
+        }
+        SelectionPanelTest.sConnection = new InputConnectionWrapper(target, true) {
             @Override
             public boolean commitText(CharSequence text, int newCursorPosition) {
                 mLog.add("commit \"" + escape(text) + "\"");
@@ -170,12 +235,27 @@ public class KeyOutputTest {
         ime.onStartInputView(ei, false);
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         mLog.clear(); // only what the keys send
+        List<Integer> held = new ArrayList<>();
         for (int i = 1; i < keys.length; i++) {
-            int code = keys[i] instanceof Character ? (Character) keys[i] : (Integer) keys[i];
-            ime.onPress(code);
+            if (keys[i] instanceof Setting) {
+                ((Setting) keys[i]).apply(LatinIME.sKeyboardSettings);
+            } else if (keys[i] instanceof Hold) {
+                int code = ((Hold) keys[i]).code;
+                ime.onPress(code);
+                held.add(0, code);
+            } else {
+                int code = keys[i] instanceof Character ? (Character) keys[i] : (Integer) keys[i];
+                ime.onPress(code);
+                ime.onKey(code, new int[] {code}, 0, 0);
+                ime.onRelease(code);
+            }
+        }
+        for (int code : held) {
             ime.onKey(code, new int[] {code}, 0, 0);
             ime.onRelease(code);
         }
+        LatinIME.sKeyboardSettings.ctrlAOverride = 0;
+        LatinIME.sKeyboardSettings.chordingCtrlKey = 0;
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         return mLog.isEmpty() ? "(nothing)" : String.join("; ", mLog);
     }

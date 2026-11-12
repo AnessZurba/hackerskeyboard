@@ -5,7 +5,7 @@ a                -> commit "a"
 Shift, code a    -> commit "a"
 1                -> down 1; up 1
 space            -> commit " "
-Enter            -> editorAction 0
+Enter            -> down ENTER; up ENTER
 Tab              -> down TAB; up TAB
 Backspace        -> down DEL; up DEL
 Esc              -> down ESCAPE; up ESCAPE
@@ -30,6 +30,16 @@ Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; u
 Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
 Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
 Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
+Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a, alone    -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a, allowed  -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl i           -> down CTRL_LEFT [Ctrl]; down I [Ctrl]; up I [Ctrl]; up CTRL_LEFT [Ctrl]
+Alt Tab          -> down ALT_LEFT [Alt]; down TAB [Alt]; up TAB [Alt]; up ALT_LEFT [Alt]
+hold Ctrl: c c   -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]; down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
+hold Ctrl: Left  -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+hold Shift: a b  -> commit "a"; commit "b"
+hold Alt: x      -> down ALT_LEFT [Alt]; down X [Alt]; up X [Alt]; up ALT_LEFT [Alt]
+hold Ctrl=113: c -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
 
 ## terminal field
 a                -> commit "a"
@@ -61,3 +71,54 @@ Shift Tab        -> down SHIFT_LEFT [Shift]; down TAB [Shift]; up TAB [Shift]; u
 Shift Left       -> down SHIFT_LEFT [Shift]; down DPAD_LEFT [Shift]; up DPAD_LEFT [Shift]; up SHIFT_LEFT [Shift]
 Ctrl Shift Left  -> down SHIFT_LEFT [Shift]; down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Shift+Ctrl]; up DPAD_LEFT [Shift+Ctrl]; up CTRL_LEFT [Ctrl]; up SHIFT_LEFT [Shift]
 Ctrl Alt Del     -> down CTRL_LEFT [Ctrl]; down ALT_LEFT [Alt]; down FORWARD_DEL [Ctrl+Alt]; up FORWARD_DEL [Ctrl+Alt]; up ALT_LEFT [Alt]; up CTRL_LEFT [Ctrl]
+Ctrl Alt a       -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a, alone    -> down CTRL_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl a, allowed  -> down CTRL_LEFT [Ctrl]; down A [Ctrl]; up A [Ctrl]; up CTRL_LEFT [Ctrl]
+Ctrl i           -> down CTRL_LEFT [Ctrl]; down I [Ctrl]; up I [Ctrl]; up CTRL_LEFT [Ctrl]
+Alt Tab          -> down ALT_LEFT [Alt]; down TAB [Alt]; up TAB [Alt]; up ALT_LEFT [Alt]
+hold Ctrl: c c   -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]; down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
+hold Ctrl: Left  -> down CTRL_LEFT [Ctrl]; down DPAD_LEFT [Ctrl]; up DPAD_LEFT [Ctrl]; up CTRL_LEFT [Ctrl]
+hold Shift: a b  -> commit "a"; commit "b"
+hold Alt: x      -> down ALT_LEFT [Alt]; down X [Alt]; up X [Alt]; up ALT_LEFT [Alt]
+hold Ctrl=113: c -> down CTRL_LEFT [Ctrl]; down C [Ctrl]; up C [Ctrl]; up CTRL_LEFT [Ctrl]
+
+## connectbot field
+a                -> commit "a"
+Shift, code a    -> commit "a"
+1                -> down 1; up 1
+space            -> commit " "
+Enter            -> editorAction 0
+Tab              -> down DPAD_CENTER; up DPAD_CENTER; down I; up I
+Backspace        -> down DEL; up DEL
+Esc              -> commit "\x1b"
+Del              -> commit "\x1b"; commit "[3~"
+Left             -> down DPAD_LEFT; up DPAD_LEFT
+Up               -> down DPAD_UP; up DPAD_UP
+Home             -> commit "\x1b"; commit "[1~"
+End              -> commit "\x1b"; commit "[4~"
+PgUp             -> commit "\x1b"; commit "[5~"
+Insert           -> commit "\x1b"; commit "[2~"
+F1               -> down DPAD_CENTER; up DPAD_CENTER; down 1; up 1
+F12              -> commit "\x1b"; commit "[24~"
+Ctrl c           -> commit "\x03"
+Ctrl a           -> commit "\x01"
+Ctrl [           -> commit "\x1b"
+Ctrl space       -> commit "\x00"
+Ctrl Left        -> down DPAD_LEFT; up DPAD_LEFT
+Alt x            -> commit "\x1b"; commit "x"
+Alt Left         -> down DPAD_LEFT; up DPAD_LEFT
+Meta x           -> commit "x"
+Shift Tab        -> down DPAD_CENTER; up DPAD_CENTER; down I; up I
+Shift Left       -> down DPAD_LEFT; up DPAD_LEFT
+Ctrl Shift Left  -> down DPAD_LEFT; up DPAD_LEFT
+Ctrl Alt Del     -> commit "\x1b"; commit "\x1b"; commit "[3~"
+Ctrl Alt a       -> commit "\x1b"; commit "\x01"
+Ctrl a, alone    -> commit "\x01"
+Ctrl a, allowed  -> commit "\x01"
+Ctrl i           -> down DPAD_CENTER; up DPAD_CENTER; down I; up I
+Alt Tab          -> commit "\x1b"; down DPAD_CENTER; up DPAD_CENTER; down I; up I
+hold Ctrl: c c   -> commit "\x03"; commit "\x03"
+hold Ctrl: Left  -> down DPAD_LEFT; up DPAD_LEFT
+hold Shift: a b  -> commit "a"; commit "b"
+hold Alt: x      -> commit "\x1b"; commit "x"
+hold Ctrl=113: c -> down CTRL_LEFT [Ctrl]; commit "\x03"; up CTRL_LEFT [Ctrl]

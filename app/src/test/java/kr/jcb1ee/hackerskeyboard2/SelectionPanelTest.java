@@ -47,8 +47,12 @@ public class SelectionPanelTest {
         @Override
         public EditorInfo getCurrentInputEditorInfo() {
             EditorInfo ei = new EditorInfo();
+            if (sEditorInfo != null) { // what the field itself said (imeOptions and all)
+                ei.imeOptions = sEditorInfo.imeOptions;
+                ei.actionId = sEditorInfo.actionId;
+            }
             ei.inputType = sInputType;
-            ei.packageName = "com.example.chat";
+            ei.packageName = sPackageName;
             if (sImages) {
                 androidx.core.view.inputmethod.EditorInfoCompat.setContentMimeTypes(ei, new String[] {"image/*"});
             }
@@ -59,6 +63,9 @@ public class SelectionPanelTest {
     static InputConnection sConnection;
     static int sInputType = InputType.TYPE_CLASS_TEXT;
     static boolean sImages;
+    static String sPackageName = "com.example.chat";
+    /** If set, the field's own EditorInfo (from onCreateInputConnection); the type is still sInputType. */
+    static EditorInfo sEditorInfo;
     private EditText mField;
     private LatinIME mIme;
 

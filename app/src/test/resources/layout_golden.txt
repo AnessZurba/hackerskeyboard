@@ -1,0 +1,558 @@
+# Key labels per row for every layout and language (LayoutLoadTest).
+# Regenerate with -PupdateGolden.
+
+## Shared layouts (en)
+fn (5-row):
+  [-103] F1 F2 F3 F4 7 8 9 / Home [-5]
+  [9] F5 F6 F7 F8 4 5 6 * End Ins Del
+  Ctrl F9 F10 F11 F12 1 2 3 - PgUp [10]
+  [-1] SyRq ScrL Brk NumL , 0 . + PgDn △ [-1]
+  Esc [-100] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+fn, swapped:
+  [-103] F1 F2 F3 F4 7 8 9 / Home [-5]
+  [9] F5 F6 F7 F8 4 5 6 * End Ins Del
+  Esc F9 F10 F11 F12 1 2 3 - PgUp [10]
+  [-1] SyRq ScrL Brk NumL , 0 . + PgDn △ [-1]
+  Ctrl [-100] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+5-row, swapped Ctrl/Esc:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p [ ] \
+  Esc a s d f g h j k l ; ' [10]
+  [-1] z x c v b n m , . / △ [-1]
+  Ctrl [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+compact:
+  1 2 3 4 5 6 7 8 9 0 [-5]
+  q w e r t y u i o p '
+  a s d f g h j k l [10]
+  [-1] z x c v b n m , . /
+  Fn Ctrl Alt [9] [32] ◁ ▽ △ ▷
+compact fn:
+  Esc [-103] F1 F2 F3 F4 F5 F6 Brk [-5]
+  SyRq [-100] F7 F8 F9 F10 F11 F12 Ins PgUp
+  ScrL ~ _ + { } | : Del PgDn
+  NumL ` - = [ ] \ ; Home End
+  Fn Ctrl Alt ❖ [-1] .com :-) ○ ◁ ▽ △ ▷
+symbols:
+  1 2 3 4 5 6 7 8 9 0
+  @ # $ % & * - + ( )
+  ALT ! " ' : ; / ? [-5]
+symbols shift:
+  ~ ` | • √ π ÷ × { }
+  ⇥ £ ¢ € ° ^ _ = [ ]
+  ALT ™ ® © ¶ \ < > [-5]
+phone:
+  1 2 3 [-5]
+  4 5 6 -
+  7 8 9 .
+  [-2] 0 [32] [10]
+phone symbols:
+  ( / ) [-5]
+  N Pause , -
+  * Wait # .
+  123 + [32] [10]
+
+## ar
+5-row:
+  ذ 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] ض ص ث ق ف غ ع ه خ ح ج د \
+  Ctrl ش س ي ب ل ا ت ن م ك ط [10]
+  [-1] ئ ء ؤ ر لا ى ة و ز ظ △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  ض ص ق ف غ ع ه خ ح ج
+  ش س ي ب ل ا ت ن م ك
+  ظ ط ذ د ز ر و ة ث [-5]
+  ?123 [-103] [32] . [10]
+
+## bg
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] я в е р т ъ у и о п ш щ ;
+  Ctrl а с д ф г х й к л ю ч [10]
+  [-1] з ь ц ж б н м , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  я в е р т ъ у и о п ш щ
+  а с д ф г х й к л ю ч
+  [-1] з ь ц ж б н м [-5]
+  ?123 [-103] [32] . [10]
+
+## bg_ST
+5-row:
+  ( 1 2 3 4 5 6 7 8 9 0 - . [-5]
+  [9] , у е и ш щ к с д з ц ; ;
+  Ctrl ь я а о ж г т н в м ч [10]
+  [-1] ю й ъ э ф х п р л б △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  , е и ш щ к с д з ц
+  ь я а о ж г т н в м ч
+  [-1] ю й ъ э ф х п р л б [-5]
+  ?123 [-103] [32] . [10]
+
+## cs
+5-row:
+  ; + ě š č ř ž ý á í é = ́ [-5]
+  [9] q w e r t z u i o p ú ) '
+  Ctrl a s d f g h j k l ů § [10]
+  [-1] y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## cs_QY
+5-row:
+  ; + ě š č ř ž ý á í é = ́ [-5]
+  [9] q w e r t y u i o p ú ) '
+  Ctrl a s d f g h j k l ů § [10]
+  [-1] z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## da
+5-row:
+  § 1 2 3 4 5 6 7 8 9 0 + ́ [-5]
+  [9] q w e r t y u i o p å ̈ '
+  Ctrl a s d f g h j k l æ ø [10]
+  [-1] > z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p å
+  a s d f g h j k l æ ø
+  [-1] z x c v b n m ' [-5]
+  ?123 [-103] [32] . [10]
+
+## de
+5-row:
+  ^ 1 2 3 4 5 6 7 8 9 0 ß ' [-5]
+  [9] q w e r t z u i o p ü + #
+  Ctrl a s d f g h j k l ö ä [10]
+  [-1] < y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## de_NE
+5-row:
+  ̂ 1 2 3 4 5 6 7 8 9 0 - ̀ [-5]
+  [9] x v l c w k h g f q ß ́ [10]
+  Ctrl u i a e o s n r t d y [10]
+  [-1] ü ö ä p z b m , . j △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  x v l c w k h g f q ß [-5]
+  u i a e o s n r t d y
+  [-1] ü ö ä p z b m , . j
+  ?123 [-103] [32] . [10]
+
+## el
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] ; ς ε ρ τ υ θ ι ο π [ ] \
+  Ctrl α σ δ φ γ η ξ κ λ ́ ' [10]
+  [-1] ζ χ ψ ω β ν μ , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  ; ς ε ρ τ υ θ ι ο π
+  α σ δ φ γ η ξ κ λ
+  [-1] ζ χ ψ ω β ν μ [-5]
+  ?123 [-103] [32] . [10]
+
+## en
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p [ ] \
+  Ctrl a s d f g h j k l ; ' [10]
+  [-1] z x c v b n m , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## en_CX
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q g m l w y f u b ; [ ] \
+  Ctrl d s t n r i a e o h ' [10]
+  [-1] z x c v j k p , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q g m l w y f u b '
+  d s t n r i a e o h
+  [-1] z x c v j k p [-5]
+  ?123 [-103] [32] . [10]
+
+## en_DV
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 [ ] [-5]
+  [9] ' , . p y f g c r l / = \
+  Ctrl a o e u i d h t n s - [10]
+  [-1] ; q j k x b m w v z △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  ' , . p y f g c r l [-5]
+  a o e u i d h t n s
+  [-1] q j k x b m w v z
+  ?123 [-103] [32] . [10]
+
+## en_GB
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p [ ] #
+  Ctrl a s d f g h j k l ; ' [10]
+  [-1] \ z x c v b n m , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## es
+5-row:
+  º 1 2 3 4 5 6 7 8 9 0 ' ¡ [-5]
+  [9] q w e r t y u i o p ̀ + ç
+  Ctrl a s d f g h j k l ñ ́ [10]
+  [-1] < z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l ñ
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## es_LA
+5-row:
+  | 1 2 3 4 5 6 7 8 9 0 ' ¿ [-5]
+  [9] q w e r t y u i o p ́ + }
+  Ctrl a s d f g h j k l ñ { [10]
+  [-1] < z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l ñ
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## es_US
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l ñ
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## fa
+5-row:
+  ‍ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹ ۰ - = [-5]
+  [9] ض ص ث ق ف غ ع ه خ ح ج چ \
+  Ctrl ش س ی ب ل ا ت ن م ک گ [10]
+  [-1] ظ ط ز ر ذ د پ و . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  ض ص ق ف غ ع ه خ ح ج
+  ش س ی ب ل ا ت ن م چ
+  ظ ط ز ر د پ و ک گ [-5]
+  ?123 [-103] [32] . [10]
+
+## fi
+5-row:
+  § 1 2 3 4 5 6 7 8 9 0 ? ' [-5]
+  [9] q w e r t y u i o p å ~ '
+  Ctrl a s d f g h j k l ö ä [10]
+  [-1] < z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## fr
+5-row:
+  ² & é " ' ( - è _ ç à ) = [-5]
+  [9] a z e r t y u i o p ̂ $ *
+  Ctrl q s d f g h j k l m ù [10]
+  [-1] < w x c v b n , ; : ! △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  a z e r t y u i o p
+  q s d f g h j k l m
+  [-1] w x c v b n ' [-5]
+  ?123 [-103] [32] . [10]
+
+## fr_CA
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p [ ] \
+  Ctrl a s d f g h j k l ; ' [10]
+  [-1] z x c v b n m , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## hr
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 ' + [-5]
+  [9] q w e r t z u i o p š đ ž
+  Ctrl a s d f g h j k l č ć [10]
+  [-1] < y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## hu
+5-row:
+  0 1 2 3 4 5 6 7 8 9 ö ü ó [-5]
+  [9] q w e r t z u i o p ő ú ű
+  Ctrl a s d f g h j k l é á [10]
+  [-1] í y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## hu_QY
+5-row:
+  0 1 2 3 4 5 6 7 8 9 ö ü ó [-5]
+  [9] q w e r t y u i o p ő ú ű
+  Ctrl a s d f g h j k l é á [10]
+  [-1] í z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## hy
+5-row:
+  ` ( ) ՚ ՝ ։ . , - ֆ օ ռ ջ [-5]
+  [9] ք վ ը ր տ ճ ւ ի ո պ ղ յ ձ
+  Ctrl ա ս դ հ գ է թ կ լ ե փ [10]
+  [-1] ց զ չ ժ բ ն մ շ խ ծ △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## it
+5-row:
+  \ 1 2 3 4 5 6 7 8 9 0 ' ì [-5]
+  [9] q w e r t y u i o p è + ù
+  Ctrl a s d f g h j k l ò à [10]
+  [-1] < z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## iw
+5-row:
+  ; 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] / ' ק ר א ט ו ן ם פ ] [ \
+  Ctrl ש ד ג כ ע י ח ל ך ף , [10]
+  [-1] ז ס ב ה נ מ צ ת ץ . △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  ק ר א ט ו ן ם פ [-5]
+  ש ד ג כ ע י ח ל ך ף
+  ז ס ב ה נ מ צ ת ץ
+  ?123 [-103] [32] . [10]
+
+## ko
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] ㅂ ㅈ ㄷ ㄱ ㅅ ㅛ ㅕ ㅑ ㅐ ㅔ [ ] \
+  Ctrl ㅁ ㄴ ㅇ ㄹ ㅎ ㅗ ㅓ ㅏ ㅣ ; ' [10]
+  [-1] < ㅋ ㅌ ㅊ ㅍ ㅠ ㅜ ㅡ , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## lo
+5-row:
+  " ຢ ຟ ໂ ຖ ຸ ູ ຄ ຕ ຈ ຂ ຊ ໍ [-5]
+  [9] ົ ໄ ຳ ພ ະ ິ ີ ຮ ນ ຍ ບ ລ /
+  Ctrl ັ ຫ ກ ດ ເ ້ ່ າ ສ ວ ງ [10]
+  [-1] ຜ ປ ແ ອ ຶ ື ທ ມ ໃ ຝ △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## lt
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p [ ] \
+  Ctrl a s d f g h j k l ; ' [10]
+  [-1] z x c v b n m , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## nb
+5-row:
+  | 1 2 3 4 5 6 7 8 9 0 + \ [-5]
+  [9] q w e r t y u i o p å ̈ '
+  Ctrl a s d f g h j k l ø æ [10]
+  [-1] > z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p å
+  a s d f g h j k l ø æ
+  [-1] z x c v b n m ' [-5]
+  ?123 [-103] [32] . [10]
+
+## pt_PT
+5-row:
+  \ 1 2 3 4 5 6 7 8 9 0 ' « [-5]
+  [9] q w e r t y u i o p + ́ º
+  Ctrl a s d f g h j k l ç ̃ [10]
+  [-1] < z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## ro
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] q w e r t y u i o p ă î â
+  Ctrl a s d f g h j k l ș ț [10]
+  [-1] z x c v b n m , . / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## ru
+5-row:
+  ё 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] й ц у к е н г ш щ з х ъ \
+  Ctrl ф ы в а п р о л д ж э [10]
+  [-1] < я ч с м и т ь б ю . △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  й ц у к е н г ш щ з х
+  ф ы в а п р о л д ж э
+  [-1] я ч с м и т ь б ю [-5]
+  ?123 [-103] [32] . [10]
+
+## ru_PH
+5-row:
+  ё 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] я в е р т ы у и о п ш щ \
+  Ctrl а с д ф г х й к л ч э [10]
+  [-1] < з ь ц ж б н м ъ ю . △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  я в е р т ы у и о п ш
+  а с д ф г х й к л ч э
+  [-1] з ь ц ж б н м ъ ю [-5]
+  ?123 [-103] [32] . [10]
+
+## si
+5-row:
+  ්‍ර 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] ු අ ැ ර එ හ ම ස ද ච ඤ ; \
+  Ctrl ් ි ා ‍ෙ ට ය ව න ක ත , [10]
+  [-1] ' ං ජ ඩ ඉ බ ප ල ග / △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## sk
+5-row:
+  ; + ľ š č ť ž ý á í é = ́ [-5]
+  [9] q w e r t z u i o p ú ä ň
+  Ctrl a s d f g h j k l ô § [10]
+  [-1] y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## sk_QY
+5-row:
+  ; + ľ š č ť ž ý á í é = ́ [-5]
+  [9] q w e r t y u i o p ú ä ň
+  Ctrl a s d f g h j k l ô § [10]
+  [-1] z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## sl
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 ' + [-5]
+  [9] q w e r t z u i o p š đ ž
+  Ctrl a s d f g h j k l č ć [10]
+  [-1] < y x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t z u i o p
+  a s d f g h j k l
+  [-1] y x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## sr
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 ' + [-5]
+  [9] љ њ е р т з у и о п ш ђ \
+  Ctrl а с д ф г х ј к л ч ћ [10]
+  [-1] ж џ ц в б н м , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  љ њ е р т з у и о п ш
+  а с д ф г х ј к л ч ћ
+  [-1] ж џ ц в б н м ђ [-5]
+  ?123 [-103] [32] . [10]
+
+## sv
+5-row:
+  § 1 2 3 4 5 6 7 8 9 0 + ´ [-5]
+  [9] q w e r t y u i o p å ¨ >
+  Ctrl a s d f g h j k l ö ä [10]
+  [-1] ' z x c v b n m , . - △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p å
+  a s d f g h j k l ö ä
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## ta
+5-row:
+  ` 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] ா ீ ூ ை ே ள ற ன ட ண ச ஞ \
+  Ctrl அ ி ு ் ெ க ப ம த ந ய [10]
+  [-1] ௌ ோ ொ வ ங ல ர , . ழ △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## th
+5-row:
+  _ ๅ / - ภ ถ ุ ึ ค ต จ ข ช [-5]
+  [9] ๆ ไ ำ พ ะ ั ี ร น ย บ ล ฃ
+  Ctrl ฟ ห ก ด เ ้ ่ า ส ว ง [10]
+  [-1] ผ ป แ อ ิ ื ท ม ใ ฝ △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+
+## tr
+5-row:
+  " 1 2 3 4 5 6 7 8 9 0 * - [-5]
+  [9] q w e r t y u ı o p ğ ü ,
+  Ctrl a s d f g h j k l ş i [10]
+  [-1] < z x c v b n m ö ç . △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  q w e r t y u i o p
+  a s d f g h j k l
+  [-1] z x c v b n m [-5]
+  ?123 [-103] [32] . [10]
+
+## uk
+5-row:
+  ' 1 2 3 4 5 6 7 8 9 0 - = [-5]
+  [9] й ц у к е н г ш щ з х ї \
+  Ctrl ф і в а п р о л д ж є [10]
+  [-1] < я ч с м и т ь б ю . △ [-1]
+  Esc [-103] Alt ❖ [32] Fn ○ ◁ ▽ ▷
+4-row:
+  й ц у к е н г ш щ з х
+  ф і в а п р о л д ж є
+  [-1] я ч с м и т ь б ю [-5]
+  ?123 [-103] [32] . [10]

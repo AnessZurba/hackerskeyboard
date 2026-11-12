@@ -1,0 +1,62 @@
+# What typing leaves in the field (TypingFlowTest); | is the cursor.
+# Regenerate with -PupdateGolden.
+
+## sentence field
+"hello world"        -> "Hello world|"
+"hi. how are you"    -> "Hi. How are you|"
+"hi  there"          -> "Hi  there|"
+"hi, there! ok? yes" -> "Hi, there! Ok? Yes|"
+"dr.who"             -> "Dr.who|"
+"it's 5 o'clock"     -> "It's 5 o'clock|"
+"hello\b\b\b"        -> "He|"
+"hi \b\bey"          -> "Hey|"
+"word\nnext"         -> "Wordnext|" (editorAction 6)
+"⇧a⇧b c"             -> "aB c|"
+"a , b"              -> "A , b|"
+"end. "              -> "End. |" shifted
+"see you ."          -> "See you .|"
+
+## multi-line field
+"hello world"        -> "Hello world|"
+"hi. how are you"    -> "Hi. How are you|"
+"hi  there"          -> "Hi  there|"
+"hi, there! ok? yes" -> "Hi, there! Ok? Yes|"
+"dr.who"             -> "Dr.who|"
+"it's 5 o'clock"     -> "It's 5 o'clock|"
+"hello\b\b\b"        -> "He|"
+"hi \b\bey"          -> "Hey|"
+"word\nnext"         -> "Word\nNext|"
+"⇧a⇧b c"             -> "aB c|"
+"a , b"              -> "A , b|"
+"end. "              -> "End. |" shifted
+"see you ."          -> "See you .|"
+
+## plain field
+"hello world"        -> "hello world|"
+"hi. how are you"    -> "hi. how are you|"
+"hi  there"          -> "hi  there|"
+"hi, there! ok? yes" -> "hi, there! ok? yes|"
+"dr.who"             -> "dr.who|"
+"it's 5 o'clock"     -> "it's 5 o'clock|"
+"hello\b\b\b"        -> "he|"
+"hi \b\bey"          -> "hey|"
+"word\nnext"         -> "wordnext|" (editorAction 6)
+"⇧a⇧b c"             -> "AB c|"
+"a , b"              -> "a , b|"
+"end. "              -> "end. |"
+"see you ."          -> "see you .|"
+
+## password field
+"hello world"        -> "hello world|"
+"hi. how are you"    -> "hi. how are you|"
+"hi  there"          -> "hi  there|"
+"hi, there! ok? yes" -> "hi, there! ok? yes|"
+"dr.who"             -> "dr.who|"
+"it's 5 o'clock"     -> "it's 5 o'clock|"
+"hello\b\b\b"        -> "he|"
+"hi \b\bey"          -> "hey|"
+"word\nnext"         -> "wordnext|" (editorAction 6)
+"⇧a⇧b c"             -> "AB c|"
+"a , b"              -> "a , b|"
+"end. "              -> "end. |"
+"see you ."          -> "see you .|"
