@@ -169,7 +169,10 @@ public class LatinIMESettings extends AppCompatActivity {
                 Log.e(TAG, "Could not find version info.");
             }
 
-            mLabelVersion.setSummary(version);
+            // Diagnostic while the keyboard's navigation-bar gap is being sorted out.
+            String nav = getPreferenceManager().getSharedPreferences()
+                    .getString(LatinIME.PREF_NAV_DIAGNOSTIC, null);
+            mLabelVersion.setSummary(nav == null ? version : version + "\nKeyboard bar: " + nav);
         }
 
         private void updateAdaptiveClearSummary() {

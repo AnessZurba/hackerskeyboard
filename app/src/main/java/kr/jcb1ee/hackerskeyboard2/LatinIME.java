@@ -689,6 +689,8 @@ public class LatinIME extends InputMethodService implements
     public void onStartInputView(EditorInfo attribute, boolean restarting) {
         // Material You: the wallpaper or light/dark mode may have changed while hidden.
         mKeyboardSwitcher.refreshThemeColours();
+        // The navigation bar (or the keyboard's own gesture bar) may have changed too.
+        mHandler.post(this::refreshNavigationBar);
         if (mSearchConnection != null && mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel(); // ends the emoji search
         }
@@ -939,16 +941,59 @@ public class LatinIME extends InputMethodService implements
         androidx.core.view.ViewCompat.requestApplyInsets(decor);
     }
 
+    /** Where the last navigation bar reading came from, shown in settings (diagnostic). */
+    static final String PREF_NAV_DIAGNOSTIC = "nav_bar_diagnostic";
+
     void setNavigationBar(androidx.core.view.WindowInsetsCompat insets) {
-        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
-        androidx.core.graphics.Insets shown = insets.getInsets(nav);
-        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(nav);
-        // The bar's space whether or not it is showing right now (it can be hidden briefly).
+        // All system bars, not just navigationBars(): when the keyboard window draws the gesture
+        // bar itself (Android 16), that bar is a captionBar inset (InputMethodService's
+        // NavigationBarController), as AnySoftKeyboard and the platform's own frame use.
+        int bars = androidx.core.view.WindowInsetsCompat.Type.systemBars();
+        androidx.core.graphics.Insets shown = insets.getInsets(
+                bars | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(bars);
         androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.max(shown, any);
+        // Only the sides and bottom matter (the window never reaches the status bar).
+        bar = androidx.core.graphics.Insets.of(bar.left, 0, bar.right, bar.bottom);
+        // Edge to edge but no bar reported: keep the platform's bar height, as a floor.
+        if (Build.VERSION.SDK_INT >= 35 && bar.bottom == 0 && bar.left == 0 && bar.right == 0) {
+            bar = androidx.core.graphics.Insets.of(0, 0, 0, systemNavigationBarHeight());
+        }
+        noteNavigationBar(insets, bar);
         if (bar.equals(mNavBar)) return;
         mNavBar = bar;
         KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
         if (toolbar != null) mHandler.post(toolbar::keepClearOfNavigationBar);
+    }
+
+    /** The platform's navigation bar height (its frame when the keyboard draws the bar). */
+    @android.annotation.SuppressLint("DiscouragedApi") // platform dimens have no public id
+    private int systemNavigationBarHeight() {
+        android.content.res.Resources sys = android.content.res.Resources.getSystem();
+        for (String name : new String[] {"navigation_bar_frame_height", "navigation_bar_height"}) {
+            int id = sys.getIdentifier(name, "dimen", "android");
+            if (id != 0) {
+                int px = sys.getDimensionPixelSize(id);
+                if (px > 0) return px;
+            }
+        }
+        return Math.round(40 * getResources().getDisplayMetrics().density);
+    }
+
+    private void noteNavigationBar(androidx.core.view.WindowInsetsCompat insets,
+            androidx.core.graphics.Insets used) {
+        int T_NAV = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
+        int T_CAP = androidx.core.view.WindowInsetsCompat.Type.captionBar();
+        String note = "nav " + insets.getInsets(T_NAV).bottom
+                + "/" + insets.getInsetsIgnoringVisibility(T_NAV).bottom
+                + ", caption " + insets.getInsets(T_CAP).bottom
+                + ", used " + used.left + "," + used.right + "," + used.bottom
+                + " (API " + Build.VERSION.SDK_INT + ")";
+        try {
+            PreferenceManager.getDefaultSharedPreferences(this).edit()
+                    .putString(PREF_NAV_DIAGNOSTIC, note).apply();
+        } catch (RuntimeException ignored) {
+        }
     }
 
     @Override
