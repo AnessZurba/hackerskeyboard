@@ -949,7 +949,11 @@ public class LatinIME extends InputMethodService implements
         int bars = androidx.core.view.WindowInsetsCompat.Type.systemBars();
         androidx.core.graphics.Insets shown = insets.getInsets(
                 bars | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
-        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(bars);
+        // The navigation bar's space even while it is briefly hidden; the keyboard's own
+        // gesture bar (captionBar) only while shown: in landscape it may be gone while its
+        // portrait size is still reported, which left an empty band under the keys.
+        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(
+                androidx.core.view.WindowInsetsCompat.Type.navigationBars());
         androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.max(shown, any);
         // Only the sides and bottom matter (the window never reaches the status bar).
         bar = androidx.core.graphics.Insets.of(bar.left, 0, bar.right, bar.bottom);
@@ -957,10 +961,33 @@ public class LatinIME extends InputMethodService implements
         if (Build.VERSION.SDK_INT >= 35 && bar.bottom == 0 && bar.left == 0 && bar.right == 0) {
             bar = androidx.core.graphics.Insets.of(0, 0, 0, systemNavigationBarHeight());
         }
+        noteNavigationBar(insets, bar);
         if (bar.equals(mNavBar)) return;
         mNavBar = bar;
         KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
         if (toolbar != null) mHandler.post(toolbar::keepClearOfNavigationBar);
+    }
+
+    /** The last navigation bar reading, shown under Version in settings (diagnostic). */
+    static final String PREF_NAV_DIAGNOSTIC = "nav_bar_diagnostic";
+
+    private void noteNavigationBar(androidx.core.view.WindowInsetsCompat insets,
+            androidx.core.graphics.Insets used) {
+        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
+        int cap = androidx.core.view.WindowInsetsCompat.Type.captionBar();
+        androidx.core.graphics.Insets n = insets.getInsets(nav);
+        androidx.core.graphics.Insets c = insets.getInsets(cap);
+        androidx.core.graphics.Insets ci = insets.getInsetsIgnoringVisibility(cap);
+        String note = (isPortrait() ? "portrait" : "landscape")
+                + ": nav " + n.left + "," + n.right + "," + n.bottom
+                + ", caption " + c.bottom + " (hidden " + ci.bottom + ")"
+                + ", used " + used.left + "," + used.right + "," + used.bottom
+                + " (API " + Build.VERSION.SDK_INT + ")";
+        try {
+            PreferenceManager.getDefaultSharedPreferences(this).edit()
+                    .putString(PREF_NAV_DIAGNOSTIC, note).apply();
+        } catch (RuntimeException ignored) {
+        }
     }
 
     /** The platform's navigation bar height (its frame when the keyboard draws the bar). */
