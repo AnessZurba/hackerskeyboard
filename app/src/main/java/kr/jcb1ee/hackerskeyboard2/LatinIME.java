@@ -941,13 +941,11 @@ public class LatinIME extends InputMethodService implements
         androidx.core.view.ViewCompat.requestApplyInsets(decor);
     }
 
-    /** Where the last navigation bar reading came from, shown in settings (diagnostic). */
-    static final String PREF_NAV_DIAGNOSTIC = "nav_bar_diagnostic";
-
     void setNavigationBar(androidx.core.view.WindowInsetsCompat insets) {
         // All system bars, not just navigationBars(): when the keyboard window draws the gesture
-        // bar itself (Android 16), that bar is a captionBar inset (InputMethodService's
-        // NavigationBarController), as AnySoftKeyboard and the platform's own frame use.
+        // bar itself (Android 16+), that bar is a captionBar inset (InputMethodService's
+        // NavigationBarController); navigationBars is then 0 (seen on Android 17: nav 0,
+        // caption 180px). AnySoftKeyboard and the platform's own frame use the same.
         int bars = androidx.core.view.WindowInsetsCompat.Type.systemBars();
         androidx.core.graphics.Insets shown = insets.getInsets(
                 bars | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
@@ -959,7 +957,6 @@ public class LatinIME extends InputMethodService implements
         if (Build.VERSION.SDK_INT >= 35 && bar.bottom == 0 && bar.left == 0 && bar.right == 0) {
             bar = androidx.core.graphics.Insets.of(0, 0, 0, systemNavigationBarHeight());
         }
-        noteNavigationBar(insets, bar);
         if (bar.equals(mNavBar)) return;
         mNavBar = bar;
         KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
@@ -978,22 +975,6 @@ public class LatinIME extends InputMethodService implements
             }
         }
         return Math.round(40 * getResources().getDisplayMetrics().density);
-    }
-
-    private void noteNavigationBar(androidx.core.view.WindowInsetsCompat insets,
-            androidx.core.graphics.Insets used) {
-        int T_NAV = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
-        int T_CAP = androidx.core.view.WindowInsetsCompat.Type.captionBar();
-        String note = "nav " + insets.getInsets(T_NAV).bottom
-                + "/" + insets.getInsetsIgnoringVisibility(T_NAV).bottom
-                + ", caption " + insets.getInsets(T_CAP).bottom
-                + ", used " + used.left + "," + used.right + "," + used.bottom
-                + " (API " + Build.VERSION.SDK_INT + ")";
-        try {
-            PreferenceManager.getDefaultSharedPreferences(this).edit()
-                    .putString(PREF_NAV_DIAGNOSTIC, note).apply();
-        } catch (RuntimeException ignored) {
-        }
     }
 
     @Override
