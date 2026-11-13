@@ -290,11 +290,6 @@
     <string name="title_long_press_duration">Долгое нажатие</string>
 
     <string name="title_render_mode">Метод отрисовки</string>
-    <string-array name="render_mode_entries">
-        <item>Direct draw (экономит память)</item>
-        <item>Программная буферизация (по умолчанию)</item>
-        <item>Аппаратное ускорение (экспериментально)</item>
-    </string-array>
 
     <string name="pref_screen_actions_title">Жесты и кнопки</string>
     <string name="pref_screen_actions_title_summary">Настройка жестов и аппаратных кнопок</string>

@@ -390,9 +390,9 @@
 
     <string name="title_render_mode">Drawing method</string>
     <string-array name="render_mode_entries">
-        <item>Direct draw (saves memory)</item>
-        <item>Software buffered (default)</item>
-        <item>Hardware accelerated (experimental)</item>
+        <item>Direct, on the GPU (default)</item>
+        <item>Software buffered (old default)</item>
+        <item>GPU layer</item>
     </string-array>
     <!-- Keep these values in sync with android.view.View LAYER_TYPE_* definitions -->
     <string-array name="render_mode_values">
