@@ -187,6 +187,18 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         };
         addView(mBody, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
+        // The keyboard window may reach behind the navigation bar (edge to edge): keep the keys
+        // above it (and beside it in landscape), and fill that space with the keyboard colour.
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
+            androidx.core.graphics.Insets nav = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            if (getPaddingLeft() != nav.left || getPaddingRight() != nav.right
+                    || getPaddingBottom() != nav.bottom) {
+                setPadding(nav.left, 0, nav.right, nav.bottom);
+            }
+            return insets;
+        });
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ime);
         mToolbarShown = prefs.getBoolean(PREF_SHOW_TOOLBAR, true);
         // The row always takes its space, so the input window never changes height (which
@@ -223,6 +235,33 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         mBody.addView(view, 0, lp);
         applyColours(view.getBackground());
+    }
+
+    private final android.graphics.Paint mBarsPaint = new android.graphics.Paint();
+
+    /** Paints the space kept for the navigation bar (only that: a hidden toolbar row is clear). */
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int l = getPaddingLeft(), r = getPaddingRight(), b = getPaddingBottom();
+        if (l > 0 || r > 0 || b > 0) {
+            mBarsPaint.setColor(mBackground);
+            int top = mBody.getTop();
+            if (b > 0) canvas.drawRect(0, getHeight() - b, getWidth(), getHeight(), mBarsPaint);
+            if (l > 0) canvas.drawRect(0, top, l, getHeight(), mBarsPaint);
+            if (r > 0) canvas.drawRect(getWidth() - r, top, getWidth(), getHeight(), mBarsPaint);
+        }
+        super.dispatchDraw(canvas);
+    }
+
+    /** Dark navigation-bar buttons over a light keyboard, light ones over a dark keyboard. */
+    private void matchNavigationBar(boolean light) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) return;
+        android.app.Dialog d = mIme.getWindow();
+        android.view.Window w = d != null ? d.getWindow() : null;
+        android.view.WindowInsetsController c = w != null ? w.getInsetsController() : null;
+        if (c == null) return;
+        int flag = android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+        c.setSystemBarsAppearance(light ? flag : 0, flag);
     }
 
     // ------------------------------------------------------------------ toolbar row
@@ -1762,6 +1801,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         // Backgrounds per part: when the toolbar row is hidden, its space must stay clear.
         mBar.setBackgroundColor(mBackground);
         mBody.setBackgroundColor(mBackground);
+        matchNavigationBar(light);
+        invalidate();
         mChipsDismiss.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
         updateButtons();
     }

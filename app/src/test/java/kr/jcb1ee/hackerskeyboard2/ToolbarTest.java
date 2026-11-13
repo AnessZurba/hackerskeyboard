@@ -25,6 +25,33 @@ public class ToolbarTest {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
     }
 
+    /** Edge to edge: the keys stay above the navigation bar, whose space takes the keyboard colour. */
+    @Test
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+    public void keysStayAboveTheNavigationBar() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        androidx.core.view.ViewCompat.dispatchApplyWindowInsets(toolbar,
+                new androidx.core.view.WindowInsetsCompat.Builder()
+                        .setInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
+                                androidx.core.graphics.Insets.of(0, 0, 0, 63))
+                        .build());
+        int w = 1080;
+        toolbar.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        toolbar.layout(0, 0, w, toolbar.getMeasuredHeight());
+        assertEquals(63, toolbar.getPaddingBottom());
+        View body = toolbar.getChildAt(1);
+        assertEquals("keys end where the navigation bar starts",
+                toolbar.getHeight() - 63, body.getBottom());
+        android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(w, toolbar.getHeight(),
+                android.graphics.Bitmap.Config.ARGB_8888);
+        toolbar.draw(new android.graphics.Canvas(bmp));
+        assertEquals("navigation bar space has the keyboard colour",
+                toolbar.backgroundColour(), bmp.getPixel(w / 2, toolbar.getHeight() - 10));
+    }
+
     @Test
     public void toolbarPanelsOpenAndClose() {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
