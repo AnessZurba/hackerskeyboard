@@ -564,4 +564,7 @@
     <string name="toolbar_unselect">Unselect</string>
     <string name="toolbar_nothing_selected">Nothing selected</string>
     <string name="toolbar_clipboard_all">All</string>
+    <string name="setup_step_1" translatable="false">1</string>
+    <string name="setup_step_2" translatable="false">2</string>
+    <string name="setup_step_3" translatable="false">3</string>
 </resources>

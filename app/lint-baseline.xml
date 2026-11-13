@@ -2,24 +2,6 @@
 <issues format="6" by="lint 9.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.1)" variant="all" version="9.5.1">
 
     <issue
-        id="ObsoleteLintCustomCheck"
-        message="Library lint checks out of date;&#xA;these checks **will be skipped**!&#xA;&#xA;Lint found an issue registry (`androidx.lifecycle.lint.LifecycleRuntimeIssueRegistry`)&#xA;which was compiled against an older version of lint&#xA;than this one. This is usually fine, but not in this&#xA;case; some basic verification shows that the lint&#xA;check jar references (for example) the following API&#xA;which is no longer valid in this version of lint:&#xA;org.jetbrains.kotlin.asJava.elements.KtLightModifierList#getKotlinOrigin(): org.jetbrains.kotlin.psi.KtModifierList&#xA;(Referenced from androidx/lifecycle/lint/LifecycleWhenChecksKt.class)&#xA;&#xA;Therefore, this lint check library is **not** included&#xA;in analysis. This affects the following lint checks:&#xA;`UnsafeLifecycleWhenUsage`,`RepeatOnLifecycleWrongUsage`&#xA;&#xA;Recompile the checks against the latest version, or if&#xA;this is a check bundled with a third-party library, see&#xA;if there is a more recent version available.&#xA;&#xA;Version of Lint API this lint check is using is 14.&#xA;The Lint API version currently running is 16 (8.7+).">
-        <location
-            file="$GRADLE_USER_HOME/caches/9.9.1/transforms/132dadc1a97d266731eab939067fc4c1/transformed/lifecycle-runtime-ktx-2.6.2/jars/lint.jar"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="            notificationManager.notify(NOTIFICATION_ONGOING_ID, mBuilder.build());"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="543"
-            column="13"/>
-    </issue>
-
-    <issue
         id="ResAuto"
         message="In Gradle projects, always use `http://schemas.android.com/apk/res-auto` for custom attributes"
         errorLine1="&lt;resources xmlns:android=&quot;http://schemas.android.com/apk/res/kr.jcb1ee.hackerskeyboard2&quot;"
@@ -534,39 +516,6 @@
             file="src/main/res/xml/kbd_compact_fn.xml"
             line="22"
             column="20"/>
-    </issue>
-
-    <issue
-        id="NamespaceTypo"
-        message="Unexpected namespace URI bound to the `&quot;android&quot;` prefix, was `http://schemas.android.com/apk/res-auto`, expected `http://schemas.android.com/apk/res/android`"
-        errorLine1="&lt;Keyboard xmlns:android=&quot;http://schemas.android.com/apk/res-auto&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml-en/kbd_extension.xml"
-            line="22"
-            column="26"/>
-    </issue>
-
-    <issue
-        id="NamespaceTypo"
-        message="Unexpected namespace URI bound to the `&quot;android&quot;` prefix, was `http://schemas.android.com/apk/res-auto`, expected `http://schemas.android.com/apk/res/android`"
-        errorLine1="&lt;Keyboard xmlns:android=&quot;http://schemas.android.com/apk/res-auto&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml/kbd_extension.xml"
-            line="22"
-            column="26"/>
-    </issue>
-
-    <issue
-        id="NamespaceTypo"
-        message="Unexpected namespace URI bound to the `&quot;android&quot;` prefix, was `http://schemas.android.com/apk/res-auto`, expected `http://schemas.android.com/apk/res/android`"
-        errorLine1="&lt;Keyboard xmlns:android=&quot;http://schemas.android.com/apk/res-auto&quot;"
-        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/xml/kbd_extension_full.xml"
-            line="26"
-            column="26"/>
     </issue>
 
     <issue
@@ -1687,7 +1636,7 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardView.java"
-            line="129"
+            line="114"
             column="24"/>
     </issue>
 
@@ -1720,7 +1669,7 @@
         errorLine2="                                                                     ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/Keyboard.java"
-            line="987"
+            line="979"
             column="70"/>
     </issue>
 
@@ -1731,7 +1680,7 @@
         errorLine2="                                    ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3396"
+            line="3061"
             column="37"/>
     </issue>
 
@@ -1742,7 +1691,7 @@
         errorLine2="                                                               ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3498"
+            line="3163"
             column="64"/>
     </issue>
 
@@ -1753,7 +1702,7 @@
         errorLine2="                                               ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3540"
+            line="3205"
             column="48"/>
     </issue>
 
@@ -1764,7 +1713,7 @@
         errorLine2="                                                              ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3584"
+            line="3249"
             column="63"/>
     </issue>
 
@@ -1775,19 +1724,8 @@
         errorLine2="                                                               ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3665"
+            line="3330"
             column="64"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="            mStringToPlay = s.toLowerCase();"
-        errorLine2="                              ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardView.java"
-            line="618"
-            column="31"/>
     </issue>
 
     <issue
@@ -1797,7 +1735,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/SeekBarPreference.java"
-            line="60"
+            line="61"
             column="20"/>
     </issue>
 
@@ -1808,7 +1746,7 @@
         errorLine2="                                                     ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="245"
+            line="237"
             column="54"/>
     </issue>
 
@@ -1819,7 +1757,7 @@
         errorLine2="                                                                          ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="257"
+            line="249"
             column="75"/>
     </issue>
 
@@ -1830,7 +1768,7 @@
         errorLine2="                                                                      ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="332"
+            line="315"
             column="71"/>
     </issue>
 
@@ -1841,7 +1779,7 @@
         errorLine2="                                                       ~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="467"
+            line="450"
             column="56"/>
     </issue>
 
@@ -1899,24 +1837,8 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/UserBigramDictionary.java"
-            line="365"
+            line="364"
             column="39"/>
-    </issue>
-
-    <issue
-        id="SuspiciousIndentation"
-        message="The indentation string here is different from on the previous line (`&quot; &quot;` vs `\t`)"
-        errorLine1="     for (int i = 1; i &lt; key.length(); ++i) {"
-        errorLine2="    ~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/ComposeSequence.java"
-            line="176"
-            column="5"/>
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/ComposeSequence.java"
-            line="175"
-            column="5"
-            message="Previous line indentation here"/>
     </issue>
 
     <issue
@@ -2012,7 +1934,7 @@
         errorLine2="                                         ~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="789"
+            line="652"
             column="42"/>
     </issue>
 
@@ -2025,28 +1947,6 @@
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/KeyboardToolbar.java"
             line="1592"
             column="43"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of `compileSdk` than 36 is available: 37"
-        errorLine1="    compileSdk = 36"
-        errorLine2="    ~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle"
-            line="7"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of androidx.core:core than 1.18.0 is available: 1.19.1"
-        errorLine1="core = &quot;1.18.0&quot;"
-        errorLine2="       ~~~~~~~~">
-        <location
-            file="../gradle/libs.versions.toml"
-            line="6"
-            column="8"/>
     </issue>
 
     <issue
@@ -2419,7 +2319,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2423"
+            line="2088"
             column="26"/>
     </issue>
 
@@ -2430,7 +2330,7 @@
         errorLine2="                         ~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2427"
+            line="2092"
             column="26"/>
     </issue>
 
@@ -2441,7 +2341,7 @@
         errorLine2="                                       ~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2427"
+            line="2092"
             column="40"/>
     </issue>
 
@@ -2452,7 +2352,7 @@
         errorLine2="                         ~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2428"
+            line="2093"
             column="26"/>
     </issue>
 
@@ -2463,7 +2363,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2437"
+            line="2102"
             column="26"/>
     </issue>
 
@@ -2474,7 +2374,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2442"
+            line="2107"
             column="26"/>
     </issue>
 
@@ -2485,7 +2385,7 @@
         errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2442"
+            line="2107"
             column="45"/>
     </issue>
 
@@ -2496,7 +2396,7 @@
         errorLine2="                         ~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2443"
+            line="2108"
             column="26"/>
     </issue>
 
@@ -2507,7 +2407,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2444"
+            line="2109"
             column="26"/>
     </issue>
 
@@ -2518,7 +2418,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="2450"
+            line="2115"
             column="26"/>
     </issue>
 
@@ -2529,7 +2429,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="581"
+            line="472"
             column="50"/>
     </issue>
 
@@ -2606,7 +2506,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="127"
+            line="123"
             column="26"/>
     </issue>
 
@@ -2617,7 +2517,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="128"
+            line="124"
             column="33"/>
     </issue>
 
@@ -2628,7 +2528,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="130"
+            line="126"
             column="22"/>
     </issue>
 
@@ -2639,7 +2539,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="131"
+            line="127"
             column="41"/>
     </issue>
 
@@ -2650,7 +2550,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="132"
+            line="128"
             column="29"/>
     </issue>
 
@@ -2661,7 +2561,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="133"
+            line="129"
             column="20"/>
     </issue>
 
@@ -2672,7 +2572,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="134"
+            line="130"
             column="27"/>
     </issue>
 
@@ -2683,7 +2583,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="135"
+            line="131"
             column="25"/>
     </issue>
 
@@ -2694,7 +2594,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="136"
+            line="132"
             column="32"/>
     </issue>
 
@@ -2705,7 +2605,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="138"
+            line="134"
             column="32"/>
     </issue>
 
@@ -2716,7 +2616,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="139"
+            line="135"
             column="33"/>
     </issue>
 
@@ -2727,7 +2627,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="140"
+            line="136"
             column="23"/>
     </issue>
 
@@ -2738,7 +2638,7 @@
         errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="141"
+            line="137"
             column="30"/>
     </issue>
 
@@ -2749,7 +2649,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="142"
+            line="138"
             column="21"/>
     </issue>
 
@@ -2760,7 +2660,7 @@
         errorLine2="                                            ^">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="204"
+            line="200"
             column="45"/>
     </issue>
 
@@ -2771,7 +2671,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="206"
+            line="202"
             column="38"/>
     </issue>
 
@@ -2782,7 +2682,7 @@
         errorLine2="                                            ^">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="216"
+            line="212"
             column="45"/>
     </issue>
 
@@ -2793,7 +2693,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="218"
+            line="214"
             column="38"/>
     </issue>
 
@@ -2804,7 +2704,7 @@
         errorLine2="                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="412"
+            line="401"
             column="34"/>
     </issue>
 
@@ -2815,7 +2715,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="897"
+            line="886"
             column="21"/>
     </issue>
 
@@ -2826,7 +2726,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="899"
+            line="888"
             column="21"/>
     </issue>
 
@@ -2837,7 +2737,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardBaseView.java"
-            line="1264"
+            line="1267"
             column="44"/>
     </issue>
 
@@ -3074,23 +2974,12 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;title_hardware_key_actions&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_hardware_key_actions&quot;>Hardware key actions&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="40"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;vibrate_on_keypress&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
         errorLine1="    &lt;string name=&quot;vibrate_on_keypress&quot;>Vibrate on keypress&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="43"
+            line="42"
             column="13"/>
     </issue>
 
@@ -3101,7 +2990,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="46"
+            line="45"
             column="13"/>
     </issue>
 
@@ -3112,7 +3001,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="49"
+            line="48"
             column="13"/>
     </issue>
 
@@ -3123,7 +3012,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="58"
+            line="57"
             column="13"/>
     </issue>
 
@@ -3134,7 +3023,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="63"
+            line="62"
             column="13"/>
     </issue>
 
@@ -3145,7 +3034,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="66"
+            line="65"
             column="13"/>
     </issue>
 
@@ -3156,7 +3045,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="68"
+            line="67"
             column="13"/>
     </issue>
 
@@ -3167,7 +3056,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="71"
+            line="70"
             column="13"/>
     </issue>
 
@@ -3178,7 +3067,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="73"
+            line="72"
             column="13"/>
     </issue>
 
@@ -3189,7 +3078,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="76"
+            line="75"
             column="13"/>
     </issue>
 
@@ -3200,7 +3089,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="78"
+            line="77"
             column="13"/>
     </issue>
 
@@ -3211,7 +3100,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="81"
+            line="80"
             column="13"/>
     </issue>
 
@@ -3222,7 +3111,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="89"
+            line="88"
             column="13"/>
     </issue>
 
@@ -3233,7 +3122,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="91"
+            line="90"
             column="13"/>
     </issue>
 
@@ -3244,7 +3133,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="93"
+            line="92"
             column="13"/>
     </issue>
 
@@ -3255,7 +3144,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="106"
+            line="105"
             column="13"/>
     </issue>
 
@@ -3266,7 +3155,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="112"
+            line="111"
             column="13"/>
     </issue>
 
@@ -3277,7 +3166,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="114"
+            line="113"
             column="13"/>
     </issue>
 
@@ -3288,7 +3177,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="116"
+            line="115"
             column="13"/>
     </issue>
 
@@ -3299,7 +3188,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="118"
+            line="117"
             column="13"/>
     </issue>
 
@@ -3310,7 +3199,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="120"
+            line="119"
             column="13"/>
     </issue>
 
@@ -3321,7 +3210,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="122"
+            line="121"
             column="13"/>
     </issue>
 
@@ -3332,7 +3221,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="124"
+            line="123"
             column="13"/>
     </issue>
 
@@ -3343,7 +3232,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="126"
+            line="125"
             column="13"/>
     </issue>
 
@@ -3354,7 +3243,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="151"
+            line="150"
             column="13"/>
     </issue>
 
@@ -3365,7 +3254,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="186"
+            line="185"
             column="13"/>
     </issue>
 
@@ -3376,7 +3265,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="188"
+            line="187"
             column="13"/>
     </issue>
 
@@ -3387,7 +3276,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="190"
+            line="189"
             column="13"/>
     </issue>
 
@@ -3398,7 +3287,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="192"
+            line="191"
             column="13"/>
     </issue>
 
@@ -3409,7 +3298,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="197"
+            line="196"
             column="13"/>
     </issue>
 
@@ -3420,7 +3309,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="199"
+            line="198"
             column="13"/>
     </issue>
 
@@ -3431,7 +3320,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="202"
+            line="201"
             column="13"/>
     </issue>
 
@@ -3442,7 +3331,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="205"
+            line="204"
             column="13"/>
     </issue>
 
@@ -3453,7 +3342,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="208"
+            line="207"
             column="13"/>
     </issue>
 
@@ -3464,7 +3353,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="210"
+            line="209"
             column="13"/>
     </issue>
 
@@ -3475,7 +3364,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="212"
+            line="211"
             column="13"/>
     </issue>
 
@@ -3486,7 +3375,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="213"
+            line="212"
             column="13"/>
     </issue>
 
@@ -3497,7 +3386,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="215"
+            line="214"
             column="13"/>
     </issue>
 
@@ -3508,7 +3397,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="216"
+            line="215"
             column="13"/>
     </issue>
 
@@ -3519,7 +3408,40 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="219"
+            line="218"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;title_key_borders&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;title_key_borders&quot;>Key borders&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="227"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;summary_key_borders_on&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;summary_key_borders_on&quot;>Keys are drawn as shapes&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="228"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingTranslation"
+        message="&quot;summary_key_borders_off&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
+        errorLine1="    &lt;string name=&quot;summary_key_borders_off&quot;>Labels only; a key lights up while pressed (colour themes)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="229"
             column="13"/>
     </issue>
 
@@ -3530,7 +3452,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="258"
+            line="266"
             column="13"/>
     </issue>
 
@@ -3541,40 +3463,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="259"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_ctrl_a_override&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_ctrl_a_override&quot;>Ctrl-A (select all) override&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="273"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;toast_ctrl_a_override_info&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;toast_ctrl_a_override_info&quot;>Ctrl-A is disabled. Use Ctrl-Alt-A instead, or enable it in settings.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="274"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;default_ctrl_a_override&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;default_ctrl_a_override&quot;>0&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="275"
+            line="267"
             column="13"/>
     </issue>
 
@@ -3585,7 +3474,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="287"
+            line="282"
             column="13"/>
     </issue>
 
@@ -3596,7 +3485,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="288"
+            line="283"
             column="13"/>
     </issue>
 
@@ -3607,7 +3496,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="300"
+            line="295"
             column="13"/>
     </issue>
 
@@ -3618,7 +3507,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="301"
+            line="296"
             column="13"/>
     </issue>
 
@@ -3629,7 +3518,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="313"
+            line="308"
             column="13"/>
     </issue>
 
@@ -3640,7 +3529,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="314"
+            line="309"
             column="13"/>
     </issue>
 
@@ -3651,7 +3540,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="326"
+            line="321"
             column="13"/>
     </issue>
 
@@ -3662,7 +3551,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="327"
+            line="322"
             column="13"/>
     </issue>
 
@@ -3673,7 +3562,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="328"
+            line="323"
             column="13"/>
     </issue>
 
@@ -3684,7 +3573,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="330"
+            line="325"
             column="13"/>
     </issue>
 
@@ -3695,7 +3584,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="331"
+            line="326"
             column="13"/>
     </issue>
 
@@ -3706,7 +3595,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="332"
+            line="327"
             column="13"/>
     </issue>
 
@@ -3717,7 +3606,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="334"
+            line="329"
             column="13"/>
     </issue>
 
@@ -3728,7 +3617,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="335"
+            line="330"
             column="13"/>
     </issue>
 
@@ -3739,40 +3628,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="336"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_keyboard_notification&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_keyboard_notification&quot;>Use permanent notification&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="338"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_keyboard_notification_true&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_keyboard_notification_true&quot;>Activate the keyboard by tapping the notification&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="339"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_keyboard_notification_false&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_keyboard_notification_false&quot;>No notification&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="340"
+            line="331"
             column="13"/>
     </issue>
 
@@ -3783,40 +3639,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="342"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_connectbot_tab_hack&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_connectbot_tab_hack&quot;>ConnectBot tab key mode&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="344"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_connectbot_tab_hack_true&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_connectbot_tab_hack_true&quot;>Enable compatibility workaround&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="345"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_connectbot_tab_hack_false&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_connectbot_tab_hack_false&quot;>Send plain Tab key event&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="346"
+            line="334"
             column="13"/>
     </issue>
 
@@ -3827,7 +3650,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="348"
+            line="337"
             column="13"/>
     </issue>
 
@@ -3838,7 +3661,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="349"
+            line="338"
             column="13"/>
     </issue>
 
@@ -3849,7 +3672,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="350"
+            line="339"
             column="13"/>
     </issue>
 
@@ -3860,7 +3683,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="352"
+            line="341"
             column="13"/>
     </issue>
 
@@ -3871,7 +3694,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="353"
+            line="342"
             column="13"/>
     </issue>
 
@@ -3882,7 +3705,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="354"
+            line="343"
             column="13"/>
     </issue>
 
@@ -3893,7 +3716,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="356"
+            line="345"
             column="13"/>
     </issue>
 
@@ -3904,7 +3727,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="368"
+            line="357"
             column="13"/>
     </issue>
 
@@ -3915,7 +3738,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="370"
+            line="359"
             column="13"/>
     </issue>
 
@@ -3926,7 +3749,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="371"
+            line="360"
             column="13"/>
     </issue>
 
@@ -3937,18 +3760,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="372"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_slide_keys&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_slide_keys&quot;>Sliding key events&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="374"
+            line="361"
             column="13"/>
     </issue>
 
@@ -3959,7 +3771,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="392"
+            line="365"
             column="13"/>
     </issue>
 
@@ -3970,7 +3782,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="394"
+            line="367"
             column="13"/>
     </issue>
 
@@ -3981,7 +3793,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="395"
+            line="368"
             column="13"/>
     </issue>
 
@@ -3992,7 +3804,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="397"
+            line="370"
             column="13"/>
     </issue>
 
@@ -4003,7 +3815,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="399"
+            line="372"
             column="13"/>
     </issue>
 
@@ -4014,7 +3826,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="400"
+            line="373"
             column="13"/>
     </issue>
 
@@ -4025,7 +3837,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="401"
+            line="374"
             column="13"/>
     </issue>
 
@@ -4036,7 +3848,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="402"
+            line="375"
             column="13"/>
     </issue>
 
@@ -4047,7 +3859,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="416"
+            line="389"
             column="13"/>
     </issue>
 
@@ -4058,7 +3870,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="418"
+            line="391"
             column="13"/>
     </issue>
 
@@ -4069,7 +3881,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="431"
+            line="404"
             column="13"/>
     </issue>
 
@@ -4080,7 +3892,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="432"
+            line="405"
             column="13"/>
     </issue>
 
@@ -4091,7 +3903,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="433"
+            line="406"
             column="13"/>
     </issue>
 
@@ -4102,7 +3914,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="434"
+            line="407"
             column="13"/>
     </issue>
 
@@ -4113,7 +3925,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="435"
+            line="408"
             column="13"/>
     </issue>
 
@@ -4124,29 +3936,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="436"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_vol_up&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_vol_up&quot;>Volume up&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="437"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_vol_down&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_vol_down&quot;>Volume down&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="438"
+            line="409"
             column="13"/>
     </issue>
 
@@ -4157,7 +3947,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="465"
+            line="436"
             column="13"/>
     </issue>
 
@@ -4168,7 +3958,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="466"
+            line="437"
             column="13"/>
     </issue>
 
@@ -4179,7 +3969,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="467"
+            line="438"
             column="13"/>
     </issue>
 
@@ -4190,29 +3980,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="468"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;default_vol_up&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;default_vol_up&quot;>none&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="469"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;default_vol_down&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;default_vol_down&quot;>none&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="470"
+            line="439"
             column="13"/>
     </issue>
 
@@ -4223,7 +3991,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="472"
+            line="441"
             column="13"/>
     </issue>
 
@@ -4234,7 +4002,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="490"
+            line="459"
             column="13"/>
     </issue>
 
@@ -4245,7 +4013,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="492"
+            line="461"
             column="13"/>
     </issue>
 
@@ -4256,7 +4024,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="493"
+            line="462"
             column="13"/>
     </issue>
 
@@ -4267,7 +4035,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="494"
+            line="463"
             column="13"/>
     </issue>
 
@@ -4278,7 +4046,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="495"
+            line="464"
             column="13"/>
     </issue>
 
@@ -4289,7 +4057,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="496"
+            line="465"
             column="13"/>
     </issue>
 
@@ -4300,7 +4068,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="497"
+            line="466"
             column="13"/>
     </issue>
 
@@ -4311,7 +4079,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="498"
+            line="467"
             column="13"/>
     </issue>
 
@@ -4322,7 +4090,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="499"
+            line="468"
             column="13"/>
     </issue>
 
@@ -4333,7 +4101,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="500"
+            line="469"
             column="13"/>
     </issue>
 
@@ -4344,7 +4112,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="501"
+            line="470"
             column="13"/>
     </issue>
 
@@ -4355,7 +4123,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="502"
+            line="471"
             column="13"/>
     </issue>
 
@@ -4366,7 +4134,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="503"
+            line="472"
             column="13"/>
     </issue>
 
@@ -4377,40 +4145,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="504"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;notification_channel_name&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;notification_channel_name&quot;>Hacker\&apos;s Keyboard&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="505"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;notification_channel_description&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;notification_channel_description&quot;>Hacker\&apos;s Keyboard&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="506"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;notification_action_settings&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;he&quot; (Hebrew), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;notification_action_settings&quot;>Settings&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="507"
+            line="473"
             column="13"/>
     </issue>
 
@@ -4421,7 +4156,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="510"
+            line="476"
             column="13"/>
     </issue>
 
@@ -4432,7 +4167,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="511"
+            line="477"
             column="13"/>
     </issue>
 
@@ -4443,7 +4178,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="512"
+            line="478"
             column="13"/>
     </issue>
 
@@ -4454,7 +4189,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="513"
+            line="479"
             column="13"/>
     </issue>
 
@@ -4465,7 +4200,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="525"
+            line="491"
             column="13"/>
     </issue>
 
@@ -4476,7 +4211,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="526"
+            line="492"
             column="13"/>
     </issue>
 
@@ -4487,7 +4222,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="527"
+            line="493"
             column="13"/>
     </issue>
 
@@ -4498,7 +4233,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="528"
+            line="494"
             column="13"/>
     </issue>
 
@@ -4509,7 +4244,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="529"
+            line="495"
             column="13"/>
     </issue>
 
@@ -4520,7 +4255,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="532"
+            line="498"
             column="13"/>
     </issue>
 
@@ -4531,7 +4266,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="533"
+            line="499"
             column="13"/>
     </issue>
 
@@ -4542,7 +4277,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="534"
+            line="500"
             column="13"/>
     </issue>
 
@@ -4553,7 +4288,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="535"
+            line="501"
             column="13"/>
     </issue>
 
@@ -4564,7 +4299,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="537"
+            line="503"
             column="13"/>
     </issue>
 
@@ -4575,7 +4310,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="538"
+            line="504"
             column="13"/>
     </issue>
 
@@ -4586,7 +4321,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="541"
+            line="507"
             column="13"/>
     </issue>
 
@@ -4597,7 +4332,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="542"
+            line="508"
             column="13"/>
     </issue>
 
@@ -4608,7 +4343,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="543"
+            line="509"
             column="13"/>
     </issue>
 
@@ -4619,7 +4354,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="544"
+            line="510"
             column="13"/>
     </issue>
 
@@ -4630,7 +4365,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="545"
+            line="511"
             column="13"/>
     </issue>
 
@@ -4641,7 +4376,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="546"
+            line="512"
             column="13"/>
     </issue>
 
@@ -4652,7 +4387,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="547"
+            line="513"
             column="13"/>
     </issue>
 
@@ -4663,7 +4398,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="548"
+            line="514"
             column="13"/>
     </issue>
 
@@ -4674,7 +4409,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="549"
+            line="515"
             column="13"/>
     </issue>
 
@@ -4685,7 +4420,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="550"
+            line="516"
             column="13"/>
     </issue>
 
@@ -4696,7 +4431,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="551"
+            line="517"
             column="13"/>
     </issue>
 
@@ -4707,7 +4442,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="552"
+            line="518"
             column="13"/>
     </issue>
 
@@ -4718,7 +4453,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="553"
+            line="519"
             column="13"/>
     </issue>
 
@@ -4729,7 +4464,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="554"
+            line="520"
             column="13"/>
     </issue>
 
@@ -4740,7 +4475,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="555"
+            line="521"
             column="13"/>
     </issue>
 
@@ -4751,7 +4486,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="556"
+            line="522"
             column="13"/>
     </issue>
 
@@ -4762,7 +4497,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="557"
+            line="523"
             column="13"/>
     </issue>
 
@@ -4773,7 +4508,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="558"
+            line="524"
             column="13"/>
     </issue>
 
@@ -4784,7 +4519,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="559"
+            line="525"
             column="13"/>
     </issue>
 
@@ -4795,7 +4530,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="560"
+            line="526"
             column="13"/>
     </issue>
 
@@ -4806,7 +4541,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="561"
+            line="527"
             column="13"/>
     </issue>
 
@@ -4817,7 +4552,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="562"
+            line="528"
             column="13"/>
     </issue>
 
@@ -4828,7 +4563,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="565"
+            line="531"
             column="13"/>
     </issue>
 
@@ -4839,7 +4574,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="566"
+            line="532"
             column="13"/>
     </issue>
 
@@ -4850,7 +4585,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="567"
+            line="533"
             column="13"/>
     </issue>
 
@@ -4861,7 +4596,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="568"
+            line="534"
             column="13"/>
     </issue>
 
@@ -4872,7 +4607,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="569"
+            line="535"
             column="14"/>
     </issue>
 
@@ -4883,7 +4618,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="573"
+            line="539"
             column="13"/>
     </issue>
 
@@ -4894,7 +4629,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="574"
+            line="540"
             column="13"/>
     </issue>
 
@@ -4905,7 +4640,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="575"
+            line="541"
             column="13"/>
     </issue>
 
@@ -4916,7 +4651,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="576"
+            line="542"
             column="13"/>
     </issue>
 
@@ -4927,7 +4662,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="593"
+            line="559"
             column="13"/>
     </issue>
 
@@ -4938,7 +4673,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="594"
+            line="560"
             column="13"/>
     </issue>
 
@@ -4949,7 +4684,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="595"
+            line="561"
             column="13"/>
     </issue>
 
@@ -4960,7 +4695,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="596"
+            line="562"
             column="13"/>
     </issue>
 
@@ -4971,7 +4706,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="597"
+            line="563"
             column="13"/>
     </issue>
 
@@ -4982,7 +4717,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="598"
+            line="564"
             column="13"/>
     </issue>
 
@@ -4993,7 +4728,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="599"
+            line="565"
             column="13"/>
     </issue>
 
@@ -5004,7 +4739,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="600"
+            line="566"
             column="13"/>
     </issue>
 
@@ -5037,19 +4772,8 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="193"
+            line="192"
             column="39"/>
-    </issue>
-
-    <issue
-        id="Untranslatable"
-        message="The resource string &quot;layout_gingerbread&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
-        errorLine1="    &lt;string name=&quot;layout_gingerbread&quot;  translatable=&quot;false&quot;>Имбирный пряник&lt;/string>"
-        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="194"
-            column="40"/>
     </issue>
 
     <issue
@@ -5059,7 +4783,7 @@
         errorLine2="                               ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="195"
+            line="193"
             column="32"/>
     </issue>
 
@@ -5070,7 +4794,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="196"
+            line="194"
             column="39"/>
     </issue>
 
@@ -5081,7 +4805,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="197"
+            line="195"
             column="39"/>
     </issue>
 
@@ -5092,7 +4816,7 @@
         errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="198"
+            line="196"
             column="41"/>
     </issue>
 
@@ -5103,7 +4827,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values-ru/strings.xml"
-            line="199"
+            line="197"
             column="42"/>
     </issue>
 
@@ -5114,107 +4838,8 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="528"
+            line="494"
             column="5"/>
-    </issue>
-
-    <issue
-        id="Recycle"
-        message="This `TypedArray` should be recycled after use with `#recycle()`"
-        errorLine1="        TypedArray a = context.obtainStyledAttributes("
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardBaseView.java"
-            line="501"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="Recycle"
-        message="This `TypedArray` should be recycled after use with `#recycle()`"
-        errorLine1="        TypedArray a = context.obtainStyledAttributes("
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardView.java"
-            line="128"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="Recycle"
-        message="This `TypedArray` should be recycled after use with `#recycle()`"
-        errorLine1="        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SeekBarPreference);"
-        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/SeekBarPreference.java"
-            line="34"
-            column="32"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_popup_ics.xml"
-            line="31"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_popup_material_black.xml"
-            line="31"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_popup_material_dark.xml"
-            line="31"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_popup_material_light.xml"
-            line="31"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_stone_popup.xml"
-            line="31"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="ObsoleteLayoutParam"
-        message="Invalid layout param in a `LinearLayout`: `layout_alignParentBottom`"
-        errorLine1="            android:layout_alignParentBottom=&quot;true&quot;"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/keyboard_popup.xml"
-            line="32"
-            column="13"/>
     </issue>
 
     <issue
@@ -5257,7 +4882,7 @@
         errorLine2="                                    ^">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="342"
+            line="322"
             column="37"/>
     </issue>
 
@@ -5268,30 +4893,8 @@
         errorLine2="          ~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardBaseView.java"
-            line="325"
+            line="327"
             column="11"/>
-    </issue>
-
-    <issue
-        id="HandlerLeak"
-        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
-        errorLine1="                mHandler2 = new Handler() {"
-        errorLine2="                            ^">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardView.java"
-            line="548"
-            column="29"/>
-    </issue>
-
-    <issue
-        id="UseValueOf"
-        message="Use `Integer.valueOf(freq)` instead"
-        errorLine1="            mPendingWrites.put(word, freq == 0 ? null : new Integer(freq));"
-        errorLine2="                                                        ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/AutoDictionary.java"
-            line="160"
-            column="57"/>
     </issue>
 
     <issue
@@ -5303,22 +4906,6 @@
             file="src/main/res/layout/candidates.xml"
             line="31"
             column="9"/>
-    </issue>
-
-    <issue
-        id="LaunchActivityFromNotification"
-        message="Notifications should only launch a `BroadcastReceiver` from notification actions (`addAction`)"
-        errorLine1="                    .setContentIntent(contentIntent)"
-        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="520"
-            column="22"/>
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="503"
-            column="43"
-            message="This `BroadcastReceiver` intent is launched from a notification; this is discouraged except as notification actions"/>
     </issue>
 
     <issue
@@ -5340,17 +4927,6 @@
         <location
             file="src/main/res/layout/candidates.xml"
             line="26"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_dark_background` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_dark_background&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_gingerbread.xml"
-            line="29"
             column="9"/>
     </issue>
 
@@ -5433,17 +5009,6 @@
 
     <issue
         id="Overdraw"
-        message="Possible overdraw: Root element paints background `@color/latinkeyboard_extension_background` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@color/latinkeyboard_extension_background&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_trans.xml"
-            line="28"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
         message="Possible overdraw: Root element paints background `#c0000000` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
         errorLine1="        android:background=&quot;#c0000000&quot;"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -5484,28 +5049,6 @@
             file="src/main/res/layout/main.xml"
             line="7"
             column="5"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.xml.kbd_extension` appears to be unused"
-        errorLine1="&lt;Keyboard xmlns:android=&quot;http://schemas.android.com/apk/res-auto&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/xml/kbd_extension.xml"
-            line="22"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.xml.kbd_extension_full` appears to be unused"
-        errorLine1="&lt;Keyboard xmlns:android=&quot;http://schemas.android.com/apk/res-auto&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/xml/kbd_extension_full.xml"
-            line="26"
-            column="1"/>
     </issue>
 
     <issue
@@ -6072,14 +5615,14 @@
 
     <issue
         id="IconDensities"
-        message="Missing the following drawables in `drawable-xhdpi`: btn_keyboard_key_dark_normal.9.png, btn_keyboard_key_dark_normal_lock.9.png, btn_keyboard_key_dark_normal_off.9.png, btn_keyboard_key_dark_normal_on.9.png, btn_keyboard_key_dark_pressed.9.png... (66 more)">
+        message="Missing the following drawables in `drawable-xhdpi`: btn_keyboard_key_light_popup_normal.9.png, btn_keyboard_key_light_popup_selected.9.png, btn_keyboard_key_normal_lock_stone.9.png, btn_keyboard_key_normal_off_stone.9.png, btn_keyboard_key_normal_on_stone.9.png... (57 more)">
         <location
             file="src/main/res/drawable-xhdpi"/>
     </issue>
 
     <issue
         id="IconDensities"
-        message="Missing the following drawables in `drawable-xxhdpi`: btn_keyboard_key_dark_normal.9.png, btn_keyboard_key_dark_normal_holo.9.png, btn_keyboard_key_dark_normal_lock.9.png, btn_keyboard_key_dark_normal_lock_holo.9.png, btn_keyboard_key_dark_normal_off.9.png... (72 more)">
+        message="Missing the following drawables in `drawable-xxhdpi`: btn_keyboard_key_dark_normal_holo.9.png, btn_keyboard_key_dark_normal_lock_holo.9.png, btn_keyboard_key_dark_normal_off_holo.9.png, btn_keyboard_key_dark_normal_on_holo.9.png, btn_keyboard_key_dark_pressed_holo.9.png... (63 more)">
         <location
             file="src/main/res/drawable-xxhdpi"/>
     </issue>
@@ -6177,7 +5720,7 @@
         errorLine2="                   ~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardBaseView.java"
-            line="1616"
+            line="1644"
             column="20"/>
     </issue>
 
@@ -6188,7 +5731,7 @@
         errorLine2="                   ~~~~~~~~~~~~">
         <location
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboardView.java"
-            line="329"
+            line="301"
             column="20"/>
     </issue>
 
@@ -6249,17 +5792,6 @@
 
     <issue
         id="HardcodedText"
-        message="Hardcoded string &quot;1&quot;, should use `@string` resource"
-        errorLine1="                        android:text=&quot;1&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/main.xml"
-            line="106"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="HardcodedText"
         message="Hardcoded string &quot;Add to system input methods&quot;, should use `@string` resource"
         errorLine1="                            android:text=&quot;Add to system input methods&quot;"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -6271,17 +5803,6 @@
 
     <issue
         id="HardcodedText"
-        message="Hardcoded string &quot;2&quot;, should use `@string` resource"
-        errorLine1="                        android:text=&quot;2&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/main.xml"
-            line="177"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="HardcodedText"
         message="Hardcoded string &quot;Select as your active keyboard&quot;, should use `@string` resource"
         errorLine1="                            android:text=&quot;Select as your active keyboard&quot;"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -6289,17 +5810,6 @@
             file="src/main/res/layout/main.xml"
             line="202"
             column="29"/>
-    </issue>
-
-    <issue
-        id="HardcodedText"
-        message="Hardcoded string &quot;3&quot;, should use `@string` resource"
-        errorLine1="                        android:text=&quot;3&quot;"
-        errorLine2="                        ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/main.xml"
-            line="248"
-            column="25"/>
     </issue>
 
     <issue

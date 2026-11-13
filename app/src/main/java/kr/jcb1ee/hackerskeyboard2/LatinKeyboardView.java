@@ -132,6 +132,7 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
                 if (mPopupLayout == R.layout.null_layout) mPopupLayout = 0;
             }
         }
+        a.recycle();
 
         final Resources res = getResources();
 

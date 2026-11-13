@@ -103,7 +103,7 @@
                     <TextView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:text="1"
+                        android:text="@string/setup_step_1"
                         android:textColor="@color/setup_on_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -174,7 +174,7 @@
                     <TextView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:text="2"
+                        android:text="@string/setup_step_2"
                         android:textColor="@color/setup_on_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -245,7 +245,7 @@
                     <TextView
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:text="3"
+                        android:text="@string/setup_step_3"
                         android:textColor="@color/setup_on_primary"
                         android:textSize="14sp"
                         android:textStyle="bold"

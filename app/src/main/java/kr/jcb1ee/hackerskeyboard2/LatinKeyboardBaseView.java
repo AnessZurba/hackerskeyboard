@@ -553,6 +553,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 mSymbolColorScheme = a.getInt(attr, 0);
             }
         }
+        a.recycle();
 
         final Resources res = getResources();
 
