@@ -38,9 +38,12 @@ public class ToolbarTest {
                                 androidx.core.graphics.Insets.of(0, 0, 0, 63))
                         .build());
         int w = 1080;
-        toolbar.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        toolbar.layout(0, 0, w, toolbar.getMeasuredHeight());
+        for (int pass = 0; pass < 3; pass++) { // the padding is set after a layout; lay out again
+            idle();
+            toolbar.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            toolbar.layout(0, 0, w, toolbar.getMeasuredHeight());
+        }
         assertEquals(63, toolbar.getPaddingBottom());
         View body = toolbar.getChildAt(1);
         assertEquals("keys end where the navigation bar starts",
