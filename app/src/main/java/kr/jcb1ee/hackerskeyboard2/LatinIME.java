@@ -341,6 +341,7 @@ public class LatinIME extends InputMethodService implements
         KeyboardSwitcher.init(this);
         super.onCreate();
         sInstance = this;
+        listenForNavigationBar();
         mAdaptive = AdaptiveKeyTargets.get(this);
         ClipboardHistory.get(this).setEnabled(PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean(ClipboardHistory.PREF_ENABLED, true));
@@ -899,9 +900,61 @@ public class LatinIME extends InputMethodService implements
             mUserBigramDictionary.flushPendingWrites();
     }
 
+    /** Navigation bar insets of the keyboard window: left, right, bottom (0 if none). */
+    private androidx.core.graphics.Insets mNavBar = androidx.core.graphics.Insets.NONE;
+
+    androidx.core.graphics.Insets navigationBarInsets() {
+        return mNavBar;
+    }
+
+    /**
+     * Since Android 15 the keyboard window reaches the bottom of the screen (edge to edge, and
+     * InputMethodService leaves the bottom inset unfitted), so the keyboard has to keep its
+     * keys above the navigation bar itself. The bar's size is read where the window gets it,
+     * on its decor view; the keyboard container pads by it (KeyboardToolbar).
+     */
+    private void listenForNavigationBar() {
+        android.app.Dialog d = getWindow();
+        android.view.Window w = d != null ? d.getWindow() : null;
+        if (w == null) return;
+        // Edge to edge on every Android version (it is forced from 15), so that the padding
+        // below is the only room made for the bar, never added to the window's own.
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(w, false);
+        View decor = w.getDecorView();
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(decor, (v, insets) -> {
+            setNavigationBar(insets);
+            return androidx.core.view.ViewCompat.onApplyWindowInsets(v, insets);
+        });
+        androidx.core.view.ViewCompat.requestApplyInsets(decor);
+    }
+
+    /** Reads the insets again (they may not be dispatched again when the window is reshown). */
+    private void refreshNavigationBar() {
+        android.app.Dialog d = getWindow();
+        android.view.Window w = d != null ? d.getWindow() : null;
+        if (w == null) return;
+        View decor = w.getDecorView();
+        androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
+        if (insets != null) setNavigationBar(insets);
+        androidx.core.view.ViewCompat.requestApplyInsets(decor);
+    }
+
+    void setNavigationBar(androidx.core.view.WindowInsetsCompat insets) {
+        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
+        androidx.core.graphics.Insets shown = insets.getInsets(nav);
+        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(nav);
+        // The bar's space whether or not it is showing right now (it can be hidden briefly).
+        androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.max(shown, any);
+        if (bar.equals(mNavBar)) return;
+        mNavBar = bar;
+        KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
+        if (toolbar != null) mHandler.post(toolbar::keepClearOfNavigationBar);
+    }
+
     @Override
     public void onWindowShown() {
         super.onWindowShown();
+        refreshNavigationBar();
         ClipboardHistory.get(this).catchUp(); // cheap: reads the clip only when it's new
     }
 

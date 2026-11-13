@@ -187,18 +187,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         };
         addView(mBody, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        // The keyboard window may reach behind the navigation bar (edge to edge): keep the keys
+        // The keyboard window reaches behind the navigation bar (edge to edge): keep the keys
         // above it (and beside it in landscape), and fill that space with the keyboard colour.
-        // The insets may not reach this view (a parent in the input window can take them), so
-        // it also measures, after each layout, how far it actually reaches into the bar.
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(this, (v, insets) -> {
-            androidx.core.graphics.Insets nav = insets.getInsets(
-                    androidx.core.view.WindowInsetsCompat.Type.navigationBars());
-            mNavInsets = nav;
-            mHandler.post(this::keepClearOfNavigationBar);
-            return insets;
-        });
-        // Posted: padding changed inside a layout pass would be dropped by that pass.
+        // The bar's size comes from the window (LatinIME.setNavigationBar).
         addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) ->
                 mHandler.post(this::keepClearOfNavigationBar));
 
@@ -241,57 +232,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private final android.graphics.Paint mBarsPaint = new android.graphics.Paint();
-    /** Navigation bar insets as dispatched to this view (none if they never arrive). */
-    private androidx.core.graphics.Insets mNavInsets = androidx.core.graphics.Insets.NONE;
-
-    /**
-     * Pads the keyboard so no key is under the navigation bar: by the insets this view was
-     * given, or by how far its bottom (or side) actually reaches into the bar on screen,
-     * whichever is more.
-     */
+    /** Pads the keyboard so no key is under the navigation bar (padding set after layout). */
     void keepClearOfNavigationBar() {
-        int left = mNavInsets.left, right = mNavInsets.right, bottom = mNavInsets.bottom;
-        int[] bar = navigationBarOnScreen();
-        if (bar != null && isAttachedToWindow() && getHeight() > 0) {
-            int[] at = new int[2];
-            getLocationOnScreen(at);
-            // bar = {screen width, screen height, left, top, right, bottom insets}
-            if (bar[5] > 0) bottom = Math.max(bottom, at[1] + getHeight() - (bar[1] - bar[5]));
-            if (bar[2] > 0) left = Math.max(left, bar[2] - at[0]);
-            if (bar[4] > 0) right = Math.max(right, at[0] + getWidth() - (bar[0] - bar[4]));
-        }
-        left = Math.max(0, left);
-        right = Math.max(0, right);
-        bottom = Math.max(0, bottom);
-        if (getPaddingLeft() != left || getPaddingRight() != right
-                || getPaddingBottom() != bottom) {
-            setPadding(left, 0, right, bottom);
-        }
-    }
-
-    /**
-     * The screen size and the navigation bar insets of the keyboard's window, from the window
-     * manager rather than from the view tree; null where that isn't available.
-     */
-    private int[] navigationBarOnScreen() {
-        try {
-            android.view.WindowInsets wi = getRootWindowInsets();
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                android.app.Dialog d = mIme.getWindow();
-                android.view.Window w = d != null ? d.getWindow() : null;
-                if (w == null) return null;
-                android.view.WindowMetrics m = w.getWindowManager().getCurrentWindowMetrics();
-                android.graphics.Insets n = m.getWindowInsets().getInsets(
-                        android.view.WindowInsets.Type.navigationBars());
-                android.graphics.Rect b = m.getBounds();
-                return new int[] {b.width(), b.height(), n.left, n.top, n.right, n.bottom};
-            }
-            if (wi == null) return null;
-            return new int[] {getRootView().getWidth(), getRootView().getHeight(),
-                    wi.getStableInsetLeft(), 0, wi.getStableInsetRight(),
-                    wi.getStableInsetBottom()};
-        } catch (RuntimeException e) {
-            return null;
+        androidx.core.graphics.Insets nav = mIme.navigationBarInsets();
+        if (getPaddingLeft() != nav.left || getPaddingRight() != nav.right
+                || getPaddingBottom() != nav.bottom) {
+            setPadding(nav.left, 0, nav.right, nav.bottom);
         }
     }
 

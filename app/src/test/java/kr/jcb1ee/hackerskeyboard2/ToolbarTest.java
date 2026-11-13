@@ -32,11 +32,13 @@ public class ToolbarTest {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
         KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
         idle();
-        androidx.core.view.ViewCompat.dispatchApplyWindowInsets(toolbar,
-                new androidx.core.view.WindowInsetsCompat.Builder()
-                        .setInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
-                                androidx.core.graphics.Insets.of(0, 0, 0, 63))
-                        .build());
+        // As the window's decor view gets them (LatinIME listens there).
+        ime.setNavigationBar(new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
+                        androidx.core.graphics.Insets.of(0, 0, 0, 63))
+                .setInsetsIgnoringVisibility(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
+                        androidx.core.graphics.Insets.of(0, 0, 0, 63))
+                .build());
         int w = 1080;
         for (int pass = 0; pass < 3; pass++) { // the padding is set after a layout; lay out again
             idle();
@@ -53,6 +55,21 @@ public class ToolbarTest {
         toolbar.draw(new android.graphics.Canvas(bmp));
         assertEquals("navigation bar space has the keyboard colour",
                 toolbar.backgroundColour(), bmp.getPixel(w / 2, toolbar.getHeight() - 10));
+    }
+
+    /** The navigation bar's size is taken from the keyboard window's decor view. */
+    @Test
+    public void navigationBarReadFromTheWindow() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        ime.onCreateInputView();
+        idle();
+        View decor = ime.getWindow().getWindow().getDecorView();
+        decor.dispatchApplyWindowInsets(new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
+                        androidx.core.graphics.Insets.of(0, 0, 0, 48))
+                .build().toWindowInsets());
+        idle();
+        assertEquals(48, ime.navigationBarInsets().bottom);
     }
 
     @Test
