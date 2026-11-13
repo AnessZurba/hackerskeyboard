@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config;
 
 /** Starts the keyboard service and works the toolbar: each panel, clipboard, toggling. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class ToolbarTest {
     private static void idle() {
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();

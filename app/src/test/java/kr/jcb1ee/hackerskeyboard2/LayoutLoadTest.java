@@ -34,7 +34,7 @@ import java.util.TreeSet;
  * {@code ./gradlew testDebugUnitTest --tests '*LayoutLoadTest*' -PupdateGolden} and review the diff.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class LayoutLoadTest {
     private static final String GOLDEN = "src/test/resources/layout_golden.txt";
 

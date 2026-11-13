@@ -19,7 +19,7 @@ import java.util.List;
 
 /** Swipe gestures on the keyboard, driven with real key positions. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class SwipeGestureTest {
     private KeyboardToolbar mToolbar;
     private LatinKeyboardView mView;

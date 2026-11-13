@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class LayoutOutputTest {
     private static Keyboard.Key withLabel(Keyboard kb, String label) {
         for (Keyboard.Key k : kb.getKeys()) if (k.label != null && label.equals(k.label.toString())) return k;

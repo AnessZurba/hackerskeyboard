@@ -20,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode;
 
 /** The colour themes: which ids they cover, and how keys look with and without borders. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 public class KeyboardThemeTest {
     private final Context mContext = ApplicationProvider.getApplicationContext();

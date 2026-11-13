@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config;
  * after the moving end) and reporting it in that order. Check it against EditText.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class ReversedSelectionTest {
     @Test
     public void editTextKeepsReversedSelection() {

@@ -12,7 +12,7 @@ android {
         // Settings screens link to their sub-screens by package; see res/xml/prefs.xml.
         resValue 'string', 'app_package', applicationId
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 2000000
         versionName = "v2.0.0"
         // Shown on the main screen and in settings.
@@ -42,6 +42,7 @@ android {
     externalNativeBuild {
         cmake {
             path = "CMakeLists.txt"
+            version = "3.22.1" // the SDK's CMake; pinned like the NDK
         }
     }
     buildFeatures {
@@ -66,6 +67,8 @@ android.testOptions.unitTests.includeAndroidResources = true
 // Robolectric downloads its Android runtime jar at test time; pass
 // -ProbolectricDeps=<dir holding the jar> to run offline instead.
 android.testOptions.unitTests.all {
+    // Robolectric's Android 16 runtime reaches into FileDescriptor internals.
+    jvmArgs '--add-opens=java.base/java.io=ALL-UNNAMED', '--add-exports=java.base/jdk.internal.access=ALL-UNNAMED'
     if (project.hasProperty('robolectricDeps')) {
         systemProperty 'robolectric.offline', 'true'
         systemProperty 'robolectric.dependency.dir', project.property('robolectricDeps')

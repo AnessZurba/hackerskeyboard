@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config;
 
 /** "Hide the ○ key" drops D-pad Center; its room goes to the space bar (centred) and Fn. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class HideDpadCenterTest {
     @After
     public void reset() {

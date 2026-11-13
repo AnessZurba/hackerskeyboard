@@ -31,7 +31,7 @@ import java.util.Collections;
 
 /** The mic key: opens the system recogniser, and types what it heard into the field. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class VoiceInputTest {
     private Application mApp;
     private EditText mField;

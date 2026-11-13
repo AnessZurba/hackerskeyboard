@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34, qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = 36, qualifiers = "w411dp-h891dp-xxhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 /**
  * Renders the keyboard (toolbar and keys) to a PNG, to look at layout and theme changes

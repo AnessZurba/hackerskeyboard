@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 /** The selection panel's Select mode against editors, and the Select button's trackpad. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class SelectionPanelTest {
     /** The keyboard, typing into {@link #sConnection}. */
     public static class TestIME extends LatinIME {

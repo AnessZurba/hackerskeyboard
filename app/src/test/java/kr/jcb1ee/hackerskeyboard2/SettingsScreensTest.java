@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config;
 
 /** Opens every settings screen, and inflates the keyboard view in every theme. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class SettingsScreensTest {
     private static void open(Class<? extends Activity> cls) {
         Robolectric.buildActivity(cls).setup().pause().stop().destroy();

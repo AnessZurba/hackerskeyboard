@@ -20,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode;
  * Drawn at keyboard size, their top row must be the same colour as their body.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34, qualifiers = "xxhdpi")
+@Config(sdk = 36, qualifiers = "xxhdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 public class SeamTest {
     @Test

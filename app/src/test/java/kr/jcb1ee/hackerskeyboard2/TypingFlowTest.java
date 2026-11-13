@@ -35,7 +35,7 @@ import java.util.List;
  * {@code ./gradlew testDebugUnitTest --tests '*TypingFlowTest*' -PupdateGolden} and review the diff.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class TypingFlowTest {
     private static final String GOLDEN = "src/test/resources/typing_flow_golden.txt";
     private static final char SHIFT = '⇧';

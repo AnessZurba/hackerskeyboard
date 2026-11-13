@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config;
 
 /** Opens the "View" settings screen and the keyboard theme picker. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class PrefScreenViewTest {
     @Test
     public void openThemePicker() {

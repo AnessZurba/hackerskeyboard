@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config;
 
 /** The main screen's test field can pose as a number, multi-line or password field. */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class MainTestFieldTest {
     @Test
     public void typeToggleChangesTheField() {

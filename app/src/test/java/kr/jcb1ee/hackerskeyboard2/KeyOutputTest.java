@@ -36,7 +36,7 @@ import java.util.List;
  * {@code ./gradlew testDebugUnitTest --tests '*KeyOutputTest*' -PupdateGolden} and review its diff.
  */
 @RunWith(RobolectricTestRunner.class)
-@Config(sdk = 34)
+@Config(sdk = 36)
 public class KeyOutputTest {
     private static final String GOLDEN = "src/test/resources/key_output_golden.txt";
 
