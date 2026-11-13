@@ -1,8 +1,25 @@
 # Hacker's Keyboard 2 AZ — modernization plan
 
-Plan only; no files in the repo were changed. All paths are under `/home/user/hackerskeyboard`; Java sources are in `app/src/main/java/kr/jcb1ee/hackerskeyboard2/` (abbreviated `…/` below). Line numbers are from the tree as read at the start of this pass (then HEAD `306c42f`). The repo was committed to by someone else while I was reading (HEAD is now `56630d9`, a loupe/toolbar change), so line numbers may be off by a few lines in `CursorLoupe.java`, `KeyboardToolbar.java` and nearby.
+Originally a plan only. All paths are under `/home/user/hackerskeyboard`; Java sources are in `app/src/main/java/kr/jcb1ee/hackerskeyboard2/` (abbreviated `…/` below). Line numbers are from the tree as read at the start of this pass (then HEAD `306c42f`). The repo was committed to by someone else while I was reading (HEAD is now `56630d9`, a loupe/toolbar change), so line numbers may be off by a few lines in `CursorLoupe.java`, `KeyboardToolbar.java` and nearby.
 
 Claims marked **[verified]** were checked by grep/reading in this pass. Nothing was built or run.
+
+## Status (updated 2026-11-13)
+
+Branch `claude/android-keyboard-pc-layout-0nwimp`. The sections below are the original plan; this is what has happened since.
+
+**Phase 0 — done.** Manual owner-only CI workflow (kept; APKs are built locally); lint on with a baseline (540 entries, MissingTranslation is a warning); AGP 9.5.1, Gradle 9.9.1, version catalog, Java 17; compileSdk 37, targetSdk 36, minSdk 24; current AndroidX; NDK and CMake 3.22.1 pinned; data-extraction/backup rules; edge to edge (settings pad by where the action bar really ends); characterisation tests: `KeyOutputTest` (text and terminal fields, chording), `TypingFlowTest`, `LayoutLoadTest` (every language), `KeyboardThemeTest`; Robolectric 4.17 running as Android 16 (one test on 15). Build from clean: AGP 9.5 has an incremental resource-link bug ("@android:color/black not found").
+
+**Phase 1 — mostly done.** Removed: extension row (and the 16 hidden F-key rows), `ContactsDictionary`, debug auto-play, reflection shims, 133 unused resources, 2011 scripts, F-Droid/fastlane metadata, `voiceimeutils.jar`. Not yet: `TextEntryState` logging, `measureCps` and other small leftovers, sudden-jump filter, `values-he`/`xml-he` duplicates.
+
+**Owner decisions (§11) and what followed.**
+- Suggestions: port the current Apache-licensed AOSP LatinIME native decoder (option C), show suggestions in the toolbar strip. Research found the old engine can read converted word lists (en/he/ar converted and tested off-device) but misses transpositions and next-word prediction. Next up.
+- Removed: Ctrl-A override (Ctrl+A is sent as is), volume-key actions, permanent notification, sliding key events, ConnectBot special cases (current ConnectBot never matched them), Gingerbread theme (its id now maps to ICS).
+- Kept: voice key, D-pad centre key (OK/select, Compose on long press).
+- Themes: colour-token themes (`KeyboardTheme`): Material You, Material Dark/Light/Black, Black (AMOLED), High contrast, plus a key-borders toggle. Image themes (ICS, ICS darker, Stone, Transparent) remain until the owner retires them.
+- Distribution: sideload / GitHub, not Play or F-Droid.
+
+**Still open from §2/§5.** Software rendering (`hardwareAccelerated="false"`, render-mode pref); `Configuration.locale`/`updateConfiguration` for layout loading (Phase 4.5); `AsyncTask` (goes with the old suggestion code); R8 (later, shrink without renaming); Phases 3–5 refactors.
 
 ## 0. Summary
 
