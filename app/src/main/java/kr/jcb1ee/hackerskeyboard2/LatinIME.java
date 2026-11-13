@@ -40,8 +40,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import androidx.core.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -319,7 +318,7 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
-    /* package */Handler mHandler = new Handler() {
+    /* package */Handler mHandler = new Handler(android.os.Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
