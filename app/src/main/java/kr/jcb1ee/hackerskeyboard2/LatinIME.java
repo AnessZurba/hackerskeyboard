@@ -922,6 +922,7 @@ public class LatinIME extends InputMethodService implements
         // Edge to edge on every Android version (it is forced from 15), so that the padding
         // below is the only room made for the bar, never added to the window's own.
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(w, false);
+        noScrimOnNavigationBar(w);
         View decor = w.getDecorView();
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(decor, (v, insets) -> {
             setNavigationBar(insets);
@@ -935,6 +936,7 @@ public class LatinIME extends InputMethodService implements
         android.app.Dialog d = getWindow();
         android.view.Window w = d != null ? d.getWindow() : null;
         if (w == null) return;
+        noScrimOnNavigationBar(w);
         View decor = w.getDecorView();
         androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
         if (insets != null) setNavigationBar(insets);
@@ -942,25 +944,19 @@ public class LatinIME extends InputMethodService implements
     }
 
     void setNavigationBar(androidx.core.view.WindowInsetsCompat insets) {
-        // All system bars, not just navigationBars(): when the keyboard window draws the gesture
-        // bar itself (Android 16+), that bar is a captionBar inset (InputMethodService's
-        // NavigationBarController); navigationBars is then 0 (seen on Android 17: nav 0,
-        // caption 180px). AnySoftKeyboard and the platform's own frame use the same.
+        // The same rule as the platform's own frame for the gesture bar the keyboard window
+        // draws (InputMethodService NavigationBarController.getSystemInsets): system bars as
+        // shown, capped by their stable size. All system bars, not just navigationBars():
+        // that gesture bar is a captionBar inset, and navigationBars is then 0 (Android 17:
+        // nav 0, caption 180px). Nothing is kept for a bar that isn't shown (landscape).
         int bars = androidx.core.view.WindowInsetsCompat.Type.systemBars();
-        androidx.core.graphics.Insets shown = insets.getInsets(
-                bars | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
-        // The navigation bar's space even while it is briefly hidden; the keyboard's own
-        // gesture bar (captionBar) only while shown: in landscape it may be gone while its
-        // portrait size is still reported, which left an empty band under the keys.
-        androidx.core.graphics.Insets any = insets.getInsetsIgnoringVisibility(
-                androidx.core.view.WindowInsetsCompat.Type.navigationBars());
-        androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.max(shown, any);
+        androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.min(
+                insets.getInsets(bars), insets.getInsetsIgnoringVisibility(bars));
+        // A display cutout at the side or bottom (landscape) also keeps keys clear.
+        bar = androidx.core.graphics.Insets.max(bar,
+                insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.displayCutout()));
         // Only the sides and bottom matter (the window never reaches the status bar).
         bar = androidx.core.graphics.Insets.of(bar.left, 0, bar.right, bar.bottom);
-        // Edge to edge but no bar reported: keep the platform's bar height, as a floor.
-        if (Build.VERSION.SDK_INT >= 35 && bar.bottom == 0 && bar.left == 0 && bar.right == 0) {
-            bar = androidx.core.graphics.Insets.of(0, 0, 0, systemNavigationBarHeight());
-        }
         noteNavigationBar(insets, bar);
         if (bar.equals(mNavBar)) return;
         mNavBar = bar;
@@ -968,40 +964,41 @@ public class LatinIME extends InputMethodService implements
         if (toolbar != null) mHandler.post(toolbar::keepClearOfNavigationBar);
     }
 
+    /**
+     * The keyboard paints the bar's space in its own colour (KeyboardToolbar); without this the
+     * window lays a translucent dark scrim over it ("contrast enforcement", on by default),
+     * which looked like a black band (DecorView.calculateBarColor). FlorisBoard does the same.
+     */
+    private static void noScrimOnNavigationBar(android.view.Window w) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) w.setNavigationBarContrastEnforced(false);
+    }
+
     /** The last navigation bar reading, shown under Version in settings (diagnostic). */
     static final String PREF_NAV_DIAGNOSTIC = "nav_bar_diagnostic";
 
     private void noteNavigationBar(androidx.core.view.WindowInsetsCompat insets,
             androidx.core.graphics.Insets used) {
-        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
+        int sys = androidx.core.view.WindowInsetsCompat.Type.systemBars();
         int cap = androidx.core.view.WindowInsetsCompat.Type.captionBar();
-        androidx.core.graphics.Insets n = insets.getInsets(nav);
-        androidx.core.graphics.Insets c = insets.getInsets(cap);
-        androidx.core.graphics.Insets ci = insets.getInsetsIgnoringVisibility(cap);
+        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
+        String contrast = "?";
+        android.app.Dialog d = getWindow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && d != null && d.getWindow() != null) {
+            contrast = String.valueOf(d.getWindow().isNavigationBarContrastEnforced());
+        }
         String note = (isPortrait() ? "portrait" : "landscape")
-                + ": nav " + n.left + "," + n.right + "," + n.bottom
-                + ", caption " + c.bottom + " (hidden " + ci.bottom + ")"
+                + ": bars " + insets.getInsets(sys).bottom
+                + " (stable " + insets.getInsetsIgnoringVisibility(sys).bottom + ")"
+                + ", nav " + insets.getInsets(nav).bottom
+                + ", caption " + insets.getInsets(cap).bottom
+                + (insets.isVisible(cap) ? " shown" : " hidden")
                 + ", used " + used.left + "," + used.right + "," + used.bottom
-                + " (API " + Build.VERSION.SDK_INT + ")";
+                + ", scrim " + contrast + " (API " + Build.VERSION.SDK_INT + ")";
         try {
             PreferenceManager.getDefaultSharedPreferences(this).edit()
                     .putString(PREF_NAV_DIAGNOSTIC, note).apply();
         } catch (RuntimeException ignored) {
         }
-    }
-
-    /** The platform's navigation bar height (its frame when the keyboard draws the bar). */
-    @android.annotation.SuppressLint("DiscouragedApi") // platform dimens have no public id
-    private int systemNavigationBarHeight() {
-        android.content.res.Resources sys = android.content.res.Resources.getSystem();
-        for (String name : new String[] {"navigation_bar_frame_height", "navigation_bar_height"}) {
-            int id = sys.getIdentifier(name, "dimen", "android");
-            if (id != 0) {
-                int px = sys.getDimensionPixelSize(id);
-                if (px > 0) return px;
-            }
-        }
-        return Math.round(40 * getResources().getDisplayMetrics().density);
     }
 
     @Override

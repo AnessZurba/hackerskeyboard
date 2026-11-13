@@ -67,9 +67,34 @@ public class ToolbarTest {
         decor.dispatchApplyWindowInsets(new androidx.core.view.WindowInsetsCompat.Builder()
                 .setInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
                         androidx.core.graphics.Insets.of(0, 0, 0, 48))
+                .setInsetsIgnoringVisibility(androidx.core.view.WindowInsetsCompat.Type.navigationBars(),
+                        androidx.core.graphics.Insets.of(0, 0, 0, 48))
                 .build().toWindowInsets());
         idle();
         assertEquals(48, ime.navigationBarInsets().bottom);
+    }
+
+    /**
+     * The keyboard's own gesture bar (a caption bar) counts while shown and not when hidden
+     * (landscape left an empty band when its size was kept).
+     */
+    @Test
+    public void gestureBarCountsOnlyWhileShown() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        ime.onCreateInputView();
+        idle();
+        int cap = androidx.core.view.WindowInsetsCompat.Type.captionBar();
+        androidx.core.graphics.Insets bar = androidx.core.graphics.Insets.of(0, 0, 0, 180);
+        ime.setNavigationBar(new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(cap, bar).setInsetsIgnoringVisibility(cap, bar).setVisible(cap, true)
+                .build());
+        assertEquals(180, ime.navigationBarInsets().bottom);
+        // Hidden, as the platform reports it: nothing shown, the stable size still there.
+        ime.setNavigationBar(new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(cap, androidx.core.graphics.Insets.NONE)
+                .setInsetsIgnoringVisibility(cap, bar).setVisible(cap, false)
+                .build());
+        assertEquals(0, ime.navigationBarInsets().bottom);
     }
 
     @Test
