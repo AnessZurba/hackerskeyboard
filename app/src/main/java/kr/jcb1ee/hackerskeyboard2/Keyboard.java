@@ -1288,16 +1288,28 @@ public class Keyboard {
         }
     }
 
+    /** The width the layout was built for, before any {@link #setKeyboardWidth}. */
+    private int mBaseTotalWidth = -1;
+    private float mWidthScale = 1f;
+
+    /**
+     * Fits the keys into {@code newWidth} (the screen width less what a display cutout or a
+     * side navigation bar takes), scaling key positions and widths; a larger width restores
+     * the layout's own size. The keys keep their proportions.
+     */
     public void setKeyboardWidth(int newWidth) {
-        Log.i(TAG, "setKeyboardWidth newWidth=" + newWidth + ", mTotalWidth=" + mTotalWidth);
         if (newWidth <= 0) return;  // view not initialized?
-        if (mTotalWidth <= newWidth) return;  // it already fits
-        float scale = (float) newWidth / mDisplayWidth;
-        Log.i("PCKeyboard", "Rescaling keyboard: " + mTotalWidth + " => " + newWidth);
+        if (mBaseTotalWidth < 0) mBaseTotalWidth = mTotalWidth;
+        if (mBaseTotalWidth <= 0) return;
+        float scale = Math.min(1f, (float) newWidth / mBaseTotalWidth);
+        if (scale == mWidthScale) return;
         for (Key key : mKeys) {
             key.x = Math.round(key.realX * scale);
+            key.width = Math.round(key.realWidth * scale);
         }
-        mTotalWidth = newWidth;
+        mTotalWidth = Math.round(mBaseTotalWidth * scale);
+        mWidthScale = scale;
+        mGridNeighbors = null; // key positions changed: rebuild the touch grid
     }
 
     private void skipToEndOfRow(XmlResourceParser parser)

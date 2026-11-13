@@ -675,6 +675,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mHandler.cancelKeyTimers();
         mHandler.cancelPopupPreview();
         mKeyboard = keyboard;
+        if (mAvailableWidth > 0) keyboard.setKeyboardWidth(mAvailableWidth);
         // Disable correctionX and correctionY, it doesn't seem to work as intended.
         // mKeys = mKeyDetector.setKeyboard(keyboard, -getPaddingLeft(),-getPaddingTop() + mVerticalCorrection);
         mKeys = mKeyDetector.setKeyboard(keyboard, 0, 0);
@@ -1352,6 +1353,20 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             mPointerQueue.remove(tracker);
         }
         return result;
+    }
+
+    /** Width the keys must fit in (screen less a cutout or side navigation bar); 0 = all. */
+    private int mAvailableWidth;
+
+    /** Fits this keyboard, and every keyboard set on it later, into {@code width}. */
+    void setAvailableWidth(int width) {
+        if (width == mAvailableWidth) return;
+        mAvailableWidth = width;
+        if (mKeyboard == null) return;
+        int before = mKeyboard.getMinWidth();
+        mKeyboard.setKeyboardWidth(width);
+        // Re-attach (key detector, touch state) only if the keys actually moved.
+        if (mKeyboard.getMinWidth() != before) setKeyboard(mKeyboard);
     }
 
     /**

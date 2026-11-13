@@ -97,6 +97,31 @@ public class ToolbarTest {
         assertEquals(0, ime.navigationBarInsets().bottom);
     }
 
+    /** Landscape with a cutout at one side: the keys fit in what is left, none cut off. */
+    @Test
+    public void keysFitBesideACutout() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        int cut = androidx.core.view.WindowInsetsCompat.Type.displayCutout();
+        ime.setNavigationBar(new androidx.core.view.WindowInsetsCompat.Builder()
+                .setInsets(cut, androidx.core.graphics.Insets.of(100, 0, 0, 0)).build());
+        idle();
+        int screen = ime.getResources().getDisplayMetrics().widthPixels;
+        LatinKeyboardView view = (LatinKeyboardView) ((ViewGroup) toolbar.getChildAt(1)).getChildAt(0);
+        Keyboard kb = view.getKeyboard();
+        assertEquals(100, toolbar.getPaddingLeft());
+        assertTrue("keyboard " + kb.getMinWidth() + " fits " + (screen - 100),
+                kb.getMinWidth() <= screen - 100);
+        for (Keyboard.Key k : kb.getKeys()) {
+            assertTrue("key at " + k.x + "+" + k.width, k.x + k.width <= screen - 100 + 1);
+        }
+        // Back to no cutout: the keys get their full width again.
+        ime.setNavigationBar(new androidx.core.view.WindowInsetsCompat.Builder().build());
+        idle();
+        assertTrue(view.getKeyboard().getMinWidth() > screen - 100);
+    }
+
     @Test
     public void toolbarPanelsOpenAndClose() {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
