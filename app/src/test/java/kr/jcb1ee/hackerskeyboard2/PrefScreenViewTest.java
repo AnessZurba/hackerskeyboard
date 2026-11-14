@@ -28,7 +28,7 @@ public class PrefScreenViewTest {
         assertNotNull(f);
         PreferenceFragmentCompat pf = (PreferenceFragmentCompat) f;
         for (String key : new String[] {"pref_keyboard_layout", "pref_hint_mode",
-                "pref_render_mode", "pref_label_scale_v2"}) {
+                "pref_label_scale_v2"}) {
             Preference p = pf.findPreference(key);
             assertNotNull(key, p);
             pf.onDisplayPreferenceDialog(p);

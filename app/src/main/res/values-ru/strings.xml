@@ -190,9 +190,6 @@
     <!-- Description for keyboard theme switcher -->
     <string name="keyboard_layout">Тема клавиатуры</string>
     <string name="layout_stone_bold"  translatable="false">Кость (жирный)</string>
-    <string name="layout_ics"  translatable="false">Сэндвич с мороженым (светлые подсказки)</string>
-    <string name="layout_ics_darker"  translatable="false">Сэндвич с мороженым (тёмн. подсказки)</string>
-    <string name="layout_trans_neon"  translatable="false">Прозрачная (эксперимент)</string>
     <string name="layout_material_dark" translatable="false">Материал (тёмная)</string>
     <string name="layout_material_light" translatable="false">Материал (светлая)</string>
 
@@ -289,7 +286,6 @@
 
     <string name="title_long_press_duration">Долгое нажатие</string>
 
-    <string name="title_render_mode">Метод отрисовки</string>
 
     <string name="pref_screen_actions_title">Жесты и кнопки</string>
     <string name="pref_screen_actions_title_summary">Настройка жестов и аппаратных кнопок</string>

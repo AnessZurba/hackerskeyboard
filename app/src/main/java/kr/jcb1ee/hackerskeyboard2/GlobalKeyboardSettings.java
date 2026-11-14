@@ -72,7 +72,6 @@ public final class GlobalKeyboardSettings {
     //
     // Read by LatinKeyboardBaseView
     public int hintMode = 0;
-    public int renderMode = 1;
     //
     // Read by PointerTracker
     public int longpressTimeout = 400;

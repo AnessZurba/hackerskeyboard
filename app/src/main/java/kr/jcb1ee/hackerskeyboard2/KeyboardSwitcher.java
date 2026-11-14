@@ -65,18 +65,19 @@ public class KeyboardSwitcher implements
     // Symbols keyboard layout with the settings key
     public static final int KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY = R.id.mode_symbols_with_settings_key;
 
-    public static final String DEFAULT_LAYOUT_ID = "0";
+    public static final String DEFAULT_LAYOUT_ID = "7"; // Material Black
     public static final String PREF_KEYBOARD_LAYOUT = "pref_keyboard_layout";
-    // Indexed by the stored theme number, so entries must never move. 1 was Gingerbread
-    // (removed); a saved 1 now gets ICS, the closest look.
+    // Indexed by the stored theme number, so entries must never move. 0 (ICS), 1
+    // (Gingerbread), 3 (Transparent) and 6 (ICS dark hints) were removed; a saved one is
+    // moved to Material Black (KeyboardTheme.migrate), and the slots only keep the numbering.
     private static final int[] THEMES = new int[] {
-        R.layout.input_ics,
-        R.layout.input_ics,
+        R.layout.input_material_black,
+        R.layout.input_material_black,
         R.layout.input_stone_bold,
-        R.layout.input_trans_neon,
+        R.layout.input_material_black,
         R.layout.input_material_dark,
         R.layout.input_material_light,
-        R.layout.input_ics_darker,
+        R.layout.input_material_black,
         R.layout.input_material_black,
         // 8-10: Material You, AMOLED black, high contrast. Colour themes (KeyboardTheme)
         // are drawn over input_material_dark or _light, see themeLayout().
@@ -174,8 +175,7 @@ public class KeyboardSwitcher implements
 
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(ims);
-        sInstance.mLayoutId = Integer.valueOf(prefs.getString(
-                PREF_KEYBOARD_LAYOUT, DEFAULT_LAYOUT_ID));
+        sInstance.mLayoutId = KeyboardTheme.migrate(prefs);
 
         sInstance.updateSettingsKeyState(prefs);
         prefs.registerOnSharedPreferenceChangeListener(sInstance);
@@ -689,6 +689,7 @@ public class KeyboardSwitcher implements
 
     /** The layout to inflate for a theme id; sets {@link #mTheme} for colour themes. */
     private int themeLayout(int id) {
+        id = KeyboardTheme.current(id);
         mTheme = KeyboardTheme.forId(mInputMethodService, id);
         if (mTheme != null) {
             return mTheme.light ? R.layout.input_material_light : R.layout.input_material_dark;

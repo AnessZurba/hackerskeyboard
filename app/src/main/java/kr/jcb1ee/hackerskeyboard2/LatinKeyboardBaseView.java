@@ -314,7 +314,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     // Distance from horizontal center of the key, proportional to key label text height.
     private final float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
     private final String KEY_LABEL_HEIGHT_REFERENCE_CHAR = "H";
-    private static int sPrevRenderMode = -1;
 
     private static final float[] INVERTING_MATRIX = {
             -1.f, 0, 0, 0, 255, // Red
@@ -483,14 +482,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         }
     }
 
-    private void setRenderModeIfPossible(int mode) {
-        if (mode != sPrevRenderMode) {
-            setLayerType(mode, null);
-            sPrevRenderMode = mode;
-            Log.i(TAG, "render mode set to " + LatinIME.sKeyboardSettings.renderMode);
-        }
-    }
-    
     public LatinKeyboardBaseView(Context context, AttributeSet attrs) {
         this(context, attrs, R.attr.keyboardViewStyle);
     }
@@ -500,7 +491,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
         if (!isInEditMode())
             Log.i(TAG, "Creating new LatinKeyboardBaseView " + this);
-        setRenderModeIfPossible(LatinIME.sKeyboardSettings.renderMode);
 
         TypedArray a = context.obtainStyledAttributes(
                 attrs, R.styleable.LatinKeyboardBaseView, defStyle, R.style.LatinKeyboardBaseView);
@@ -695,7 +685,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mMiniKeyboardCacheMain.clear();
         mMiniKeyboardCacheShift.clear();
         mMiniKeyboardCacheCaps.clear();
-        setRenderModeIfPossible(LatinIME.sKeyboardSettings.renderMode);
         mIgnoreMove = true;
     }
     

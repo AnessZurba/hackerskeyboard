@@ -30,9 +30,23 @@ public class KeyboardThemeTest {
         for (int id : new int[] {4, 5, 7, 8, 9, 10}) {
             assertNotNull("colour theme " + id, KeyboardTheme.forId(mContext, id));
         }
-        for (int id : new int[] {0, 1, 2, 3, 6}) {
-            assertNull("image theme " + id, KeyboardTheme.forId(mContext, id));
+        assertNull("Stone is an image theme", KeyboardTheme.forId(mContext, 2));
+    }
+
+    /** Removed themes (ICS, Gingerbread, Transparent, ICS dark) become Material Black. */
+    @Test
+    public void removedThemesBecomeMaterialBlack() {
+        for (int id : new int[] {0, 1, 3, 6}) {
+            assertEquals(KeyboardTheme.MATERIAL_BLACK, KeyboardTheme.current(id));
         }
+        assertEquals(KeyboardTheme.HIGH_CONTRAST, KeyboardTheme.current(KeyboardTheme.HIGH_CONTRAST));
+        android.content.SharedPreferences prefs =
+                androidx.preference.PreferenceManager.getDefaultSharedPreferences(mContext);
+        prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, "6").commit();
+        assertEquals(KeyboardTheme.MATERIAL_BLACK, KeyboardTheme.migrate(prefs));
+        assertEquals("7", prefs.getString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, null));
+        prefs.edit().clear().commit();
+        assertEquals("default", KeyboardTheme.MATERIAL_BLACK, KeyboardTheme.migrate(prefs));
     }
 
     /** With borders, a plain key is filled; without, it shows the keyboard behind it. */

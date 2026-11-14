@@ -30,6 +30,31 @@ final class KeyboardTheme {
 
     static final String PREF_KEY_BORDERS = "pref_key_borders";
 
+    /** Theme ids of removed themes (ICS, Gingerbread, Transparent, ICS dark hints). */
+    private static final int[] REMOVED = {0, 1, 3, 6};
+
+    /** A removed theme's id becomes Material Black (the default); others stay. */
+    static int current(int id) {
+        for (int r : REMOVED) if (r == id) return MATERIAL_BLACK;
+        return id;
+    }
+
+    /** Reads the stored theme, rewriting a removed one so settings show what is drawn. */
+    static int migrate(android.content.SharedPreferences prefs) {
+        int stored;
+        try {
+            stored = Integer.parseInt(prefs.getString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT,
+                    KeyboardSwitcher.DEFAULT_LAYOUT_ID));
+        } catch (NumberFormatException e) {
+            stored = MATERIAL_BLACK;
+        }
+        int id = current(stored);
+        if (id != stored) {
+            prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, String.valueOf(id)).apply();
+        }
+        return id;
+    }
+
     /** Dark labels and icons (light backgrounds). */
     final boolean light;
     final int background;
