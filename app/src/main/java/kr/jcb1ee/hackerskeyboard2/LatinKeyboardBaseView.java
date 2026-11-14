@@ -1411,7 +1411,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mMiniKeyboard.mDetectSwipes = false;
         mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
             public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
-                if (mOpenPopupResId == R.xml.popup_mic
+                if (LatinKeyboard.isMicKeyPopup(mOpenPopupResId)
                         && LatinKeyboard.rememberMicKeyChoice(getContext(), primaryCode)) {
                     LatinIME ime = LatinIME.sInstance;
                     if (ime != null) ime.mHandler.post(ime::refreshMicKey);

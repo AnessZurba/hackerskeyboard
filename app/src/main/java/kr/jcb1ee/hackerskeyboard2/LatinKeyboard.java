@@ -263,6 +263,11 @@ public class LatinKeyboard extends Keyboard {
     /** KEYCODE_VOICE or KEYCODE_OPTIONS as last picked from that popup, or 0 for the default. */
     static int sMicKeyChoice;
 
+    /** The long-press popups of the mic/settings key (each holds the other choice). */
+    static boolean isMicKeyPopup(int popupResId) {
+        return popupResId == R.xml.popup_settings || popupResId == R.xml.popup_voice;
+    }
+
     static void loadMicKeyChoice(android.content.SharedPreferences prefs) {
         sMicKeyChoice = prefs.getInt(PREF_MIC_KEY, 0);
     }
@@ -351,8 +356,8 @@ public class LatinKeyboard extends Keyboard {
         final Drawable micWithSettingsHintDrawable = new BitmapDrawable(mRes,
                 drawSynthesizedSettingsHintImage(key.width, key.height, mMicIcon, mHintIcon));
 
-        if (key.popupResId == 0) {
-            key.popupResId = R.xml.popup_mic;
+        if (key.popupResId == 0 || isMicKeyPopup(key.popupResId)) {
+            key.popupResId = R.xml.popup_settings; // the other choice only
         } else {
             key.modifier = true;
             if (key.label != null) {
@@ -372,7 +377,9 @@ public class LatinKeyboard extends Keyboard {
         key.label = null;
         key.shiftLabel = null;
         key.codes = new int[] { LatinKeyboardView.KEYCODE_VOICE };
-        key.icon = mMicIcon;
+        // Drawn into the key's size like the other icons (the bare drawable is too big).
+        key.icon = new BitmapDrawable(mRes,
+                drawSynthesizedSettingsHintImage(key.width, key.height, mMicIcon, null));
         key.iconPreview = mMicPreviewIcon;
         key.popupResId = 0;
     }
@@ -387,7 +394,7 @@ public class LatinKeyboard extends Keyboard {
     	key.label = null;
     	key.icon = settingsHintDrawable;
     	key.codes = new int[] { LatinKeyboardView.KEYCODE_OPTIONS };
-    	key.popupResId = R.xml.popup_mic;
+    	key.popupResId = R.xml.popup_voice; // the other choice only
     	key.iconPreview = mSettingsPreviewIcon;
     }
     
@@ -450,10 +457,10 @@ public class LatinKeyboard extends Keyboard {
     // Overlay two images: mainIcon and hintIcon.
     private Bitmap drawSynthesizedSettingsHintImage(
             int width, int height, Drawable mainIcon, Drawable hintIcon) {
-        if (mainIcon == null || hintIcon == null)
+        if (mainIcon == null)
             return null;
         Rect hintIconPadding = new Rect(0, 0, 0, 0);
-        hintIcon.getPadding(hintIconPadding);
+        if (hintIcon != null) hintIcon.getPadding(hintIconPadding);
         final Bitmap buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         final Canvas canvas = new Canvas(buffer);
         canvas.drawColor(mRes.getColor(R.color.latinkeyboard_transparent), PorterDuff.Mode.CLEAR);
@@ -469,9 +476,11 @@ public class LatinKeyboard extends Keyboard {
         mainIcon.draw(canvas);
         canvas.translate(-drawableX, -drawableY);
 
-        // Draw hint icon fully in the key
-        hintIcon.setBounds(0, 0, width, height);
-        hintIcon.draw(canvas);
+        // Draw hint icon fully in the key (none: just the main icon)
+        if (hintIcon != null) {
+            hintIcon.setBounds(0, 0, width, height);
+            hintIcon.draw(canvas);
+        }
         return buffer;
     }
 

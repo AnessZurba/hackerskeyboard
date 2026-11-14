@@ -39,12 +39,12 @@ public class MicKeyTest {
         Keyboard.Key key = f1(R.xml.kbd_full);
         assertNotNull(key);
         assertEquals("mic by default", LatinKeyboardView.KEYCODE_VOICE, key.codes[0]);
-        assertEquals(R.xml.popup_mic, key.popupResId);
+        assertEquals("popup: settings only", R.xml.popup_settings, key.popupResId);
 
         assertTrue(LatinKeyboard.rememberMicKeyChoice(mContext, LatinKeyboardView.KEYCODE_OPTIONS));
         key = f1(R.xml.kbd_full);
         assertEquals("settings after picking it", LatinKeyboardView.KEYCODE_OPTIONS, key.codes[0]);
-        assertEquals("the popup still offers the mic", R.xml.popup_mic, key.popupResId);
+        assertEquals("popup: the mic only", R.xml.popup_voice, key.popupResId);
 
         // Kept across restarts.
         LatinKeyboard.sMicKeyChoice = 0;
@@ -55,6 +55,17 @@ public class MicKeyTest {
         assertTrue(LatinKeyboard.rememberMicKeyChoice(mContext, LatinKeyboardView.KEYCODE_VOICE));
         assertEquals(LatinKeyboardView.KEYCODE_VOICE, f1(R.xml.kbd_full).codes[0]);
         assertFalse("other keys aren't remembered", LatinKeyboard.rememberMicKeyChoice(mContext, 'a'));
+    }
+
+    /** Each popup holds just the other choice. */
+    @Test
+    public void popupsHoldTheOtherChoice() {
+        Keyboard settings = new Keyboard(mContext, 0, R.xml.popup_settings);
+        assertEquals(1, settings.getKeys().size());
+        assertEquals(LatinKeyboardView.KEYCODE_OPTIONS, settings.getKeys().get(0).codes[0]);
+        Keyboard voice = new Keyboard(mContext, 0, R.xml.popup_voice);
+        assertEquals(1, voice.getKeys().size());
+        assertEquals(LatinKeyboardView.KEYCODE_VOICE, voice.getKeys().get(0).codes[0]);
     }
 
     @Test

@@ -3,6 +3,7 @@ package kr.jcb1ee.hackerskeyboard2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
@@ -50,6 +51,31 @@ public class LayoutOutputTest {
             assertEquals(zero.y, comma.y);
             assertNotNull(withLabel(kb, "NumL"));
             assertNotNull(withLabel(kb, "ScrL"));
+        }
+    }
+
+    /**
+     * Fitting the keyboard into a narrower width (landscape beside a cutout) scales every key
+     * as drawn, so no gap opens (the left Shift once kept a short stored width).
+     */
+    @Test
+    public void narrowerKeyboardKeepsProportions() {
+        Context c = ApplicationProvider.getApplicationContext();
+        for (int layout : new int[] {R.xml.kbd_full, R.xml.kbd_full_fn, R.xml.kbd_full_swap}) {
+            Keyboard kb = new LatinKeyboard(c, layout, 0, LatinIME.sKeyboardSettings.keyboardHeightPercent);
+            java.util.List<Keyboard.Key> keys = kb.getKeys();
+            int[] x = new int[keys.size()], w = new int[keys.size()];
+            for (int i = 0; i < keys.size(); i++) {
+                x[i] = keys.get(i).x;
+                w[i] = keys.get(i).width;
+            }
+            float scale = 0.9f;
+            kb.setKeyboardWidth(Math.round(kb.getMinWidth() * scale));
+            for (int i = 0; i < keys.size(); i++) {
+                Keyboard.Key k = keys.get(i);
+                assertTrue("x " + k.x + " vs " + x[i] * scale, Math.abs(k.x - x[i] * scale) <= 1);
+                assertTrue("width " + k.width + " vs " + w[i] * scale, Math.abs(k.width - w[i] * scale) <= 1);
+            }
         }
     }
 

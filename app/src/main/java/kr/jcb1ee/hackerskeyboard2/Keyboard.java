@@ -269,6 +269,9 @@ public class Keyboard {
         public int width;
         /** Height of the key, not including the gap */
         private float realWidth;
+        /** Position and width as laid out, before any setKeyboardWidth (-1: not yet). */
+        private int baseX;
+        private int baseWidth = -1;
         public int height;
         /** The horizontal gap before this key */
         public int gap;
@@ -1304,8 +1307,14 @@ public class Keyboard {
         float scale = Math.min(1f, (float) newWidth / mBaseTotalWidth);
         if (scale == mWidthScale) return;
         for (Key key : mKeys) {
-            key.x = Math.round(key.realX * scale);
-            key.width = Math.round(key.realWidth * scale);
+            // From each key's laid-out position and width (some keys are resized after
+            // parsing, so their real* values don't match what is drawn).
+            if (key.baseWidth < 0) {
+                key.baseX = key.x;
+                key.baseWidth = key.width;
+            }
+            key.x = Math.round(key.baseX * scale);
+            key.width = Math.round(key.baseWidth * scale);
         }
         mTotalWidth = Math.round(mBaseTotalWidth * scale);
         mWidthScale = scale;

@@ -201,7 +201,7 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
     @Override
     protected boolean onLongPress(Key key) {
         int primaryCode = key.codes[0];
-        if (primaryCode == KEYCODE_OPTIONS && key.popupResId != R.xml.popup_mic) {
+        if (primaryCode == KEYCODE_OPTIONS && !LatinKeyboard.isMicKeyPopup(key.popupResId)) {
             // (The mic/settings key opens its popup instead, to pick the other one.)
             return invokeOnKey(KEYCODE_OPTIONS_LONGPRESS);
         } else if (primaryCode == KEYCODE_DPAD_CENTER) {
