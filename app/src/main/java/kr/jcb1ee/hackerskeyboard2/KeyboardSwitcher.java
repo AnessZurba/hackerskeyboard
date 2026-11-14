@@ -347,13 +347,11 @@ public class KeyboardSwitcher implements
         SoftReference<LatinKeyboard> ref = mKeyboards.get(id);
         LatinKeyboard keyboard = (ref == null) ? null : ref.get();
         if (keyboard == null) {
-            Resources orig = mInputMethodService.getResources();
-            Configuration conf = orig.getConfiguration();
-            Locale saveLocale = conf.locale;
-            conf.locale = LatinIME.sKeyboardSettings.inputLocale;
-            orig.updateConfiguration(conf, null);
-            keyboard = new LatinKeyboard(mInputMethodService, id.mXml,
-                    id.mKeyboardMode, id.mKeyboardHeightPercent);
+            // The layout in the input language's resources (not by switching the app's).
+            Locale input = LatinIME.sKeyboardSettings.inputLocale;
+            keyboard = new LatinKeyboard(input != null
+                            ? LocaleContext.of(mInputMethodService, input) : mInputMethodService,
+                    id.mXml, id.mKeyboardMode, id.mKeyboardHeightPercent);
             keyboard.setVoiceMode(hasVoiceButton(id.mXml == R.xml.kbd_symbols), mHasVoice);
             keyboard.setLanguageSwitcher(mLanguageSwitcher, mIsAutoCompletionActive);
 
@@ -361,9 +359,6 @@ public class KeyboardSwitcher implements
                 keyboard.enableShiftLock();
             }
             mKeyboards.put(id, new SoftReference<LatinKeyboard>(keyboard));
-
-            conf.locale = saveLocale;
-            orig.updateConfiguration(conf, null);
         }
         return keyboard;
     }

@@ -491,22 +491,22 @@ public class LatinIME extends InputMethodService implements
     private void initSuggest(String locale) {
         mInputLocale = locale;
 
-        Resources orig = getResources();
-        Configuration conf = orig.getConfiguration();
-        Locale saveLocale = conf.locale;
-        conf.locale = new Locale(locale);
-        orig.updateConfiguration(conf, orig.getDisplayMetrics());
+        // The input language's resources (dictionary, separators, punctuation), without
+        // switching the app's own language.
+        Context lc = LocaleContext.of(this, LocaleContext.parse(locale));
+        Resources lres = lc.getResources();
+        Locale systemLocale = getResources().getConfiguration().getLocales().get(0);
         if (mSuggest != null) {
             mSuggest.close();
         }
         SharedPreferences sp = PreferenceManager
                 .getDefaultSharedPreferences(this);
-        mQuickFixes = sp.getBoolean(PREF_QUICK_FIXES, getResources()
+        mQuickFixes = sp.getBoolean(PREF_QUICK_FIXES, lres
                 .getBoolean(R.bool.default_quick_fixes));
 
-        int[] dictionaries = getDictionary(orig);
-        mSuggest = new Suggest(this, dictionaries);
-        updateAutoTextEnabled(saveLocale);
+        int[] dictionaries = getDictionary(lres);
+        mSuggest = new Suggest(lc, dictionaries);
+        updateAutoTextEnabled(systemLocale);
         if (mUserDictionary != null)
             mUserDictionary.close();
         mUserDictionary = new UserDictionary(this, mInputLocale);
@@ -524,13 +524,9 @@ public class LatinIME extends InputMethodService implements
         mSuggest.setUserDictionary(mUserDictionary);
         mSuggest.setAutoDictionary(mAutoDictionary);
         updateCorrectionMode();
-        mWordSeparators = mResources.getString(R.string.word_separators);
-        mSentenceSeparators = mResources
-                .getString(R.string.sentence_separators);
-        initSuggestPuncList();
-
-        conf.locale = saveLocale;
-        orig.updateConfiguration(conf, orig.getDisplayMetrics());
+        mWordSeparators = lres.getString(R.string.word_separators);
+        mSentenceSeparators = lres.getString(R.string.sentence_separators);
+        initSuggestPuncList(lres);
     }
 
     private void startVoiceInput() {
@@ -3529,7 +3525,9 @@ public class LatinIME extends InputMethodService implements
             needReload = true;
         }
         if (sKeyboardSettings.hasFlag(GlobalKeyboardSettings.FLAG_PREF_NEW_PUNC_LIST)) {
-            initSuggestPuncList();
+            initSuggestPuncList(mInputLocale != null
+                    ? LocaleContext.of(this, LocaleContext.parse(mInputLocale)).getResources()
+                    : getResources());
         }
         if (sKeyboardSettings.hasFlag(GlobalKeyboardSettings.FLAG_PREF_RECREATE_INPUT_VIEW)) {
             mKeyboardSwitcher.recreateInputView();
@@ -3996,13 +3994,13 @@ public class LatinIME extends InputMethodService implements
         mDeadKeysActive = mLanguageSwitcher.allowDeadKeys();
     }
 
-    private void initSuggestPuncList() {
+    private void initSuggestPuncList(Resources lres) {
         mSuggestPuncList = new ArrayList<CharSequence>();
         String suggestPuncs = sKeyboardSettings.suggestedPunctuation;
-        String defaultPuncs = getResources().getString(R.string.suggested_punctuations_default);
+        String defaultPuncs = lres.getString(R.string.suggested_punctuations_default);
         if (suggestPuncs.equals(defaultPuncs) || suggestPuncs.equals("")) {
             // Not user-configured, load the language-specific default.
-            suggestPuncs = getResources().getString(R.string.suggested_punctuations);
+            suggestPuncs = lres.getString(R.string.suggested_punctuations);
         }
         if (suggestPuncs != null) {
             for (int i = 0; i < suggestPuncs.length(); i++) {

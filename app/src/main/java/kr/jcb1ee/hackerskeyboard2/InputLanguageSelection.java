@@ -26,8 +26,6 @@ import java.util.Set;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -234,15 +232,12 @@ public class InputLanguageSelection extends AppCompatActivity {
         }
 
         private boolean hasDictionary(Locale locale) {
-            Resources res = getResources();
-            Configuration conf = res.getConfiguration();
-            Locale saveLocale = conf.locale;
+            // That language's resources, without switching the app's own language.
+            android.content.Context lc = LocaleContext.of(requireContext(), locale);
             boolean haveDictionary = false;
-            conf.locale = locale;
-            res.updateConfiguration(conf, res.getDisplayMetrics());
 
-            int[] dictionaries = LatinIME.getDictionary(res);
-            BinaryDictionary bd = new BinaryDictionary(requireContext(), dictionaries, Suggest.DIC_MAIN);
+            int[] dictionaries = LatinIME.getDictionary(lc.getResources());
+            BinaryDictionary bd = new BinaryDictionary(lc, dictionaries, Suggest.DIC_MAIN);
 
             // Is the dictionary larger than a placeholder? Arbitrarily chose a lower limit of
             // 4000-5000 words, whereas the LARGE_DICTIONARY is about 20000+ words.
@@ -258,8 +253,6 @@ public class InputLanguageSelection extends AppCompatActivity {
             }
 
             bd.close();
-            conf.locale = saveLocale;
-            res.updateConfiguration(conf, res.getDisplayMetrics());
             return haveDictionary;
         }
 

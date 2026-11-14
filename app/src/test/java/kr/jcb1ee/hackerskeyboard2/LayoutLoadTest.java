@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -19,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -94,19 +91,9 @@ public class LayoutLoadTest {
     /** Loads one layout in one language, as KeyboardSwitcher.getKeyboard does. */
     private static String describe(String lang, String name, int xml, int mode) {
         Context c = ApplicationProvider.getApplicationContext();
-        Resources res = c.getResources();
-        Configuration conf = res.getConfiguration();
-        Locale saved = conf.locale;
-        String[] parts = lang.split("_");
-        conf.locale = parts.length > 1 ? new Locale(parts[0], parts[1]) : new Locale(parts[0]);
-        res.updateConfiguration(conf, null);
-        LatinKeyboard kb;
-        try {
-            kb = new LatinKeyboard(c, xml, mode, LatinIME.sKeyboardSettings.keyboardHeightPercent);
-        } finally {
-            conf.locale = saved;
-            res.updateConfiguration(conf, null);
-        }
+        // As KeyboardSwitcher.getKeyboard does: the language's own resources.
+        LatinKeyboard kb = new LatinKeyboard(LocaleContext.of(c, LocaleContext.parse(lang)), xml, mode,
+                LatinIME.sKeyboardSettings.keyboardHeightPercent);
         TreeMap<Integer, List<String>> rows = new TreeMap<>();
         for (Keyboard.Key k : kb.getKeys()) {
             rows.computeIfAbsent(k.y, y -> new ArrayList<>()).add(label(k));
