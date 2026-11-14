@@ -28,8 +28,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
-import kr.jcb1ee.hackerskeyboard2.suggest.SuggestionEngine;
-
 /**
  * This class loads a dictionary and provides a list of suggestions for a given sequence of 
  * characters. This includes corrections and completions.
@@ -70,9 +68,6 @@ public class Suggest implements Dictionary.WordCallback {
     static final int LARGE_DICTIONARY_THRESHOLD = 200 * 1000;
 
     private BinaryDictionary mMainDict;
-
-    /** The new AOSP-decoder engine; when set it replaces mMainDict. */
-    private EngineDictionary mEngineDict;
 
     private Dictionary mUserDictionary;
 
@@ -147,20 +142,7 @@ public class Suggest implements Dictionary.WordCallback {
     }
 
     public boolean hasMainDictionary() {
-        return mEngineDict != null || mMainDict.getSize() > LARGE_DICTIONARY_THRESHOLD;
-    }
-
-    /**
-     * Uses {@code engine} (the AOSP decoder) instead of the old main dictionary; null goes
-     * back to the old one. Suggest closes the engine.
-     */
-    public void setMainEngine(SuggestionEngine engine) {
-        if (mEngineDict != null) mEngineDict.close();
-        mEngineDict = engine != null ? new EngineDictionary(engine) : null;
-    }
-
-    private Dictionary mainDictionary() {
-        return mEngineDict != null ? mEngineDict : mMainDict;
+        return mMainDict.getSize() > LARGE_DICTIONARY_THRESHOLD;
     }
 
     public int getApproxMaxWordLength() {
@@ -265,7 +247,7 @@ public class Suggest implements Dictionary.WordCallback {
 
             if (!TextUtils.isEmpty(prevWordForBigram)) {
                 CharSequence lowerPrevWord = prevWordForBigram.toString().toLowerCase();
-                if (mainDictionary().isValidWord(lowerPrevWord)) {
+                if (mMainDict.isValidWord(lowerPrevWord)) {
                     prevWordForBigram = lowerPrevWord;
                 }
                 if (mUserBigramDictionary != null) {
@@ -306,11 +288,7 @@ public class Suggest implements Dictionary.WordCallback {
                     mHaveCorrection = true;
                 }
             }
-            if (mEngineDict != null) {
-                mEngineDict.setKeyboard(view instanceof LatinKeyboardBaseView
-                        ? ((LatinKeyboardBaseView) view).getKeyboard() : null);
-            }
-            mainDictionary().getWords(wordComposer, this, mNextLettersFrequencies);
+            mMainDict.getWords(wordComposer, this, mNextLettersFrequencies);
             if ((mCorrectionMode == CORRECTION_FULL || mCorrectionMode == CORRECTION_FULL_BIGRAM)
                     && mSuggestions.size() > 0) {
                 mHaveCorrection = true;
@@ -512,7 +490,7 @@ public class Suggest implements Dictionary.WordCallback {
         if (word == null || word.length() == 0) {
             return false;
         }
-        return mainDictionary().isValidWord(word)
+        return mMainDict.isValidWord(word)
                 || (mUserDictionary != null && mUserDictionary.isValidWord(word))
                 || (mAutoDictionary != null && mAutoDictionary.isValidWord(word));
     }
@@ -538,6 +516,5 @@ public class Suggest implements Dictionary.WordCallback {
         if (mMainDict != null) {
             mMainDict.close();
         }
-        setMainEngine(null);
     }
 }
