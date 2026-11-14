@@ -35,15 +35,24 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     /** Where the main dictionaries are, inside the assets. */
     public static final String ASSET_DIR = "dicts";
 
+    /**
+     * How much more probable (on the dictionaries' 0-255 log scale, about 21 per tenfold)
+     * a variant spelling must be to go before the typed word (see preferVariantSpelling).
+     */
+    static final int VARIANT_SPELLING_MARGIN = 20;
+
     private final String mLocale;
+    private final LetterVariants mVariants;
     private BinaryDictionary mDict;
-    private KeyGeometry mGeometry;
+    /** The keys the decoder was last given, and them as the decoder sees them. */
+    private KeyGeometry mKeys, mGeometry;
     private ProximityInfo mProximity;
     private KeyGeometry mDefaultGeometry;
 
     private AospSuggestionEngine(BinaryDictionary dict, String locale) {
         mDict = dict;
         mLocale = locale;
+        mVariants = LetterVariants.forLocale(locale);
     }
 
     /** The asset name of the main dictionary for {@code language} ("en", "iw", ...). */
@@ -52,17 +61,29 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     }
 
     /**
-     * Opens the bundled dictionary for {@code locale} (e.g. "en_US": tries main_en_us, then
-     * main_en). Returns null when there is none, the native library is missing or the file
-     * is not a dictionary.
+     * The dictionary names to try for an input locale, most specific first: "en_US" gives
+     * en_us, en; Hebrew is "iw" (AOSP's code) whether the locale says "he" or "iw";
+     * pseudo-regions ("de_NE") fall back to the language.
+     */
+    public static List<String> dictionaryNames(String locale) {
+        String full = locale.toLowerCase(Locale.ROOT).replace('-', '_');
+        int sep = full.indexOf('_');
+        String lang = sep >= 0 ? full.substring(0, sep) : full;
+        String region = sep >= 0 ? full.substring(sep) : "";
+        if (lang.equals("he")) lang = "iw";
+        List<String> names = new ArrayList<>();
+        if (!region.isEmpty()) names.add(lang + region);
+        names.add(lang);
+        return names;
+    }
+
+    /**
+     * Opens the bundled dictionary for {@code locale} (see {@link #dictionaryNames}). Returns
+     * null when there is none, the native library is missing or the file is not a dictionary.
      */
     public static AospSuggestionEngine open(Context context, String locale) {
         if (!NativeLibrary.load()) return null;
-        String lang = locale.toLowerCase(Locale.ROOT);
-        String[] names = lang.contains("_")
-                ? new String[] {lang, lang.substring(0, lang.indexOf('_'))}
-                : new String[] {lang};
-        for (String name : names) {
+        for (String name : dictionaryNames(locale)) {
             try (AssetFileDescriptor fd = context.getAssets().openFd(assetName(name))) {
                 String apk = context.getApplicationInfo().sourceDir;
                 return open(apk, fd.getStartOffset(), fd.getLength(), locale);
@@ -105,8 +126,11 @@ public final class AospSuggestionEngine implements SuggestionEngine {
             return Collections.emptyList();
         }
         ProximityInfo proximity = proximityFor(keys);
+        LetterVariants.Input input = mVariants.input(typed, xs, ys, mGeometry);
+        if (input.text.isEmpty()) return Collections.emptyList();
+        typed = input.text;
         int[] codePoints = typed.codePoints().toArray();
-        List<Suggestion> raw = mDict.getSuggestions(codePoints, xs, ys, proximity,
+        List<Suggestion> raw = mDict.getSuggestions(codePoints, input.xs, input.ys, proximity,
                 previousWord, true /* block offensive words */);
         // Native results come sorted; keep it explicit (stable for equal scores).
         List<Suggestion> sorted = new ArrayList<>(raw);
@@ -122,14 +146,38 @@ public final class AospSuggestionEngine implements SuggestionEngine {
                     ? typed : shape.apply(s.word, mLocale);
             if (!seen.add(w)) continue;
             out.add(w.equals(s.word) ? s : s.withWord(w));
-            if (out.size() >= max) break;
         }
-        return out;
+        if (typedIsWord) preferVariantSpelling(typed, out);
+        return out.size() > max ? new ArrayList<>(out.subList(0, max)) : out;
+    }
+
+    /**
+     * Typed words spelt with base letters for variants (Arabic "اكثر" for "أكثر", "انه" for
+     * "أنه": common, and in the corpus too) are words, so the decoder puts them first. When
+     * the variant spelling is much more frequent (by {@link #VARIANT_SPELLING_MARGIN}, about
+     * ten times), it goes first instead and the typed word next to it. Only the order
+     * changes: a typed word that is a word is never auto-corrected.
+     */
+    private void preferVariantSpelling(String typed, List<Suggestion> out) {
+        if (out.isEmpty() || !out.get(0).word.equals(typed)) return;
+        int typedProbability = mDict.getProbability(typed);
+        for (int i = 1; i < out.size(); i++) {
+            Suggestion s = out.get(i);
+            if (mVariants.isVariantSpelling(typed, s.word)
+                    && mDict.getProbability(s.word)
+                            >= typedProbability + VARIANT_SPELLING_MARGIN) {
+                out.remove(i);
+                out.add(0, s);
+                return;
+            }
+        }
     }
 
     @Override
     public synchronized boolean isValidWord(String word) {
-        if (mDict == null || word == null || word.isEmpty()) return false;
+        if (mDict == null || word == null) return false;
+        word = mVariants.strip(word);
+        if (word.isEmpty()) return false;
         if (mDict.getProbability(word) != BinaryDictionary.NOT_A_PROBABILITY) return true;
         String lower = word.toLowerCase(localeObject());
         return !lower.equals(word)
@@ -139,7 +187,7 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     @Override
     public synchronized float autoCorrectionConfidence(String typed, Suggestion suggestion) {
         if (mDict == null) return 0f;
-        return BinaryDictionaryUtils.calcNormalizedScore(typed, suggestion.word,
+        return BinaryDictionaryUtils.calcNormalizedScore(mVariants.strip(typed), suggestion.word,
                 suggestion.score);
     }
 
@@ -150,6 +198,7 @@ public final class AospSuggestionEngine implements SuggestionEngine {
             mProximity = null;
         }
         mGeometry = null;
+        mKeys = null;
         if (mDict != null) {
             mDict.close();
             mDict = null;
@@ -161,10 +210,11 @@ public final class AospSuggestionEngine implements SuggestionEngine {
             if (mDefaultGeometry == null) mDefaultGeometry = KeyGeometry.defaultQwerty();
             keys = mDefaultGeometry;
         }
-        if (keys != mGeometry) {
+        if (keys != mKeys) {
             if (mProximity != null) mProximity.close();
-            mProximity = new ProximityInfo(keys);
-            mGeometry = keys;
+            mGeometry = mVariants.adapt(keys);
+            mProximity = new ProximityInfo(mGeometry);
+            mKeys = keys;
         }
         return mProximity;
     }

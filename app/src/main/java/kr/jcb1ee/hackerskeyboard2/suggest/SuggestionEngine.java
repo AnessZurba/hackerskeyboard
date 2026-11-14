@@ -29,7 +29,8 @@ public interface SuggestionEngine {
      *
      * @param typed the word so far, as typed (its case is applied to the results)
      * @param xs touch x per code point of {@code typed}, in {@code keys}' pixels, or null
-     *     (then each key's centre is assumed); entries may be -1 for unknown
+     *     (then the decoder considers only the letter itself, not its neighbours); entries
+     *     may be -1 for unknown
      * @param ys touch y, likewise
      * @param previousWord the word before, null if unknown, "" at the start of a sentence
      * @param keys the keyboard the word was typed on, or null for a plain QWERTY

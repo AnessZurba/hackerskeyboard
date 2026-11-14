@@ -2,17 +2,11 @@ package kr.jcb1ee.hackerskeyboard2.suggest;
 
 import static org.junit.Assume.assumeTrue;
 
-import android.content.Context;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-
-import androidx.test.core.app.ApplicationProvider;
 
 import java.io.File;
-import java.util.Locale;
 
-import kr.jcb1ee.hackerskeyboard2.LatinKeyboard;
-import kr.jcb1ee.hackerskeyboard2.R;
+import kr.jcb1ee.hackerskeyboard2.LocaleLayouts;
+
 
 /**
  * Shared setup for the tests that run the AOSP decoder on the JVM. The native library is the
@@ -24,34 +18,39 @@ import kr.jcb1ee.hackerskeyboard2.R;
  */
 public final class SuggestTestSupport {
     public static final String QUALIFIERS = "w411dp-h891dp-xxhdpi";
-    static final File EN_DICT = new File("src/main/assets/dicts/main_en.dict");
+    static final File DICT_DIR = new File("src/main/assets/dicts");
 
     private SuggestTestSupport() {}
 
     /** The English engine, or the test is skipped when the native library isn't available. */
     public static AospSuggestionEngine englishEngine() {
+        return engine("en_US");
+    }
+
+    /**
+     * The engine for {@code locale} with the bundled dictionary from the source tree (found as
+     * the app finds it), or the test is skipped when the native library isn't available.
+     */
+    public static AospSuggestionEngine engine(String locale) {
         assumeTrue("host libjni_latinime not built: " + NativeLibrary.loadError(),
                 NativeLibrary.load());
-        AospSuggestionEngine engine = AospSuggestionEngine.open(EN_DICT, "en_US");
-        if (engine == null) throw new AssertionError("could not open " + EN_DICT);
-        return engine;
+        for (String name : AospSuggestionEngine.dictionaryNames(locale)) {
+            File dict = new File(DICT_DIR, "main_" + name + ".dict");
+            if (!dict.isFile()) continue;
+            AospSuggestionEngine engine = AospSuggestionEngine.open(dict, locale);
+            if (engine == null) throw new AssertionError("could not open " + dict);
+            return engine;
+        }
+        throw new AssertionError("no dictionary for " + locale + " in " + DICT_DIR);
     }
 
     /** The key geometry of the English 5-row PC layout at the test screen size. */
     public static KeyGeometry englishFullLayout() {
-        Context c = ApplicationProvider.getApplicationContext();
-        Resources res = c.getResources();
-        Configuration conf = res.getConfiguration();
-        Locale saved = conf.locale;
-        conf.locale = new Locale("en");
-        res.updateConfiguration(conf, null);
-        try {
-            // The default height (40%), not the shared setting other tests may have changed.
-            LatinKeyboard kb = new LatinKeyboard(c, R.xml.kbd_full, 0, 40.0f);
-            return KeyGeometry.fromKeyboard(kb);
-        } finally {
-            conf.locale = saved;
-            res.updateConfiguration(conf, null);
-        }
+        return fullLayout("en");
+    }
+
+    /** The key geometry of {@code locale}'s 5-row PC layout at the test screen size. */
+    public static KeyGeometry fullLayout(String locale) {
+        return KeyGeometry.fromKeyboard(LocaleLayouts.fullKeyboard(locale));
     }
 }

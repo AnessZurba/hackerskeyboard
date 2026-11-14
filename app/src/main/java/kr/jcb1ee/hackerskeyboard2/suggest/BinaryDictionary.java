@@ -130,7 +130,8 @@ final class BinaryDictionary {
 
     /**
      * Runs the decoder. {@code codePoints} is what was typed; {@code xs}/{@code ys} the touch
-     * points (NOT_A_COORDINATE where unknown: the decoder then uses the key's centre).
+     * points (NOT_A_COORDINATE where unknown: the decoder then matches only that letter, not its
+     * neighbours).
      * {@code previousWord} is null when unknown, "" at the start of a sentence.
      */
     List<Suggestion> getSuggestions(int[] codePoints, int[] xs, int[] ys,
