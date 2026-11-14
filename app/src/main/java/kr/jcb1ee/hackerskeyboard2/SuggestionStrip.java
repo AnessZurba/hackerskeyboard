@@ -39,6 +39,7 @@ final class SuggestionStrip extends LinearLayout {
 
     static final int LEFT = 0, MIDDLE = 1, RIGHT = 2;
 
+    /** The three word views, left to right on screen (see {@link #slotView}). */
     private final TextView[] mSlots = new TextView[3];
     private final View[] mDividers = new View[2];
     private final String[] mWords = new String[3];
@@ -69,9 +70,9 @@ final class SuggestionStrip extends LinearLayout {
             // Hebrew / Arabic words read right to left whatever the strip's direction.
             v.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
             v.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            final int slot = i;
+            final int position = i;
             v.setOnClickListener(view -> {
-                String word = mWords[slot];
+                String word = mWords[slotAt(position)];
                 if (word == null || mListener == null) return;
                 view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 mListener.onSuggestionPicked(word);
@@ -98,13 +99,15 @@ final class SuggestionStrip extends LinearLayout {
         mWords[RIGHT] = right;
         mMiddleIsCorrection = middleIsCorrection && middle != null;
         // Right-to-left words: the second and third suggestions swap sides, as the keyboard
-        // apps for those languages do; the best one stays in the middle.
+        // apps for those languages do; the best one stays in the middle. The views are swapped
+        // here rather than through the layout direction: the app does not declare
+        // supportsRtl, so views never lay out right to left.
         mRtl = isRtl(middle != null ? middle : left != null ? left : right);
-        setLayoutDirection(mRtl ? LAYOUT_DIRECTION_RTL : LAYOUT_DIRECTION_LTR);
         for (int i = 0; i < 3; i++) {
-            mSlots[i].setText(mWords[i] != null ? mWords[i] : "");
-            mSlots[i].setClickable(mWords[i] != null);
-            mSlots[i].setContentDescription(mWords[i]);
+            String word = mWords[slotAt(i)];
+            mSlots[i].setText(word != null ? word : "");
+            mSlots[i].setClickable(word != null);
+            mSlots[i].setContentDescription(word);
         }
         applyColours();
     }
@@ -122,8 +125,14 @@ final class SuggestionStrip extends LinearLayout {
         return mWords[slot];
     }
 
+    /** The view showing {@code slot}'s word (on the right for LEFT with right-to-left words). */
     TextView slotView(int slot) {
-        return mSlots[slot];
+        return mSlots[slotAt(slot)];
+    }
+
+    /** The slot shown at {@code position} (0-2, left to right), and the other way round. */
+    private int slotAt(int position) {
+        return mRtl && position != MIDDLE ? 2 - position : position;
     }
 
     /** Whether the words are laid out right to left (Hebrew, Arabic). */

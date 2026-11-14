@@ -43,15 +43,20 @@ import kr.jcb1ee.hackerskeyboard2.suggest.SuggestTestSupport;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 36, qualifiers = SuggestTestSupport.QUALIFIERS)
 public class WordStripTest {
-    /** The test keyboard, with the English engine from the source tree. */
+    /** The test keyboard, with the English, Hebrew and Arabic engines from the source tree. */
     public static class EngineIME extends SelectionPanelTest.TestIME {
         static int sEnginesOpened;
+        static String sLastLocale;
 
         @Override
         SuggestionEngine openSuggestionEngine(String locale) {
-            if (!locale.startsWith("en")) return null;
+            if (!locale.startsWith("en") && !locale.startsWith("iw") && !locale.startsWith("he")
+                    && !locale.startsWith("ar")) {
+                return null;
+            }
             sEnginesOpened++;
-            return SuggestTestSupport.englishEngine();
+            sLastLocale = locale;
+            return SuggestTestSupport.engine(locale);
         }
     }
 
@@ -81,7 +86,9 @@ public class WordStripTest {
         if (mToolbar != null && !mToolbar.isToolbarShown()) mToolbar.toggleToolbar();
         if (mToolbar != null) mToolbar.showChips(Collections.<View>emptyList());
         prefs().edit().remove(LatinIME.PREF_WORD_SUGGESTIONS)
-                .remove(LatinIME.PREF_AUTO_CORRECTION).commit();
+                .remove(LatinIME.PREF_AUTO_CORRECTION)
+                .remove(LatinIME.PREF_SELECTED_LANGUAGES)
+                .remove(LatinIME.PREF_INPUT_LANGUAGE).commit();
         SelectionPanelTest.sConnection = null;
         SelectionPanelTest.sInputType = InputType.TYPE_CLASS_TEXT;
         SelectionPanelTest.sEditorInfo = null;
@@ -118,6 +125,13 @@ public class WordStripTest {
         mIme.onStartInput(ei, false);
         mIme.onStartInputView(ei, false);
         idle();
+    }
+
+    /** Like {@link #start}, with {@code language} as the only input language. */
+    private void startIn(String language, int inputType) {
+        prefs().edit().putString(LatinIME.PREF_SELECTED_LANGUAGES, language)
+                .putString(LatinIME.PREF_INPUT_LANGUAGE, language).commit();
+        start(inputType);
     }
 
     private void stop() {
@@ -511,5 +525,136 @@ public class WordStripTest {
                 Arrays.asList(LatinIME.stripSlots("helo", s, "hello")));
         assertEquals(Arrays.asList(null, "qzx", null),
                 Arrays.asList(LatinIME.stripSlots("qzx", Collections.<Suggestion>emptyList(), null)));
+    }
+
+    // ------------------------------------------------------------------ Hebrew and Arabic
+
+    @Test
+    public void hebrewSuggestions() {
+        startIn("iw", MULTI_LINE);
+        assertNotNull("Hebrew has a dictionary", mIme.wordQueue());
+        assertEquals("iw", EngineIME.sLastLocale);
+        type("של");
+        assertTrue(mToolbar.suggestionsShown());
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        assertTrue(strip.isRightToLeft());
+        // The ordinary mem typed at the end: the word with the final form is offered.
+        type("ומ");
+        assertEquals("שלום", strip.wordAt(SuggestionStrip.MIDDLE));
+        strip.slotView(SuggestionStrip.MIDDLE).performClick();
+        settle();
+        assertEquals("שלום |", field());
+    }
+
+    @Test
+    public void hebrewKeyGeometry() {
+        startIn("iw", MULTI_LINE);
+        KeyGeometry keys = mIme.keyGeometry();
+        for (char c : "אבגדהוזחטיכךלמםנןסעפףצץקרשת".toCharArray()) {
+            assertNotNull("key for " + c, keys.keyFor(c));
+        }
+    }
+
+    @Test
+    public void hebrewAutoCorrectionRestoresTheFinalLetter() {
+        prefs().edit().putBoolean(LatinIME.PREF_AUTO_CORRECTION, true).commit();
+        startIn("iw", MULTI_LINE);
+        type("העולמ ");
+        assertEquals("העולם |", field());
+        // And a final form typed inside a word.
+        type("לםה ");
+        assertEquals("העולם למה |", field());
+    }
+
+    @Test
+    public void heIsHebrewToo() {
+        startIn("he", MULTI_LINE);
+        assertNotNull(mIme.wordQueue());
+        type("שלומ");
+        assertEquals("שלום", mToolbar.suggestionStrip().wordAt(SuggestionStrip.MIDDLE));
+    }
+
+    @Test
+    public void arabicSuggestions() {
+        startIn("ar", MULTI_LINE);
+        assertNotNull("Arabic has a dictionary", mIme.wordQueue());
+        KeyGeometry keys = mIme.keyGeometry();
+        for (char c : "ابتثجحخدذرزسشصضطظعغفقكلمنهوي".toCharArray()) {
+            assertNotNull("key for " + c, keys.keyFor(c));
+        }
+        type("حكوم");
+        assertTrue(mToolbar.suggestionsShown());
+        assertTrue(mToolbar.suggestionStrip().isRightToLeft());
+        // Ha typed for ta marbuta: the dictionary's spelling is offered.
+        type("ه");
+        assertEquals("حكومة", mToolbar.suggestionStrip().wordAt(SuggestionStrip.MIDDLE));
+    }
+
+    @Test
+    public void arabicAlefWithAndWithoutHamza() {
+        startIn("ar", MULTI_LINE);
+        // Alef without hamza: the usual spelling goes first, the typed word beside it.
+        type("اكثر");
+        assertEquals("أكثر", mToolbar.suggestionStrip().wordAt(SuggestionStrip.MIDDLE));
+        assertTrue(stripWords().toString(), stripWords().contains("اكثر"));
+        type(" ");
+        assertEquals("kept as typed (a word, never auto-corrected)", "اكثر |", field());
+        // The hamza (shift on the alef key) typed: that word.
+        type("أكثر");
+        assertEquals("أكثر", mToolbar.suggestionStrip().wordAt(SuggestionStrip.MIDDLE));
+    }
+
+    @Test
+    public void arabicHarakatAreIgnored() {
+        startIn("ar", MULTI_LINE);
+        type("حُكومه");
+        assertEquals("حكومة", mToolbar.suggestionStrip().wordAt(SuggestionStrip.MIDDLE));
+    }
+
+    @Test
+    public void arabicPunctuationEndsTheWord() {
+        prefs().edit().putBoolean(LatinIME.PREF_AUTO_CORRECTION, true).commit();
+        startIn("ar", MULTI_LINE);
+        type("حكومه،");
+        assertEquals("حكومة،|", field());
+        assertFalse(composing());
+        assertFalse(mToolbar.suggestionsShown());
+        type(" حكومه؟");
+        assertEquals("حكومة، حكومة؟|", field());
+        type(" حكومه؛");
+        assertEquals("حكومة، حكومة؟ حكومة؛|", field());
+        // The Latin comma and question mark (shifted keys of the Arabic layout) too.
+        type(" حكومه,");
+        assertEquals("حكومة، حكومة؟ حكومة؛ حكومة,|", field());
+        type(" حكومه?");
+        assertEquals("حكومة، حكومة؟ حكومة؛ حكومة, حكومة?|", field());
+        // A word that is a word (الحكومه, in the corpus too) is kept.
+        type(" الحكومه؟");
+        assertEquals("حكومة، حكومة؟ حكومة؛ حكومة, حكومة? الحكومه؟|", field());
+    }
+
+    @Test
+    public void rightToLeftStripSwapsTheSideSlots() {
+        start(MULTI_LINE);
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        strip.setWords("hello", "help", "held", false);
+        layOut(strip);
+        assertTrue("left slot on the left",
+                strip.slotView(SuggestionStrip.LEFT).getLeft()
+                        < strip.slotView(SuggestionStrip.RIGHT).getLeft());
+        strip.setWords("שלומי", "שלום", "של", false);
+        layOut(strip);
+        assertTrue("second suggestion on the right in RTL",
+                strip.slotView(SuggestionStrip.LEFT).getLeft()
+                        > strip.slotView(SuggestionStrip.RIGHT).getLeft());
+        int middle = strip.slotView(SuggestionStrip.MIDDLE).getLeft();
+        assertTrue(middle < strip.slotView(SuggestionStrip.LEFT).getLeft());
+        assertTrue(middle > strip.slotView(SuggestionStrip.RIGHT).getLeft());
+    }
+
+    private static void layOut(View v) {
+        v.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(120, View.MeasureSpec.EXACTLY));
+        v.layout(0, 0, 1080, 120);
     }
 }
