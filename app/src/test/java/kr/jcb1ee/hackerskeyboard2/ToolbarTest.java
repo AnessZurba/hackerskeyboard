@@ -141,6 +141,30 @@ public class ToolbarTest {
         idle();
     }
 
+    /**
+     * Landscape where the window itself stops at a cutout (no inset reported): the keys fit
+     * the narrower window instead of running off its far side.
+     */
+    @Test
+    public void keysFitANarrowerWindow() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        int screen = ime.getResources().getDisplayMetrics().widthPixels;
+        int window = screen - 82;
+        for (int pass = 0; pass < 3; pass++) {
+            idle();
+            toolbar.measure(View.MeasureSpec.makeMeasureSpec(window, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            toolbar.layout(0, 0, window, toolbar.getMeasuredHeight());
+        }
+        LatinKeyboardView view = (LatinKeyboardView) ((ViewGroup) toolbar.getChildAt(1)).getChildAt(0);
+        Keyboard kb = view.getKeyboard();
+        for (Keyboard.Key k : kb.getKeys()) {
+            assertTrue("key at " + k.x + "+" + k.width + " in " + window, k.x + k.width <= window + 1);
+        }
+    }
+
     @Test
     public void toolbarPanelsOpenAndClose() {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();

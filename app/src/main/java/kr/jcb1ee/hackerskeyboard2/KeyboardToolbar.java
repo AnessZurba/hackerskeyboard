@@ -252,10 +252,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 || getPaddingBottom() != nav.bottom) {
             setPadding(nav.left, 0, nav.right, nav.bottom);
         }
-        // Keys are laid out for the screen's width: fit them into what the sides leave.
+        // Keys are laid out for the screen's width: fit them into what this view really has
+        // (the window can be narrower than the screen: in landscape it stops at a cutout,
+        // with no inset reported), less what the sides leave.
         if (mKeyboardView != null) {
-            mKeyboardView.setAvailableWidth(getResources().getDisplayMetrics().widthPixels
-                    - nav.left - nav.right);
+            int width = getWidth() > 0 ? getWidth() : getResources().getDisplayMetrics().widthPixels;
+            mKeyboardView.setAvailableWidth(width - nav.left - nav.right);
         }
     }
 
