@@ -187,6 +187,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     private int mShadowColor;
     private float mShadowRadius;
     private Drawable mKeyBackground;
+    /** The popup resource of the key whose long-press popup is open. */
+    private int mOpenPopupResId;
     /** The colour theme drawn over the layout's own look, or null for an image theme. */
     private KeyboardTheme mTheme;
     private int mBackgroundAlpha;
@@ -1409,6 +1411,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mMiniKeyboard.mDetectSwipes = false;
         mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {
             public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
+                if (mOpenPopupResId == R.xml.popup_mic
+                        && LatinKeyboard.rememberMicKeyChoice(getContext(), primaryCode)) {
+                    LatinIME ime = LatinIME.sInstance;
+                    if (ime != null) ime.mHandler.post(ime::refreshMicKey);
+                }
                 mKeyboardActionListener.onKey(primaryCode, keyCodes, x, y);
                 dismissPopupKeyboard();
             }
@@ -1503,6 +1510,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             inflateMiniKeyboardContainer();
         }
         if (mMiniKeyboard == null) return false;
+        mOpenPopupResId = popupKey.popupResId;
         mMiniKeyboard.setKeyboard(kbd);
         mMiniKeyboardContainer.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.AT_MOST),
                 MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.AT_MOST));

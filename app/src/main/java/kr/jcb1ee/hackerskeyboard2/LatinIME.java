@@ -341,6 +341,7 @@ public class LatinIME extends InputMethodService implements
         KeyboardSwitcher.init(this);
         super.onCreate();
         sInstance = this;
+        LatinKeyboard.loadMicKeyChoice(PreferenceManager.getDefaultSharedPreferences(this));
         listenForNavigationBar();
         mAdaptive = AdaptiveKeyTargets.get(this);
         ClipboardHistory.get(this).setEnabled(PreferenceManager.getDefaultSharedPreferences(this)
@@ -1304,6 +1305,11 @@ public class LatinIME extends InputMethodService implements
             break;
         }
         return super.onKeyUp(keyCode, event);
+    }
+
+    /** The mic/settings key changed its primary: rebuild the keyboards to show it. */
+    void refreshMicKey() {
+        toggleLanguage(true, true); // rebuilds and re-shows the current keyboard
     }
 
     private void reloadKeyboards() {

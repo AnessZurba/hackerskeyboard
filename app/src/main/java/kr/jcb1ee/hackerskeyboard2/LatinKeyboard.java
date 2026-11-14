@@ -258,6 +258,27 @@ public class LatinKeyboard extends Keyboard {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
     }
 
+    /** Remembers which of mic and settings was last picked from the mic/settings popup. */
+    static final String PREF_MIC_KEY = "pref_mic_key_last";
+    /** KEYCODE_VOICE or KEYCODE_OPTIONS as last picked from that popup, or 0 for the default. */
+    static int sMicKeyChoice;
+
+    static void loadMicKeyChoice(android.content.SharedPreferences prefs) {
+        sMicKeyChoice = prefs.getInt(PREF_MIC_KEY, 0);
+    }
+
+    /** The mic/settings key's primary becomes what was last picked from its popup. */
+    static boolean rememberMicKeyChoice(android.content.Context context, int code) {
+        if (code != LatinKeyboardView.KEYCODE_VOICE && code != LatinKeyboardView.KEYCODE_OPTIONS) {
+            return false;
+        }
+        if (code == sMicKeyChoice) return false;
+        sMicKeyChoice = code;
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).edit()
+                .putInt(PREF_MIC_KEY, code).apply();
+        return true;
+    }
+
     public void setVoiceMode(boolean hasVoiceButton, boolean hasVoice) {
         mHasVoiceButton = hasVoiceButton;
         mVoiceEnabled = hasVoice;
@@ -296,19 +317,26 @@ public class LatinKeyboard extends Keyboard {
                 setNonMicF1Key(mF1Key, "@", R.xml.popup_at);
             } else {
                 if (mVoiceEnabled && mHasVoiceButton) {
-                    setMicF1Key(mF1Key);
+                    if (sMicKeyChoice == LatinKeyboardView.KEYCODE_OPTIONS) {
+                        setSettingsF1Key(mF1Key);
+                    } else {
+                        setMicF1Key(mF1Key);
+                    }
                 } else {
                     setNonMicF1Key(mF1Key, ",", R.xml.popup_comma);
                 }
             }
         } else if (mIsAlphaFullKeyboard) {
-        	if (mVoiceEnabled && mHasVoiceButton) {
-        		setMicF1Key(mF1Key);
-        	} else {
-        		setSettingsF1Key(mF1Key);
-        	}
+            // Mic or settings, with the other in the popup: the last one picked sticks.
+            boolean mic = sMicKeyChoice == 0 ? mVoiceEnabled && mHasVoiceButton
+                    : sMicKeyChoice == LatinKeyboardView.KEYCODE_VOICE;
+            if (mic) {
+                setMicF1Key(mF1Key);
+            } else {
+                setSettingsF1Key(mF1Key);
+            }
         } else if (mIsFnFullKeyboard) {
-    		setMicF1Key(mF1Key);        	
+            setPlainMicKey(mF1Key); // just the mic: no settings popup on the Fn layer
         } else {  // Symbols keyboard
             if (mVoiceEnabled && mHasVoiceButton) {
                 setMicF1Key(mF1Key);
@@ -338,6 +366,15 @@ public class LatinKeyboard extends Keyboard {
         key.codes = new int[] { LatinKeyboardView.KEYCODE_VOICE };
         key.icon = micWithSettingsHintDrawable;
         key.iconPreview = mMicPreviewIcon;
+    }
+
+    private void setPlainMicKey(Key key) {
+        key.label = null;
+        key.shiftLabel = null;
+        key.codes = new int[] { LatinKeyboardView.KEYCODE_VOICE };
+        key.icon = mMicIcon;
+        key.iconPreview = mMicPreviewIcon;
+        key.popupResId = 0;
     }
 
     private void setSettingsF1Key(Key key) {
