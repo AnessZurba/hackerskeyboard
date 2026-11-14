@@ -79,6 +79,20 @@ public class LayoutOutputTest {
         }
     }
 
+    /** Hebrew resources are found whether the locale says "he" or the legacy "iw". */
+    @Test
+    public void hebrewLayoutForHeAndIw() {
+        Context c = ApplicationProvider.getApplicationContext();
+        for (String lang : new String[] {"he", "iw"}) {
+            android.content.res.Configuration conf =
+                    new android.content.res.Configuration(c.getResources().getConfiguration());
+            conf.setLocale(new java.util.Locale(lang));
+            Context hc = c.createConfigurationContext(conf);
+            Keyboard kb = new LatinKeyboard(hc, R.xml.kbd_qwerty);
+            assertNotNull(lang + ": Hebrew letter qof", withLabel(kb, "\u05e7"));
+        }
+    }
+
     /** The numpad (number and phone fields) has backspace at the top right. */
     @Test
     public void phoneBackspaceTopRight() {

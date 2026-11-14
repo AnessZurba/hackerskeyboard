@@ -120,9 +120,7 @@ public class LatinIME extends InputMethodService implements
     static final String PREF_SWIPE_RIGHT = "pref_swipe_right";
 
     private static final int MSG_UPDATE_SUGGESTIONS = 0;
-    private static final int MSG_START_TUTORIAL = 1;
     private static final int MSG_UPDATE_SHIFT_STATE = 2;
-    private static final int MSG_VOICE_RESULTS = 3;
     private static final int MSG_UPDATE_OLD_SUGGESTIONS = 4;
 
     // How many continuous deletes at which to start deleting at a higher speed.
@@ -261,7 +259,6 @@ public class LatinIME extends InputMethodService implements
     private boolean mRefreshKeyboardRequired;
 
     // For each word, a list of potential replacements, usually from voice.
-    private Map<String, List<CharSequence>> mWordToSuggestions = new HashMap<String, List<CharSequence>>();
 
     private ArrayList<WordAlternatives> mWordHistory = new ArrayList<WordAlternatives>();
     
@@ -1118,10 +1115,8 @@ public class LatinIME extends InputMethodService implements
             mOptionsDialog.dismiss();
             mOptionsDialog = null;
         }
-        mWordToSuggestions.clear();
         mWordHistory.clear();
         super.hideWindow();
-        TextEntryState.endSession();
     }
 
     @Override
@@ -2991,7 +2986,6 @@ public class LatinIME extends InputMethodService implements
                 inputView.closing();
             }
         }
-        TextEntryState.endSession();
     }
 
     private void saveWordInHistory(CharSequence result) {
@@ -4062,26 +4056,7 @@ public class LatinIME extends InputMethodService implements
         p.println("  mPopupOn=" + mPopupOn);
     }
 
-    // Characters per second measurement
-
-    private long mLastCpsTime;
-    private static final int CPS_BUFFER_SIZE = 16;
-    private long[] mCpsIntervals = new long[CPS_BUFFER_SIZE];
-    private int mCpsIndex;
     private static Pattern NUMBER_RE = Pattern.compile("(\\d+).*");
-
-    private void measureCps() {
-        long now = System.currentTimeMillis();
-        if (mLastCpsTime == 0)
-            mLastCpsTime = now - 100; // Initial
-        mCpsIntervals[mCpsIndex] = now - mLastCpsTime;
-        mLastCpsTime = now;
-        mCpsIndex = (mCpsIndex + 1) % CPS_BUFFER_SIZE;
-        long total = 0;
-        for (int i = 0; i < CPS_BUFFER_SIZE; i++)
-            total += mCpsIntervals[i];
-        System.out.println("CPS = " + ((CPS_BUFFER_SIZE * 1000f) / total));
-    }
 
     public void onAutoCompletionStateChanged(boolean isAutoCompletion) {
         mKeyboardSwitcher.onAutoCompletionStateChanged(isAutoCompletion);

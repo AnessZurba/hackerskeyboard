@@ -17,7 +17,6 @@
 package kr.jcb1ee.hackerskeyboard2;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -281,7 +280,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     // TODO: Let the PointerTracker class manage this pointer queue
     private final PointerQueue mPointerQueue = new PointerQueue();
 
-    private final boolean mHasDistinctMultitouch;
     private int mOldPointerCount = 1;
 
     protected KeyDetector mKeyDetector = new ProximityKeyDetector();
@@ -623,8 +621,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mGestureDetector = new GestureDetector(getContext(), listener, null, ignoreMultitouch);
         mGestureDetector.setIsLongpressEnabled(false);
 
-        mHasDistinctMultitouch = context.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH_DISTINCT);
         mKeyRepeatInterval = res.getInteger(R.integer.config_key_repeat_interval);
     }
 
@@ -698,11 +694,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     }
 
     /**
-     * Return whether the device has distinct multi-touch panel.
-     * @return true if the device has distinct multi-touch panel.
+     * Whether the touch screen tells fingers apart: always, on the devices this app supports
+     * (API 24+); the emulation for screens that couldn't is gone.
      */
     public boolean hasDistinctMultitouch() {
-        return mHasDistinctMultitouch;
+        return true;
     }
 
     /**
@@ -1660,16 +1656,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     public boolean onTouchEvent(MotionEvent me, boolean continuing) {
         final int action = me.getActionMasked();
         final int pointerCount = me.getPointerCount();
-        final int oldPointerCount = mOldPointerCount;
         mOldPointerCount = pointerCount;
         
-        // TODO: cleanup this code into a multi-touch to single-touch event converter class?
-        // If the device does not have distinct multi-touch support panel, ignore all multi-touch
-        // events except a transition from/to single-touch.
-        if (!mHasDistinctMultitouch && pointerCount > 1 && oldPointerCount > 1) {
-            return true;
-        }
-
         // Track the last few movements to look for spurious swipes.
         mSwipeTracker.addMovement(me);
         if (action == MotionEvent.ACTION_DOWN) {
@@ -1756,31 +1744,6 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 mHandler.cancelKeyRepeatTimer();
             }
             // Up event will pass through.
-        }
-
-        // TODO: cleanup this code into a multi-touch to single-touch event converter class?
-        // Translate mutli-touch event to single-touch events on the device that has no distinct
-        // multi-touch panel.
-        if (!mHasDistinctMultitouch) {
-            // Use only main (id=0) pointer tracker.
-            PointerTracker tracker = getPointerTracker(0);
-            if (pointerCount == 1 && oldPointerCount == 2) {
-                // Multi-touch to single touch transition.
-                // Send a down event for the latest pointer.
-                tracker.onDownEvent(x, y, eventTime);
-            } else if (pointerCount == 2 && oldPointerCount == 1) {
-                // Single-touch to multi-touch transition.
-                // Send an up event for the last pointer.
-                tracker.onUpEvent(tracker.getLastX(), tracker.getLastY(), eventTime);
-            } else if (pointerCount == 1 && oldPointerCount == 1) {
-                tracker.onTouchEvent(action, x, y, eventTime);
-            } else {
-                Log.w(TAG, "Unknown touch panel behavior: pointer count is " + pointerCount
-                        + " (old " + oldPointerCount + ")");
-            }
-            if (continuing)
-                tracker.setSlidingKeyInputState(true);
-            return true;
         }
 
         if (action == MotionEvent.ACTION_MOVE) {
