@@ -958,7 +958,6 @@ public class LatinIME extends InputMethodService implements
                 insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.displayCutout()));
         // Only the sides and bottom matter (the window never reaches the status bar).
         bar = androidx.core.graphics.Insets.of(bar.left, 0, bar.right, bar.bottom);
-        noteNavigationBar(insets, bar);
         if (bar.equals(mNavBar)) return;
         mNavBar = bar;
         KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
@@ -972,34 +971,6 @@ public class LatinIME extends InputMethodService implements
      */
     private static void noScrimOnNavigationBar(android.view.Window w) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) w.setNavigationBarContrastEnforced(false);
-    }
-
-    /** The last navigation bar reading, shown under Version in settings (diagnostic). */
-    static final String PREF_NAV_DIAGNOSTIC = "nav_bar_diagnostic";
-
-    private void noteNavigationBar(androidx.core.view.WindowInsetsCompat insets,
-            androidx.core.graphics.Insets used) {
-        int sys = androidx.core.view.WindowInsetsCompat.Type.systemBars();
-        int cap = androidx.core.view.WindowInsetsCompat.Type.captionBar();
-        int nav = androidx.core.view.WindowInsetsCompat.Type.navigationBars();
-        String contrast = "?";
-        android.app.Dialog d = getWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && d != null && d.getWindow() != null) {
-            contrast = String.valueOf(d.getWindow().isNavigationBarContrastEnforced());
-        }
-        String note = (isPortrait() ? "portrait" : "landscape")
-                + ": bars " + insets.getInsets(sys).bottom
-                + " (stable " + insets.getInsetsIgnoringVisibility(sys).bottom + ")"
-                + ", nav " + insets.getInsets(nav).bottom
-                + ", caption " + insets.getInsets(cap).bottom
-                + (insets.isVisible(cap) ? " shown" : " hidden")
-                + ", used " + used.left + "," + used.right + "," + used.bottom
-                + ", scrim " + contrast + " (API " + Build.VERSION.SDK_INT + ")";
-        try {
-            PreferenceManager.getDefaultSharedPreferences(this).edit()
-                    .putString(PREF_NAV_DIAGNOSTIC, note).apply();
-        } catch (RuntimeException ignored) {
-        }
     }
 
     @Override
