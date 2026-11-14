@@ -413,6 +413,13 @@
             android:title="@string/title_version"
             android:summary="@string/auto_version"
             />
+
+    <Preference
+            android:key="dictionary_licences"
+            android:title="@string/title_dictionary_licences"
+            android:summary="@string/summary_dictionary_licences"
+            android:selectable="false"
+            />
     </PreferenceCategory>
 
 </PreferenceScreen>

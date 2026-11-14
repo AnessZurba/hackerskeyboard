@@ -36,6 +36,9 @@
     <string name="title_debugging">Debugging</string>
     <string name="title_input_connection_details">Input connection details</string>
     <string name="title_version">Version</string>
+    <!-- Where the bundled word data comes from; the details are in assets/dicts/NOTICE.txt. -->
+    <string name="title_dictionary_licences">Dictionaries</string>
+    <string name="summary_dictionary_licences">English and Hebrew: AOSP LatinIME word lists (Apache License 2.0).\nArabic: word frequencies from the Leipzig Corpora Collection, Arabic news 2020 and Wikipedia 2021 (CC BY 4.0, wortschatz.uni-leipzig.de), reduced to the 150,000 most frequent words without diacritics.\nArabic key targets: Hermit Dave\'s FrequencyWords from OpenSubtitles (CC BY-SA 4.0).</string>
     <string name="title_swipe_gestures">Swipe gestures (experimental)</string>
 
     <!-- Option to provide vibrate/haptic feedback on keypress -->

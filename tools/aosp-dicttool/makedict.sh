@@ -7,6 +7,9 @@
 # Examples (from the repository root):
 #   # English, from AOSP's en_US wordlist (Apache 2.0):
 #   tools/aosp-dicttool/makedict.sh aosp:en_US_wordlist.combined.gz app/src/main/assets/dicts/main_en.dict
+#   # Hebrew and Arabic, from word lists prepared by tools/mkcombined.py (see there):
+#   tools/aosp-dicttool/makedict.sh iw.combined app/src/main/assets/dicts/main_iw.dict -t on
+#   tools/aosp-dicttool/makedict.sh ar.combined app/src/main/assets/dicts/main_ar.dict -t on
 #   # Any wordlist in AOSP's "combined" text format:
 #   tools/aosp-dicttool/makedict.sh my.combined out.dict -t on
 #

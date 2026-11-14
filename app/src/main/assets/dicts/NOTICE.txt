@@ -1,0 +1,40 @@
+Word suggestion dictionaries (AOSP binary dictionary format v2)
+=================================================================
+
+These files are data, not code, and are distributed under their own licences, which
+differ from the app's (Apache License 2.0). They are built with AOSP's own dicttool
+(tools/aosp-dicttool/makedict.sh) from the sources below; tools/mkcombined.py prepares
+the word lists.
+
+main_en.dict - English
+    Source: AOSP LatinIME, dictionaries/en_US_wordlist.combined.gz, commit 127336e9
+    https://android.googlesource.com/platform/packages/inputmethods/LatinIME
+    Licence: Apache License 2.0. Copyright (C) The Android Open Source Project.
+    Changes: none (converted as is).
+
+main_iw.dict - Hebrew
+    Source: AOSP LatinIME, dictionaries/iw_wordlist.combined.gz, commit 127336e9
+    (same repository). Licence: Apache License 2.0. Copyright (C) The Android Open
+    Source Project.
+    Changes: 94,728 of 94,799 words kept: words with Latin letters or digits, and five
+    run-together words with a final letter inside, were dropped. The list has no niqqud.
+
+main_ar.dict - Arabic
+    Source: Leipzig Corpora Collection (Wortschatz, Leipzig University),
+    https://wortschatz.uni-leipzig.de/en/download , corpora ara_news_2020_1M and
+    ara_wikipedia_2021_1M (word frequency lists, "*-words.txt").
+    Licence: Creative Commons Attribution 4.0 International (CC BY 4.0),
+    https://creativecommons.org/licenses/by/4.0/
+    Citation: D. Goldhahn, T. Eckart, U. Quasthoff: Building Large Monolingual
+    Dictionaries at the Leipzig Corpora Collection: From 100 to 200 Languages.
+    In: Proceedings of LREC 2012.
+    Changes: the counts of both corpora were added up after removing harakat, the
+    superscript alef and tatweel (NFKC); only single words made of the 36 letters of the
+    Arabic alphabet (U+0621-U+063A, U+0641-U+064A) were kept; the 150,000 most frequent
+    were turned into dictionary frequencies (210 + 21 * log10(count / top count)).
+    This dictionary is licensed under CC BY 4.0 as well.
+
+The word lists for adaptive key targets (assets/wordlists) carry their sources in their
+headers: en.txt and he.txt from the same AOSP lists (Apache License 2.0); ar.txt from
+Hermit Dave's FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0,
+https://github.com/hermitdave/FrequencyWords), distributed under the same licence.
