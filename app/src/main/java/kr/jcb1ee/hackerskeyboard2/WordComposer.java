@@ -26,6 +26,9 @@ public class WordComposer {
      * The list of unicode values for each keystroke (including surrounding keys)
      */
     private final ArrayList<int[]> mCodes;
+
+    /** Where each keystroke touched the keyboard (keyboard pixels), -1 when not a touch. */
+    private int[] mXs = new int[12], mYs = new int[12];
     
     /**
      * The word chosen from the candidate list, until it is committed.
@@ -50,6 +53,8 @@ public class WordComposer {
 
     WordComposer(WordComposer copy) {
         mCodes = new ArrayList<int[]>(copy.mCodes);
+        mXs = copy.mXs.clone();
+        mYs = copy.mYs.clone();
         mPreferredWord = copy.mPreferredWord;
         mTypedWord = new StringBuilder(copy.mTypedWord);
         mCapsCount = copy.mCapsCount;
@@ -91,11 +96,36 @@ public class WordComposer {
      * @param codes the array of unicode values
      */
     public void add(int primaryCode, int[] codes) {
+        add(primaryCode, codes, -1, -1);
+    }
+
+    /**
+     * Like {@link #add(int, int[])}, with where the key was touched, in the keyboard's
+     * coordinates (those of its keys, after any width scaling); -1 when it wasn't a touch.
+     */
+    public void add(int primaryCode, int[] codes, int x, int y) {
+        int n = mCodes.size();
+        if (n == mXs.length) {
+            mXs = java.util.Arrays.copyOf(mXs, n * 2);
+            mYs = java.util.Arrays.copyOf(mYs, n * 2);
+        }
+        mXs[n] = x;
+        mYs[n] = y;
         mTypedWord.append((char) primaryCode);
         correctPrimaryJuxtapos(primaryCode, codes);
         correctCodesCase(codes);
         mCodes.add(codes);
         if (Character.isUpperCase((char) primaryCode)) mCapsCount++;
+    }
+
+    /** Touch x per keystroke (-1: not a touch), a copy. */
+    public int[] getXs() {
+        return java.util.Arrays.copyOf(mXs, mCodes.size());
+    }
+
+    /** Touch y per keystroke (-1: not a touch), a copy. */
+    public int[] getYs() {
+        return java.util.Arrays.copyOf(mYs, mCodes.size());
     }
 
     /**

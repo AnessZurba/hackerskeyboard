@@ -1401,7 +1401,10 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                     LatinIME ime = LatinIME.sInstance;
                     if (ime != null) ime.mHandler.post(ime::refreshMicKey);
                 }
-                mKeyboardActionListener.onKey(primaryCode, keyCodes, x, y);
+                // x and y are in the popup's coordinates, not the keyboard's: not a touch
+                // on the keyboard (the word suggestions' spatial model must not use them).
+                mKeyboardActionListener.onKey(primaryCode, keyCodes,
+                        NOT_A_TOUCH_COORDINATE, NOT_A_TOUCH_COORDINATE);
                 dismissPopupKeyboard();
             }
 
