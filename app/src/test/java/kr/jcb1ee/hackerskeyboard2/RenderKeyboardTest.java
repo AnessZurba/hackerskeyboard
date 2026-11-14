@@ -59,6 +59,10 @@ public class RenderKeyboardTest {
             for (char c : "cat".toCharArray()) ime.onKey(c, new int[] {c}, 0, 0);
             Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         }
+        // The word suggestion strip, as while typing "helo" (with a pending auto-correction).
+        if ("words".equals(panel)) toolbar.showSuggestions("helo", "hello", "help", true);
+        if ("words-plain".equals(panel)) toolbar.showSuggestions("help", "hello", "held", false);
+        if ("words-rtl".equals(panel)) toolbar.showSuggestions("שלום", "שלומי", "שלומות", false);
         if ("clipboard".equals(panel)) {
             ClipboardHistory h = ClipboardHistory.get(ime);
             h.add("ssh user@example.com -p 2222");

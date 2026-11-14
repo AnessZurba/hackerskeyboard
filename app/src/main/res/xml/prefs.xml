@@ -255,6 +255,23 @@
             android:key="prediction_settings">
 
         <CheckBoxPreference
+            android:key="word_suggestions"
+            android:title="@string/title_word_suggestions"
+            android:summary="@string/summary_word_suggestions"
+            android:persistent="true"
+            android:defaultValue="false"
+            />
+
+        <CheckBoxPreference
+            android:key="auto_correction"
+            android:title="@string/title_auto_correction"
+            android:summary="@string/summary_auto_correction"
+            android:persistent="true"
+            android:defaultValue="false"
+            android:dependency="word_suggestions"
+            />
+
+        <CheckBoxPreference
             android:key="quick_fixes"
             android:title="@string/quick_fixes"
             android:summary="@string/quick_fixes_summary"

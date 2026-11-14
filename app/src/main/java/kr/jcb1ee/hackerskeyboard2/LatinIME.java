@@ -19,6 +19,11 @@ package kr.jcb1ee.hackerskeyboard2;
 import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW;
 import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW_COMPACT;
 import kr.jcb1ee.hackerskeyboard2.LatinIMEUtil.RingCharBuffer;
+import kr.jcb1ee.hackerskeyboard2.suggest.AospSuggestionEngine;
+import kr.jcb1ee.hackerskeyboard2.suggest.KeyGeometry;
+import kr.jcb1ee.hackerskeyboard2.suggest.Suggestion;
+import kr.jcb1ee.hackerskeyboard2.suggest.SuggestionEngine;
+import kr.jcb1ee.hackerskeyboard2.suggest.SuggestionQueue;
 
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -92,6 +97,10 @@ public class LatinIME extends InputMethodService implements
     private static final String PREF_QUICK_FIXES = "quick_fixes";
     private static final String PREF_SHOW_SUGGESTIONS = "show_suggestions";
     private static final String PREF_AUTO_COMPLETE = "auto_complete";
+    /** Word suggestions in the toolbar row (the AOSP decoder and the bundled dictionaries). */
+    static final String PREF_WORD_SUGGESTIONS = "word_suggestions";
+    /** Space and punctuation apply a confident correction (with Word suggestions on). */
+    static final String PREF_AUTO_CORRECTION = "auto_correction";
     // private static final String PREF_BIGRAM_SUGGESTIONS =
     // "bigram_suggestion";
     private static final String PREF_VOICE_MODE = "voice_mode";
@@ -168,6 +177,21 @@ public class LatinIME extends InputMethodService implements
     private boolean mJustAddedAutoSpace;
     private boolean mAutoCorrectEnabled;
     private boolean mReCorrectionEnabled;
+
+    // Word suggestions in the toolbar row: the engine behind its background queue, for
+    // mWordQueueLocale. Null when the setting is off or the language has no dictionary; the
+    // old suggestion code (CandidateView, plugin dictionaries) then works as before.
+    private SuggestionQueue mWordQueue;
+    private String mWordQueueLocale;
+    private SuggestionQueue.Result mWordResult; // the latest shown, for the typed word
+    private boolean mAutoCorrectionPref;
+    private KeyGeometry mGeometry; // of mGeometryKeyboard at mGeometrySize
+    private Keyboard mGeometryKeyboard;
+    private long mGeometrySize;
+    private static final int WORD_QUERY_SIZE = 6;
+    // How long space or punctuation waits for the decoder before keeping the typed word
+    // (AOSP waits up to 200 ms the same way); queries take a few milliseconds.
+    private static final long AUTO_CORRECTION_WAIT_MS = 200;
     // Bigram Suggestion is disabled in this version.
     private final boolean mBigramSuggestionEnabled = false;
     private boolean mAutoCorrectOn;
@@ -443,6 +467,9 @@ public class LatinIME extends InputMethodService implements
     private boolean suggestionsDisabled() {
         if (mSuggestionForceOff) return true;
         if (mSuggestionForceOn) return false;
+        // "Suggestions in landscape" is about the old candidates window, which takes room
+        // from the app; the toolbar row is there anyway.
+        if (mWordQueue != null) return false;
         return !(mSuggestionsInLandscape || isPortrait());
     }
 
@@ -523,6 +550,7 @@ public class LatinIME extends InputMethodService implements
         mSuggest.setUserBigramDictionary(mUserBigramDictionary);
         mSuggest.setUserDictionary(mUserDictionary);
         mSuggest.setAutoDictionary(mAutoDictionary);
+        openWordSuggestions(sp);
         updateCorrectionMode();
         mWordSeparators = lres.getString(R.string.word_separators);
         mSentenceSeparators = lres.getString(R.string.sentence_separators);
@@ -582,6 +610,9 @@ public class LatinIME extends InputMethodService implements
 
     @Override
     public void onDestroy() {
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .unregisterOnSharedPreferenceChangeListener(this);
+        closeWordSuggestions();
         if (mUserDictionary != null) {
             mUserDictionary.close();
         }
@@ -848,7 +879,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void checkReCorrectionOnStart() {
-        if (mReCorrectionEnabled && isPredictionOn()) {
+        if (reCorrectionOn() && isPredictionOn()) {
             // First get the cursor position. This is required by
             // setOldSuggestions(), so that
             // it can pass the correct range to setComposingRegion(). At this
@@ -978,6 +1009,11 @@ public class LatinIME extends InputMethodService implements
         if (mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel();
         }
+        if (mWordQueue != null) mWordQueue.cancel();
+        mWordResult = null;
+        if (mKeyboardSwitcher.getInputContainer() != null) {
+            mKeyboardSwitcher.getInputContainer().clearSuggestions();
+        }
         // Remove penging messages related to update suggestions
         mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
         mHandler.removeMessages(MSG_UPDATE_OLD_SUGGESTIONS);
@@ -1037,7 +1073,7 @@ public class LatinIME extends InputMethodService implements
         mLastSelectionStart = newSelStart;
         mLastSelectionEnd = newSelEnd;
 
-        if (mReCorrectionEnabled) {
+        if (reCorrectionOn()) {
             // Don't look for corrections if the keyboard is not visible
             if (mKeyboardSwitcher != null
                     && mKeyboardSwitcher.getInputView() != null
@@ -1080,7 +1116,7 @@ public class LatinIME extends InputMethodService implements
      */
     @Override
     public void onExtractedTextClicked() {
-        if (mReCorrectionEnabled && isPredictionOn())
+        if (reCorrectionOn() && isPredictionOn())
             return;
 
         super.onExtractedTextClicked();
@@ -1097,7 +1133,7 @@ public class LatinIME extends InputMethodService implements
      */
     @Override
     public void onExtractedCursorMovement(int dx, int dy) {
-        if (mReCorrectionEnabled && isPredictionOn())
+        if (reCorrectionOn() && isPredictionOn())
             return;
 
         super.onExtractedCursorMovement(dx, dy);
@@ -1151,7 +1187,7 @@ public class LatinIME extends InputMethodService implements
         && onEvaluateInputViewShown()
         && mKeyboardSwitcher.getInputView() != null
         && isPredictionOn()
-        && hasSuggestionSource()
+        && candidatesWindowHasSource()
         && (needsInputViewShown
                 ? mKeyboardSwitcher.getInputView().isShown()
                         : true);
@@ -1983,7 +2019,7 @@ public class LatinIME extends InputMethodService implements
             if (isWordSeparator(primaryCode)) {
                 handleSeparator(primaryCode);
             } else {
-                handleCharacter(primaryCode, keyCodes);
+                handleCharacter(primaryCode, keyCodes, x, y);
             }
             // Cancel the just reverted state
             mJustRevertedSeparator = null;
@@ -2005,7 +2041,8 @@ public class LatinIME extends InputMethodService implements
             int c = text.charAt(0);
             if (!isWordSeparator(c)) {
                 int[] codes = {c};
-                handleCharacter(c, codes);
+                handleCharacter(c, codes, LatinKeyboardBaseView.NOT_A_TOUCH_COORDINATE,
+                        LatinKeyboardBaseView.NOT_A_TOUCH_COORDINATE);
                 return;
             }
         }
@@ -2839,7 +2876,11 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
-    private void handleCharacter(int primaryCode, int[] keyCodes) {
+    /**
+     * @param x where the key was touched, in the keyboard's coordinates (those of its keys,
+     *     as the key detector compares them: after any width scaling); -1 when not a touch
+     */
+    private void handleCharacter(int primaryCode, int[] keyCodes, int x, int y) {
         if (mLastSelectionStart == mLastSelectionEnd
                 && TextEntryState.isCorrecting()) {
             abortCorrection(false);
@@ -2871,7 +2912,7 @@ public class LatinIME extends InputMethodService implements
                 mWord.setFirstCharCapitalized(true);
             }
             mComposing.append((char) primaryCode);
-            mWord.add(primaryCode, keyCodes);
+            mWord.add(primaryCode, keyCodes != null ? keyCodes : new int[] {primaryCode}, x, y);
             InputConnection ic = getCurrentInputConnection();
             if (ic != null) {
                 // If it's the first letter, make note of auto-caps state
@@ -2923,7 +2964,7 @@ public class LatinIME extends InputMethodService implements
                 // as "added an auto space" in autocomplete mode, but as manually
                 // typed space in "quick fixes" mode.
                 if (primaryCode == ASCII_SPACE) {
-                    if (mAutoCorrectEnabled) {
+                    if (mWordQueue != null ? mAutoCorrectionPref : mAutoCorrectEnabled) {
                         mJustAddedAutoSpace = true;
                     } else {
                         TextEntryState.manualTyped("");
@@ -3004,6 +3045,10 @@ public class LatinIME extends InputMethodService implements
 
     private void postUpdateSuggestions() {
         mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
+        if (mWordQueue != null) { // asks in the background: no need to wait for a pause
+            updateSuggestions();
+            return;
+        }
         mHandler.sendMessageDelayed(mHandler
                 .obtainMessage(MSG_UPDATE_SUGGESTIONS), 100);
     }
@@ -3019,7 +3064,8 @@ public class LatinIME extends InputMethodService implements
     }
 
     private boolean isPredictionWanted() {
-        return (mShowSuggestions || mSuggestionForceOn) && !suggestionsDisabled();
+        return (mShowSuggestions || mSuggestionForceOn || mWordQueue != null)
+                && !suggestionsDisabled();
     }
 
     private boolean isCandidateStripVisible() {
@@ -3033,7 +3079,14 @@ public class LatinIME extends InputMethodService implements
      * above the keyboard, so it is not shown.
      */
     private boolean hasSuggestionSource() {
-        return mCompletionOn || (mSuggest != null && mSuggest.hasMainDictionary());
+        return mCompletionOn || wordStripAvailable()
+                || (mSuggest != null && mSuggest.hasMainDictionary());
+    }
+
+    /** Whether the old candidates window has anything to show (never the word suggestions). */
+    private boolean candidatesWindowHasSource() {
+        return mCompletionOn
+                || (mWordQueue == null && mSuggest != null && mSuggest.hasMainDictionary());
     }
 
     private void switchToKeyboardView() {
@@ -3073,7 +3126,149 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
+    // ---------------------------------------------------------------- word suggestions
+
+    /** Opens (or closes) the word suggestions for the input language, as the settings say. */
+    private void openWordSuggestions(SharedPreferences sp) {
+        mAutoCorrectionPref = sp.getBoolean(PREF_AUTO_CORRECTION, false);
+        String locale = sp.getBoolean(PREF_WORD_SUGGESTIONS, false) ? mInputLocale : null;
+        if (mWordQueue != null && TextUtils.equals(locale, mWordQueueLocale)) return;
+        closeWordSuggestions();
+        if (locale == null) return;
+        SuggestionEngine engine = openSuggestionEngine(locale);
+        if (engine == null) return; // no dictionary for this language: nothing is shown
+        mWordQueue = new SuggestionQueue(engine, mHandler::post, this::onWordSuggestions);
+        mWordQueueLocale = locale;
+    }
+
+    private void closeWordSuggestions() {
+        if (mWordQueue == null) return;
+        mWordQueue.close();
+        mWordQueue = null;
+        mWordQueueLocale = null;
+        mWordResult = null;
+        KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
+        if (toolbar != null) toolbar.clearSuggestions();
+    }
+
+    /** The suggestion engine for {@code locale}, or null if none (tests replace it). */
+    SuggestionEngine openSuggestionEngine(String locale) {
+        return AospSuggestionEngine.open(this, locale);
+    }
+
+    /** The word suggestions' queue, or null when they are off (tests). */
+    SuggestionQueue wordQueue() {
+        return mWordQueue;
+    }
+
+    /**
+     * Whether word suggestions can be shown: on, a dictionary for the language, and the
+     * toolbar row shown. A row the user hid is not brought back for them; suggestions,
+     * composing and auto-correction then stay off, as without the setting.
+     */
+    private boolean wordStripAvailable() {
+        if (mWordQueue == null) return false;
+        KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
+        return toolbar != null && toolbar.isToolbarShown();
+    }
+
+    /** The toolbar row was shown or hidden by the user. */
+    void onToolbarRowToggled() {
+        if (mWordQueue == null) return;
+        if (!wordStripAvailable()) commitTyped(getCurrentInputConnection(), true);
+        updateCorrectionMode();
+        updateSuggestions();
+    }
+
+    private boolean reCorrectionOn() {
+        // Touch-to-correct belongs to the old candidates window.
+        return mReCorrectionEnabled && mWordQueue == null;
+    }
+
+    /** Asks for suggestions for the word being typed, or clears them when there is none. */
+    private void updateWordStrip() {
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        CharSequence typed = mWord.getTypedWord();
+        if (!mPredicting || typed == null || !isPredictionOn() || !wordStripAvailable()) {
+            mWordQueue.cancel();
+            mWordResult = null;
+            if (toolbar != null) toolbar.clearSuggestions();
+            return;
+        }
+        // The strip keeps the last word's suggestions until these arrive (no flicker).
+        mWordQueue.request(typed.toString(), mWord.getXs(), mWord.getYs(), keyGeometry(),
+                WORD_QUERY_SIZE);
+    }
+
+    /** The current keyboard's keys for the decoder, rebuilt when the keys move or resize. */
+    KeyGeometry keyGeometry() {
+        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        Keyboard kb = view != null ? view.getKeyboard() : null;
+        if (kb == null) return null;
+        long size = ((long) kb.getMinWidth() << 32) | (kb.getHeight() & 0xFFFFFFFFL);
+        if (kb != mGeometryKeyboard || size != mGeometrySize) {
+            mGeometry = KeyGeometry.fromKeyboard(kb);
+            mGeometryKeyboard = kb;
+            mGeometrySize = size;
+        }
+        return mGeometry;
+    }
+
+    /** A result from the queue, on the main thread (stale ones never get here). */
+    private void onWordSuggestions(SuggestionQueue.Result r) {
+        CharSequence typed = mWord.getTypedWord();
+        if (mWordQueue == null || !mPredicting || typed == null || !r.typed.contentEquals(typed)) {
+            return;
+        }
+        mWordResult = r;
+        String correction = wordCorrection(r);
+        mBestWord = correction != null ? correction : r.typed;
+        String[] slots = stripSlots(r.typed, r.suggestions, correction);
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar != null) toolbar.showSuggestions(slots[0], slots[1], slots[2], correction != null);
+    }
+
+    /** What space would put in place of the typed word, or null to keep it. */
+    private String wordCorrection(SuggestionQueue.Result r) {
+        if (!mAutoCorrectOn || mWord.isMostlyCaps() || TextEntryState.isCorrecting()) return null;
+        return r.autoCorrection(SuggestionQueue.AUTO_CORRECTION_THRESHOLD);
+    }
+
+    /**
+     * The strip's left, middle and right words: the best in the middle. With an
+     * auto-correction pending, the typed word goes on the left (tap it to keep it).
+     */
+    static String[] stripSlots(String typed, List<Suggestion> suggestions, String correction) {
+        List<String> words = new ArrayList<>();
+        for (Suggestion s : suggestions) {
+            if (!words.contains(s.word)) words.add(s.word);
+        }
+        if (correction != null) {
+            String next = null;
+            for (String w : words) {
+                if (!w.equals(typed) && !w.equals(correction)) {
+                    next = w;
+                    break;
+                }
+            }
+            return new String[] {typed, correction, next};
+        }
+        if (words.isEmpty()) return new String[] {null, typed, null};
+        return new String[] {words.size() > 1 ? words.get(1) : null, words.get(0),
+                words.size() > 2 ? words.get(2) : null};
+    }
+
+    /** A word tapped in the toolbar strip: it replaces the word being typed. */
+    void pickStripSuggestion(String word) {
+        if (mWordQueue == null || !mPredicting) return;
+        pickSuggestionManually(-1, word);
+    }
+
     private void updateSuggestions() {
+        if (mWordQueue != null) {
+            updateWordStrip();
+            return;
+        }
         LatinKeyboardView inputView = mKeyboardSwitcher.getInputView();
         ((LatinKeyboard) inputView.getKeyboard()).setPreferredLetters(null);
 
@@ -3155,6 +3350,17 @@ public class LatinIME extends InputMethodService implements
     }
 
     private boolean pickDefaultSuggestion() {
+        if (mWordQueue != null) {
+            CharSequence typed = mWord.getTypedWord();
+            if (typed == null) return false;
+            SuggestionQueue.Result r = mWordResult;
+            if (r == null || !r.typed.contentEquals(typed)) {
+                // Typed faster than the decoder answered: wait a little for this word's.
+                r = mWordQueue.await(AUTO_CORRECTION_WAIT_MS);
+            }
+            String correction = r != null && r.typed.contentEquals(typed) ? wordCorrection(r) : null;
+            mBestWord = correction != null ? correction : typed.toString();
+        }
         // Complete any pending candidate query first
         if (mHandler.hasMessages(MSG_UPDATE_SUGGESTIONS)) {
             mHandler.removeMessages(MSG_UPDATE_SUGGESTIONS);
@@ -3173,8 +3379,6 @@ public class LatinIME extends InputMethodService implements
     }
 
     public void pickSuggestionManually(int index, CharSequence suggestion) {
-        List<CharSequence> suggestions = mCandidateView.getSuggestions();
-
         final boolean correcting = TextEntryState.isCorrecting();
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
@@ -3225,7 +3429,7 @@ public class LatinIME extends InputMethodService implements
             mJustAddedAutoSpace = true;
         }
 
-        final boolean showingAddToDictionaryHint = index == 0
+        final boolean showingAddToDictionaryHint = index == 0 && mWordQueue == null
                 && mCorrectionMode > 0 && !mSuggest.isValidWord(suggestion)
                 && !mSuggest.isValidWord(suggestion.toString().toLowerCase());
 
@@ -3244,7 +3448,7 @@ public class LatinIME extends InputMethodService implements
             clearSuggestions();
             postUpdateOldSuggestions();
         }
-        if (showingAddToDictionaryHint) {
+        if (showingAddToDictionaryHint && mCandidateView != null) {
             mCandidateView.showAddToDictionaryHint(suggestion);
         }
         if (ic != null) {
@@ -3361,6 +3565,10 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void setNextSuggestions() {
+        if (mWordQueue != null) {
+            updateWordStrip(); // no word: the toolbar buttons come back
+            return;
+        }
         setSuggestions(mSuggestPuncList, false, false, false);
     }
 
@@ -3382,6 +3590,9 @@ public class LatinIME extends InputMethodService implements
     private void checkAddToDictionary(CharSequence suggestion,
             int frequencyDelta, boolean addToBigramDictionary) {
         if (suggestion == null || suggestion.length() < 1)
+            return;
+        // The old learning (AutoDictionary, user bigrams) feeds only the old suggestions.
+        if (mWordQueue != null)
             return;
         // Only auto-add to dictionary if auto-correct is ON. Otherwise we'll be
         // adding words in situations where the user or application really
@@ -3520,6 +3731,12 @@ public class LatinIME extends InputMethodService implements
         EdgeRepeat.sEdgeDp = getPrefInt(sharedPreferences, EdgeRepeat.PREF, EdgeRepeat.DEFAULT_DP);
         if (ClipboardHistory.PREF_ENABLED.equals(key)) {
             ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
+        }
+        if (PREF_WORD_SUGGESTIONS.equals(key) || PREF_AUTO_CORRECTION.equals(key)) {
+            commitTyped(getCurrentInputConnection(), true);
+            openWordSuggestions(sharedPreferences);
+            updateCorrectionMode();
+            if (mKeyboardSwitcher.getInputView() != null) updateSuggestions();
         }
         if (sKeyboardSettings.hasFlag(GlobalKeyboardSettings.FLAG_PREF_NEED_RELOAD)) {
             needReload = true;
@@ -3909,6 +4126,18 @@ public class LatinIME extends InputMethodService implements
     }
 
     private void updateCorrectionMode() {
+        if (mWordQueue != null) {
+            // Like the old code with a dictionary and quick fixes: the double-space period
+            // and the punctuation swaps where the field allows corrections; auto-correction
+            // itself only with its setting. Nothing while the toolbar row is hidden.
+            boolean on = wordStripAvailable() && !mInputTypeNoAutoCorrect && !suggestionsDisabled();
+            mHasDictionary = wordStripAvailable();
+            mAutoCorrectOn = on && mAutoCorrectionPref;
+            mCorrectionMode = !on ? Suggest.CORRECTION_NONE
+                    : mAutoCorrectOn ? Suggest.CORRECTION_FULL : Suggest.CORRECTION_BASIC;
+            if (mSuggest != null) mSuggest.setCorrectionMode(mCorrectionMode);
+            return;
+        }
         mHasDictionary = mSuggest != null ? mSuggest.hasMainDictionary()
                 : false;
         mAutoCorrectOn = (mAutoCorrectEnabled || mQuickFixes)
@@ -3985,6 +4214,7 @@ public class LatinIME extends InputMethodService implements
         mAutoCorrectEnabled = sp.getBoolean(PREF_AUTO_COMPLETE, mResources
                 .getBoolean(R.bool.enable_autocorrect))
                 & mShowSuggestions;
+        mAutoCorrectionPref = sp.getBoolean(PREF_AUTO_CORRECTION, false);
         // mBigramSuggestionEnabled = sp.getBoolean(
         // PREF_BIGRAM_SUGGESTIONS, true) & mShowSuggestions;
         updateCorrectionMode();

@@ -78,6 +78,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final LinearLayout mChipRow;
     private final LinearLayout mPinnedRow; // the password manager's own icon, fixed at the start
     private final ImageView mChipsDismiss;
+    // Word suggestions while a word is typed, in the buttons' place (after autofill chips).
+    private final SuggestionStrip mStrip;
     // True while the row is shown only because autofill chips are offered.
     private boolean mShownForChips;
     private LatinKeyboardView mKeyboardView;
@@ -166,6 +168,10 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         });
         mChipsDismiss.setVisibility(GONE);
         mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
+        mStrip = new SuggestionStrip(ime);
+        mStrip.setListener(word -> ime().pickStripSuggestion(word));
+        mStrip.setVisibility(GONE);
+        mBar.addView(mStrip, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         // Landscape: the system's bar with ⌄ (hide) and the keyboard switcher isn't shown
         // there, so the row ends with the same two buttons (only while the row is shown).
         mSystemButtons = new LinearLayout(ime);
@@ -307,10 +313,12 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mShownForChips = !mToolbarShown && hasChips();
         updateChipsButton();
         if (mToolbarShown && !wasShown) {
+            updateRowContent();
             revealBar();
         } else if (!mToolbarShown && !hasChips()) {
             concealBar();
         }
+        ime().onToolbarRowToggled();
     }
 
     private void revealBar() {
@@ -328,6 +336,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             mBar.setVisibility(INVISIBLE);
             if (!hasChips() && !mSearching) {
                 for (View cell : mCells) cell.setVisibility(VISIBLE); // ready for next time
+                mStrip.setVisibility(GONE);
             }
             mBar.setAlpha(1f);
             mBar.setTranslationY(0f);
@@ -345,6 +354,16 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     /** The keyboard's background colour, as sampled for the toolbar. */
     int backgroundColour() {
         return mBackground;
+    }
+
+    /** The toolbar's text and icon colour. */
+    int foregroundColour() {
+        return mForeground;
+    }
+
+    /** The toolbar's highlight colour. */
+    int accentColour() {
+        return mAccent;
     }
 
     boolean hasChips() {
@@ -372,7 +391,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         // Chips gone from a row shown only for them: it fades out empty, and the buttons
         // come back once it's hidden (not during the fade).
         boolean concealing = !any && mShownForChips;
-        for (View cell : mCells) cell.setVisibility(any || concealing ? GONE : VISIBLE);
+        boolean words = !any && !concealing && wordsShown();
+        for (View cell : mCells) cell.setVisibility(any || concealing || words ? GONE : VISIBLE);
+        mStrip.setVisibility(words ? VISIBLE : GONE);
         mChipClip.setVisibility(any ? VISIBLE : GONE);
         mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
@@ -412,6 +433,46 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             lp.gravity = Gravity.CENTER_VERTICAL;
             row.addView(chip, lp);
         }
+    }
+
+    // ------------------------------------------------------------------ word suggestions
+
+    /**
+     * Shows word suggestions in the buttons' place (best in the middle); all null puts the
+     * buttons back. Autofill chips and the emoji search keep the row while they are there,
+     * and a row the user hid stays hidden (the words are not shown then).
+     */
+    void showSuggestions(String left, String middle, String right, boolean middleIsCorrection) {
+        mStrip.setWords(left, middle, right, middleIsCorrection);
+        updateRowContent();
+    }
+
+    void clearSuggestions() {
+        if (!mStrip.hasWords()) return;
+        mStrip.clear();
+        updateRowContent();
+    }
+
+    /** The strip (tests). */
+    SuggestionStrip suggestionStrip() {
+        return mStrip;
+    }
+
+    /** Whether word suggestions are on screen now. */
+    boolean suggestionsShown() {
+        return mStrip.getVisibility() == VISIBLE && mBar.getVisibility() == VISIBLE;
+    }
+
+    private boolean wordsShown() {
+        return mStrip.hasWords() && mToolbarShown;
+    }
+
+    /** Buttons or word suggestions, whichever belongs in the row (not during chips or search). */
+    private void updateRowContent() {
+        if (mSearching || hasChips()) return;
+        boolean words = wordsShown();
+        for (View cell : mCells) cell.setVisibility(words ? GONE : VISIBLE);
+        mStrip.setVisibility(words ? VISIBLE : GONE);
     }
 
     /** ">" on the chips: the regular toolbar (or, if the user keeps it hidden, nothing). */
@@ -1484,6 +1545,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         android.text.Selection.setSelection(mQuery, 0);
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
+        mStrip.setVisibility(GONE);
         mChipClip.setVisibility(GONE);
         mPinnedRow.setVisibility(GONE);
         mChipsDismiss.setVisibility(GONE);
@@ -1499,10 +1561,10 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         ime().setSearchConnection(null);
         mSearchRow.setVisibility(GONE);
         boolean chips = hasChips();
-        for (View cell : mCells) cell.setVisibility(chips ? GONE : VISIBLE);
         mChipClip.setVisibility(chips ? VISIBLE : GONE);
         mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(chips ? VISIBLE : GONE);
+        updateRowContent();
         if (toPanel) togglePanel(PANEL_EMOJI);
     }
 
@@ -1869,6 +1931,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         matchNavigationBar(light);
         invalidate();
         mChipsDismiss.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
+        mStrip.setColours(mBackground, mForeground, mAccent);
         updateButtons();
         if (mSystemButtons != null) updateSystemButtons();
     }
