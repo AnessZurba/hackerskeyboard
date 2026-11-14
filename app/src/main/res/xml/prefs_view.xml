@@ -24,6 +24,9 @@
         android:key="graphics_settings"
         android:title="@string/pref_screen_view_title" >
 
+        <kr.jcb1ee.hackerskeyboard2.ThemePreviewPreference
+            android:key="theme_preview" />
+
         <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:defaultValue="@string/default_hint_mode"
             android:entries="@array/hint_modes"

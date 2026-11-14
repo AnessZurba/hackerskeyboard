@@ -691,10 +691,15 @@ public class KeyboardSwitcher implements
     private int themeLayout(int id) {
         id = KeyboardTheme.current(id);
         mTheme = KeyboardTheme.forId(mInputMethodService, id);
-        if (mTheme != null) {
-            return mTheme.light ? R.layout.input_material_light : R.layout.input_material_dark;
+        return layoutFor(id, mTheme);
+    }
+
+    /** The layout a theme id is drawn with (colour themes over the Material layouts). */
+    static int layoutFor(int id, KeyboardTheme theme) {
+        if (theme != null) {
+            return theme.light ? R.layout.input_material_light : R.layout.input_material_dark;
         }
-        return THEMES[id];
+        return id >= 0 && id < THEMES.length ? THEMES[id] : R.layout.input_material_black;
     }
 
     /**
