@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * Modified for Hacker's Keyboard 2: registers against our Java class name.
+ */
+
 #define LOG_TAG "LatinIME: jni: ProximityInfo"
 
 #include "com_android_inputmethod_keyboard_ProximityInfo.h"
@@ -57,7 +61,7 @@ static const JNINativeMethod sMethods[] = {
 };
 
 int register_ProximityInfo(JNIEnv *env) {
-    const char *const kClassPathName = "com/android/inputmethod/keyboard/ProximityInfo";
+    const char *const kClassPathName = HK_JNI_CLASS("ProximityInfo");
     return registerNativeMethods(env, kClassPathName, sMethods, NELEMS(sMethods));
 }
 } // namespace latinime

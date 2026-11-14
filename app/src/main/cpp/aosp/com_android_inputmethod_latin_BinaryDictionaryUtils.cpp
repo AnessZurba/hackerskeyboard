@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * Modified for Hacker's Keyboard 2: registers against our Java class name.
+ */
+
 #define LOG_TAG "LatinIME: jni: BinaryDictionaryUtils"
 
 #include "com_android_inputmethod_latin_BinaryDictionaryUtils.h"
@@ -99,7 +103,7 @@ static const JNINativeMethod sMethods[] = {
 };
 
 int register_BinaryDictionaryUtils(JNIEnv *env) {
-    const char *const kClassPathName = "com/android/inputmethod/latin/utils/BinaryDictionaryUtils";
+    const char *const kClassPathName = HK_JNI_CLASS("BinaryDictionaryUtils");
     return registerNativeMethods(env, kClassPathName, sMethods, NELEMS(sMethods));
 }
 } // namespace latinime

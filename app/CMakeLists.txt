@@ -48,3 +48,8 @@ target_link_libraries( # Specifies the target library.
 # Required for Google Play: all new apps targeting Android 15+ must support
 # 16 KB page sizes. This linker flag aligns LOAD segments to 16 KB boundaries.
 target_link_options(jni_pckeyboard PRIVATE "-Wl,-z,max-page-size=16384")
+
+# libjni_latinime: the AOSP LatinIME decoder for the new suggestion engine
+# (app/src/main/cpp/aosp/README.md). The old libjni_pckeyboard above stays until the old
+# suggestion code is removed.
+add_subdirectory(src/main/cpp/aosp)

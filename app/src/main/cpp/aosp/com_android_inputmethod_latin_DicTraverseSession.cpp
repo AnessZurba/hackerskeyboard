@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * Modified for Hacker's Keyboard 2: registers against our Java class name.
+ */
+
 #define LOG_TAG "LatinIME: jni: Session"
 
 #include "com_android_inputmethod_latin_DicTraverseSession.h"
@@ -74,7 +78,7 @@ static const JNINativeMethod sMethods[] = {
 };
 
 int register_DicTraverseSession(JNIEnv *env) {
-    const char *const kClassPathName = "com/android/inputmethod/latin/DicTraverseSession";
+    const char *const kClassPathName = HK_JNI_CLASS("DicTraverseSession");
     return registerNativeMethods(env, kClassPathName, sMethods, NELEMS(sMethods));
 }
 } // namespace latinime

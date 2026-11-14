@@ -45,6 +45,10 @@ android {
             version = "3.22.1" // the SDK's CMake; pinned like the NDK
         }
     }
+    androidResources {
+        // The AOSP dictionaries are mapped straight out of the APK, so they must be stored.
+        noCompress += 'dict'
+    }
     buildFeatures {
         resValues = true // app_package and auto_version below
     }
@@ -63,12 +67,44 @@ android {
     }
 }
 
+// The JVM unit tests run the AOSP decoder (app/src/main/cpp/aosp) as a desktop library built
+// here with the machine's CMake and C++ compiler. Without them the task does nothing and the
+// suggestion tests are skipped. The build lives in the root build/ dir, so "clean" keeps it.
+def hostJniDir = rootProject.layout.buildDirectory.dir('host-jni').get().asFile
+def hostJniLib = new File(hostJniDir, System.getProperty('os.name').toLowerCase().contains('mac')
+        ? 'libjni_latinime.dylib' : 'libjni_latinime.so')
+def onPath = { String tool ->
+    System.getenv('PATH').split(File.pathSeparator).any { new File(it, tool).canExecute() }
+}
+tasks.register('hostSuggestJni') {
+    description = 'Builds libjni_latinime for this machine, for the unit tests.'
+    def src = file('src/main/cpp/aosp')
+    inputs.dir(src)
+    outputs.file(hostJniLib)
+    onlyIf { onPath('cmake') && (onPath('c++') || onPath('clang++') || onPath('g++')) }
+    doLast {
+        def include = "${System.getProperty('java.home')}/include"
+        def platform = new File(include).listFiles()?.find { it.isDirectory() }
+        def cmakeArgs = ['cmake', '-S', src.path, '-B', hostJniDir.path, '-DHK_HOST_JNI=ON',
+                         '-DCMAKE_BUILD_TYPE=Release',
+                         "-DJNI_INCLUDE_DIRS=${include}${platform ? ';' + platform : ''}"]
+        if (onPath('clang++')) cmakeArgs << '-DCMAKE_CXX_COMPILER=clang++'
+        providers.exec { commandLine cmakeArgs }.result.get()
+        providers.exec {
+            commandLine 'cmake', '--build', hostJniDir.path, '--parallel',
+                    "${Runtime.runtime.availableProcessors()}"
+        }.result.get()
+    }
+}
+
 android.testOptions.unitTests.includeAndroidResources = true
 // Robolectric downloads its Android runtime jar at test time; pass
 // -ProbolectricDeps=<dir holding the jar> to run offline instead.
 android.testOptions.unitTests.all {
     // Robolectric's Android 16 runtime reaches into FileDescriptor internals.
     jvmArgs '--add-opens=java.base/java.io=ALL-UNNAMED', '--add-exports=java.base/jdk.internal.access=ALL-UNNAMED'
+    dependsOn 'hostSuggestJni'
+    systemProperty 'hk.suggest.hostJni', hostJniLib.path
     if (project.hasProperty('robolectricDeps')) {
         systemProperty 'robolectric.offline', 'true'
         systemProperty 'robolectric.dependency.dir', project.property('robolectricDeps')

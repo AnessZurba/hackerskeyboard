@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
+/*
+ * Modified for Hacker's Keyboard 2: adds HK_JNI_CLASS() for the Java package the natives are registered in.
+ */
+
 #ifndef LATINIME_JNI_COMMON_H
 #define LATINIME_JNI_COMMON_H
 
 #include "jni.h"
+
+// The Java classes live in kr.jcb1ee.hackerskeyboard2.suggest instead of
+// com.android.inputmethod.latin / com.android.inputmethod.keyboard.
+#define HK_JNI_CLASS(name) "kr/jcb1ee/hackerskeyboard2/suggest/" name
 
 namespace latinime {
 int registerNativeMethods(JNIEnv *env, const char *const className, const JNINativeMethod *methods,

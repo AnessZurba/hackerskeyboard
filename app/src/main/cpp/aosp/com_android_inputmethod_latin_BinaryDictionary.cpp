@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/*
+ * Modified for Hacker's Keyboard 2: registers against our Java class name and only
+ * the methods our Java side declares (see the method table).
+ */
+
 #define LOG_TAG "LatinIME: jni: BinaryDictionary"
 
 #include "com_android_inputmethod_latin_BinaryDictionary.h"
@@ -616,6 +621,8 @@ static bool latinime_BinaryDictionary_migrateNative(JNIEnv *env, jclass clazz, j
     return true;
 }
 
+// Hacker's Keyboard 2: getWordPropertyNative, getNextWordNative,
+// updateEntriesForInputEventsNative and migrateNative are not registered (not used).
 static const JNINativeMethod sMethods[] = {
     {
         const_cast<char *>("openNative"),
@@ -678,18 +685,6 @@ static const JNINativeMethod sMethods[] = {
         reinterpret_cast<void *>(latinime_BinaryDictionary_getNgramProbability)
     },
     {
-        const_cast<char *>("getWordPropertyNative"),
-        const_cast<char *>("(J[IZ[I[Z[ILjava/util/ArrayList;Ljava/util/ArrayList;"
-                "Ljava/util/ArrayList;Ljava/util/ArrayList;Ljava/util/ArrayList;"
-                "Ljava/util/ArrayList;)V"),
-        reinterpret_cast<void *>(latinime_BinaryDictionary_getWordProperty)
-    },
-    {
-        const_cast<char *>("getNextWordNative"),
-        const_cast<char *>("(JI[I[Z)I"),
-        reinterpret_cast<void *>(latinime_BinaryDictionary_getNextWord)
-    },
-    {
         const_cast<char *>("addUnigramEntryNative"),
         const_cast<char *>("(J[II[IIZZZI)Z"),
         reinterpret_cast<void *>(latinime_BinaryDictionary_addUnigramEntry)
@@ -715,12 +710,6 @@ static const JNINativeMethod sMethods[] = {
         reinterpret_cast<void *>(latinime_BinaryDictionary_updateEntriesForWordWithNgramContext)
     },
     {
-        const_cast<char *>("updateEntriesForInputEventsNative"),
-        const_cast<char *>(
-                "(J[Lcom/android/inputmethod/latin/utils/WordInputEventForPersonalization;I)I"),
-        reinterpret_cast<void *>(latinime_BinaryDictionary_updateEntriesForInputEvents)
-    },
-    {
         const_cast<char *>("getPropertyNative"),
         const_cast<char *>("(JLjava/lang/String;)Ljava/lang/String;"),
         reinterpret_cast<void *>(latinime_BinaryDictionary_getProperty)
@@ -730,15 +719,10 @@ static const JNINativeMethod sMethods[] = {
         const_cast<char *>("(J)Z"),
         reinterpret_cast<void *>(latinime_BinaryDictionary_isCorruptedNative)
     },
-    {
-        const_cast<char *>("migrateNative"),
-        const_cast<char *>("(JLjava/lang/String;J)Z"),
-        reinterpret_cast<void *>(latinime_BinaryDictionary_migrateNative)
-    }
 };
 
 int register_BinaryDictionary(JNIEnv *env) {
-    const char *const kClassPathName = "com/android/inputmethod/latin/BinaryDictionary";
+    const char *const kClassPathName = HK_JNI_CLASS("BinaryDictionary");
     return registerNativeMethods(env, kClassPathName, sMethods, NELEMS(sMethods));
 }
 } // namespace latinime
