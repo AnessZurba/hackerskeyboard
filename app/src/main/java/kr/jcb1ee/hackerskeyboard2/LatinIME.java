@@ -19,6 +19,7 @@ package kr.jcb1ee.hackerskeyboard2;
 import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW;
 import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW_COMPACT;
 import kr.jcb1ee.hackerskeyboard2.LatinIMEUtil.RingCharBuffer;
+import kr.jcb1ee.hackerskeyboard2.suggest.AospSuggestionEngine;
 
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -523,6 +524,7 @@ public class LatinIME extends InputMethodService implements
         mSuggest.setUserBigramDictionary(mUserBigramDictionary);
         mSuggest.setUserDictionary(mUserDictionary);
         mSuggest.setAutoDictionary(mAutoDictionary);
+        attachSuggestionEngine(sp);
         updateCorrectionMode();
         mWordSeparators = lres.getString(R.string.word_separators);
         mSentenceSeparators = lres.getString(R.string.sentence_separators);
@@ -3071,6 +3073,17 @@ public class LatinIME extends InputMethodService implements
             mCandidateView.setSuggestions(suggestions, completions,
                     typedWordValid, haveMinimalSuggestion);
         }
+    }
+
+    /**
+     * Preview of the new suggestion engine (AOSP decoder, assets/dicts): off until the toolbar
+     * strip exists; turned on by the hidden boolean preference {@value #PREF_NEW_SUGGESTIONS}.
+     */
+    static final String PREF_NEW_SUGGESTIONS = "new_suggestion_engine";
+
+    private void attachSuggestionEngine(SharedPreferences sp) {
+        if (!sp.getBoolean(PREF_NEW_SUGGESTIONS, false) || mInputLocale == null) return;
+        mSuggest.setMainEngine(AospSuggestionEngine.open(this, mInputLocale));
     }
 
     private void updateSuggestions() {
