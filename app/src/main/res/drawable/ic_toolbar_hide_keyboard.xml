@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hide the keyboard: Material Symbols "keyboard_arrow_down" (Apache License 2.0), the
+     system's own down chevron. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="26dp" android:height="26dp"
+    android:viewportWidth="960" android:viewportHeight="960">
+    <group android:translateY="960">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M480-344L240-584L296-640L480-456L664-640L720-584Z" />
+    </group>
+</vector>

@@ -1555,7 +1555,7 @@ public class LatinIME extends InputMethodService implements
         updateShiftKeyState(getCurrentInputEditorInfo());
     }
 
-    private void showInputMethodPicker() {
+    void showInputMethodPicker() {
         ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
                 .showInputMethodPicker();
     }

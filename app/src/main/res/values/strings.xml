@@ -512,6 +512,8 @@
     <string name="toolbar_emoji_search">Search emoji</string>
     <string name="toolbar_emoji_space">Space</string>
     <string name="toolbar_show_buttons">Show toolbar</string>
+    <string name="toolbar_hide_keyboard">Hide keyboard</string>
+    <string name="toolbar_switch_keyboard">Switch keyboard</string>
     <string name="toolbar_hide_chips">Hide suggestions</string>
     <string name="toolbar_gallery">Gallery</string>
     <string name="voice_no_recognizer">No speech recognition app found</string>

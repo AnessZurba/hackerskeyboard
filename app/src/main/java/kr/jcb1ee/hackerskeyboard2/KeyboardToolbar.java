@@ -166,6 +166,19 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         });
         mChipsDismiss.setVisibility(GONE);
         mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
+        // Landscape: the system's bar with ⌄ (hide) and the keyboard switcher isn't shown
+        // there, so the row ends with the same two buttons (only while the row is shown).
+        mSystemButtons = new LinearLayout(ime);
+        mSystemButtons.setOrientation(HORIZONTAL);
+        mSystemButtons.setGravity(Gravity.CENTER_VERTICAL);
+        mHideButton = systemButton(R.drawable.ic_toolbar_hide_keyboard,
+                R.string.toolbar_hide_keyboard, () -> ime().requestHideSelf(0));
+        mSwitchButton = systemButton(R.drawable.ic_toolbar_switch_keyboard,
+                R.string.toolbar_switch_keyboard, () -> ime().showInputMethodPicker());
+        mSystemButtons.addView(mHideButton, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
+        mSystemButtons.addView(mSwitchButton, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
+        mBar.addView(mSystemButtons, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+        updateSystemButtons();
         // The room under the buttons belongs to the toolbar row (and goes with it when it's
         // hidden), so the keyboard keeps its own size: 4dp, which with each panel's own first
         // margin gives about 7dp to the first keys / buttons / tabs, the selection panel's look.
@@ -452,6 +465,49 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 FrameLayout.LayoutParams.MATCH_PARENT, height));
         if (mKeyboardView != null) mKeyboardView.setVisibility(INVISIBLE); // keeps its height
         updateButtons();
+    }
+
+    private LinearLayout mSystemButtons;
+    private ImageView mHideButton;
+    private ImageView mSwitchButton;
+
+    private ImageView systemButton(int icon, int description, Runnable action) {
+        ImageView b = new ImageView(getContext());
+        b.setImageResource(icon);
+        b.setContentDescription(getContext().getString(description));
+        b.setScaleType(ImageView.ScaleType.CENTER);
+        b.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            action.run();
+        });
+        return b;
+    }
+
+    /** The hide and switch buttons show in landscape only (the system shows its own in portrait). */
+    private void updateSystemButtons() {
+        boolean landscape = getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        mSystemButtons.setVisibility(landscape ? VISIBLE : GONE);
+        ColorStateList tint = ColorStateList.valueOf(mForeground);
+        for (ImageView b : new ImageView[] {mHideButton, mSwitchButton}) {
+            b.setImageTintList(tint);
+            GradientDrawable pressed = new GradientDrawable();
+            pressed.setShape(GradientDrawable.OVAL);
+            pressed.setColor(blend(mBackground, mForeground, 0.25f));
+            StateListDrawable states = new StateListDrawable();
+            states.addState(new int[] {android.R.attr.state_pressed}, pressed);
+            b.setBackground(states);
+        }
+    }
+
+    @Override
+    protected void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateSystemButtons();
+    }
+
+    boolean systemButtonsShown() {
+        return mSystemButtons.getVisibility() == VISIBLE;
     }
 
     private void updateButtons() {
@@ -1812,6 +1868,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         invalidate();
         mChipsDismiss.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
         updateButtons();
+        if (mSystemButtons != null) updateSystemButtons();
     }
 
     private static double luminance(int c) {

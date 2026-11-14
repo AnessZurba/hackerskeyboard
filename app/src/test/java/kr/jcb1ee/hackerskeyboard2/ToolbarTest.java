@@ -122,6 +122,25 @@ public class ToolbarTest {
         assertTrue(view.getKeyboard().getMinWidth() > screen - 100);
     }
 
+    /** In landscape (no system bar with them) the row ends with hide and switch buttons. */
+    @Test
+    @Config(qualifiers = "land")
+    public void landscapeHasHideAndSwitchButtons() {
+        LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
+        KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
+        idle();
+        assertTrue(toolbar.systemButtonsShown());
+        LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
+        ViewGroup buttons = (ViewGroup) bar.getChildAt(bar.getChildCount() - 1);
+        assertEquals(ime.getString(R.string.toolbar_hide_keyboard),
+                buttons.getChildAt(0).getContentDescription());
+        assertEquals(ime.getString(R.string.toolbar_switch_keyboard),
+                buttons.getChildAt(1).getContentDescription());
+        buttons.getChildAt(1).performClick(); // the switcher (no crash)
+        buttons.getChildAt(0).performClick(); // hides the keyboard
+        idle();
+    }
+
     @Test
     public void toolbarPanelsOpenAndClose() {
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
@@ -131,8 +150,9 @@ public class ToolbarTest {
         KeyboardToolbar toolbar = (KeyboardToolbar) input;
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
-        assertEquals("three buttons, the (hidden) autofill chip rows and their > button",
-                6, bar.getChildCount());
+        assertEquals("three buttons, the (hidden) autofill chip rows and their > button, "
+                + "and the landscape hide/switch buttons", 7, bar.getChildCount());
+        assertFalse("hide/switch buttons are for landscape", toolbar.systemButtonsShown());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());
 

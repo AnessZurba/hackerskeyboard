@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Switch keyboard: a keyboard outline with keys, after Material Symbols "keyboard"
+     (Apache License 2.0), as the system's keyboard switcher button. The outline is drawn as
+     four bars so it needs no even-odd fill. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="26dp" android:height="26dp"
+    android:viewportWidth="960" android:viewportHeight="960">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M80,200h800v80h-800zM80,680h800v80h-800zM80,280h80v400h-80zM800,280h80v400h-80z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M200,320h80v80h-80zM320,320h80v80h-80zM440,320h80v80h-80zM560,320h80v80h-80zM680,320h80v80h-80zM200,440h80v80h-80zM320,440h80v80h-80zM440,440h80v80h-80zM560,440h80v80h-80zM680,440h80v80h-80zM320,560h320v80h-320z" />
+</vector>
