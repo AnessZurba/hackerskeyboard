@@ -73,17 +73,18 @@ public class KeyboardSwitcher implements
     private static final int[] THEMES = new int[] {
         R.layout.input_material_black,
         R.layout.input_material_black,
-        R.layout.input_stone_bold,
+        R.layout.input_material_light, // 2: Stone, now High contrast (light)
         R.layout.input_material_black,
         R.layout.input_material_dark,
         R.layout.input_material_light,
         R.layout.input_material_black,
         R.layout.input_material_black,
-        // 8-10: Material You, AMOLED black, high contrast. Colour themes (KeyboardTheme)
-        // are drawn over input_material_dark or _light, see themeLayout().
+        // 8-11: Material You, AMOLED black, high contrast dark and light. Colour themes
+        // (KeyboardTheme) are drawn over input_material_dark or _light, see themeLayout().
         R.layout.input_material_dark,
         R.layout.input_material_dark,
         R.layout.input_material_dark,
+        R.layout.input_material_light,
     };
 
     /** The colour theme in use, or null for an image theme. */

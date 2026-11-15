@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -27,10 +28,10 @@ public class KeyboardThemeTest {
 
     @Test
     public void colourThemesAndImageThemes() {
-        for (int id : new int[] {4, 5, 7, 8, 9, 10}) {
+        for (int id : new int[] {4, 5, 7, 8, 9, 10, 11}) {
             assertNotNull("colour theme " + id, KeyboardTheme.forId(mContext, id));
         }
-        assertNull("Stone is an image theme", KeyboardTheme.forId(mContext, 2));
+        assertNull("no theme 2 (Stone) any more", KeyboardTheme.forId(mContext, 2));
     }
 
     /** Removed themes (ICS, Gingerbread, Transparent, ICS dark) become Material Black. */
@@ -40,6 +41,12 @@ public class KeyboardThemeTest {
             assertEquals(KeyboardTheme.MATERIAL_BLACK, KeyboardTheme.current(id));
         }
         assertEquals(KeyboardTheme.HIGH_CONTRAST, KeyboardTheme.current(KeyboardTheme.HIGH_CONTRAST));
+        assertEquals("Stone is replaced by High contrast (light)",
+                KeyboardTheme.HIGH_CONTRAST_LIGHT, KeyboardTheme.current(2));
+        KeyboardTheme light = KeyboardTheme.forId(mContext, KeyboardTheme.HIGH_CONTRAST_LIGHT);
+        assertTrue(light.light);
+        assertEquals(0xFF000000, light.keyStroke);
+        assertEquals(0xFF000000, light.text);
         android.content.SharedPreferences prefs =
                 androidx.preference.PreferenceManager.getDefaultSharedPreferences(mContext);
         prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, "6").commit();
@@ -52,7 +59,7 @@ public class KeyboardThemeTest {
     /** With borders, a plain key is filled; without, it shows the keyboard behind it. */
     @Test
     public void keyBordersToggle() {
-        for (int id : new int[] {4, 5, 7, 8, 9, 10}) {
+        for (int id : new int[] {4, 5, 7, 8, 9, 10, 11}) {
             KeyboardTheme t = KeyboardTheme.forId(mContext, id);
             int filled = centre(t.keyBackground(mContext, true), new int[0]);
             int bare = centre(t.keyBackground(mContext, false), new int[0]);

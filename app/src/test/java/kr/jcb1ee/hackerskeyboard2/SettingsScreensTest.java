@@ -185,7 +185,6 @@ public class SettingsScreensTest {
     public void everyTheme() {
         Context app = ApplicationProvider.getApplicationContext();
         int[] layouts = {
-            R.layout.input_stone_bold,
             R.layout.input_material_dark, R.layout.input_material_light,
             R.layout.input_material_black, R.layout.input_popup_material_dark,
             R.layout.input_popup_material_black, R.layout.input_popup_material_light,

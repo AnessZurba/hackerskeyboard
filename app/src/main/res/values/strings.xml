@@ -224,11 +224,11 @@
 
     <!-- Description for keyboard theme switcher -->
     <string name="keyboard_layout">Keyboard Theme</string>
-    <string name="layout_stone_bold"  translatable="false">Stone (bold)</string>
     <string name="layout_material_black" translatable="false">Material Black</string>
     <string name="layout_material_you" translatable="false">Material You (wallpaper colours)</string>
     <string name="layout_amoled_black" translatable="false">Black (AMOLED)</string>
-    <string name="layout_high_contrast" translatable="false">High contrast</string>
+    <string name="layout_high_contrast" translatable="false">High contrast (dark)</string>
+    <string name="layout_high_contrast_light" translatable="false">High contrast (light)</string>
     <string name="title_key_borders">Key borders</string>
     <string name="summary_key_borders_on">Keys are drawn as shapes</string>
     <string name="summary_key_borders_off">Labels only; a key lights up while pressed (colour themes)</string>
@@ -242,7 +242,7 @@
         <item>@string/layout_material_black</item>
         <item>@string/layout_amoled_black</item>
         <item>@string/layout_high_contrast</item>
-        <item>@string/layout_stone_bold</item>
+        <item>@string/layout_high_contrast_light</item>
     </string-array>
 
     <!--
@@ -258,7 +258,7 @@
         <item>7</item>
         <item>9</item>
         <item>10</item>
-        <item>2</item>
+        <item>11</item>
     </string-array>
 
 

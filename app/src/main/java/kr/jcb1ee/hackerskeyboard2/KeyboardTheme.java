@@ -27,6 +27,10 @@ final class KeyboardTheme {
     static final int MATERIAL_YOU = 8;
     static final int AMOLED_BLACK = 9;
     static final int HIGH_CONTRAST = 10;
+    /** Black on white with black outlines; replaced the Stone image theme (id 2). */
+    static final int HIGH_CONTRAST_LIGHT = 11;
+    /** Stone (bold), an image theme replaced by HIGH_CONTRAST_LIGHT. */
+    private static final int STONE = 2;
 
     static final String PREF_KEY_BORDERS = "pref_key_borders";
 
@@ -35,6 +39,7 @@ final class KeyboardTheme {
 
     /** A removed theme's id becomes Material Black (the default); others stay. */
     static int current(int id) {
+        if (id == STONE) return HIGH_CONTRAST_LIGHT;
         for (int r : REMOVED) if (r == id) return MATERIAL_BLACK;
         return id;
     }
@@ -86,7 +91,8 @@ final class KeyboardTheme {
 
     static boolean isColourTheme(int id) {
         return id == MATERIAL_DARK || id == MATERIAL_LIGHT || id == MATERIAL_BLACK
-                || id == MATERIAL_YOU || id == AMOLED_BLACK || id == HIGH_CONTRAST;
+                || id == MATERIAL_YOU || id == AMOLED_BLACK || id == HIGH_CONTRAST
+                || id == HIGH_CONTRAST_LIGHT;
     }
 
     /** The theme for a stored id, or null for an image-based one. */
@@ -105,6 +111,11 @@ final class KeyboardTheme {
                 // White on black with white outlines, yellow hints; active keys dark blue.
                 return new KeyboardTheme(false, 0xFF000000, 0xFF000000, 0xFF5A5A5A, 0xFF0D47A1,
                         0xFFFFFFFF, 1.5f, 0xFFFFFFFF, 0xFFFFEB3B, 0xFF000000, 0xFFFFFFFF);
+            case HIGH_CONTRAST_LIGHT:
+                // Black on white with black outlines, dark blue hints; active keys yellow
+                // (black labels stay readable on them).
+                return new KeyboardTheme(true, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFBDBDBD, 0xFFFFD600,
+                        0xFF000000, 1.5f, 0xFF000000, 0xFF0D47A1, 0xFFFFFFFF, 0xFF000000);
             case MATERIAL_YOU: return materialYou(context);
             default: return null;
         }
