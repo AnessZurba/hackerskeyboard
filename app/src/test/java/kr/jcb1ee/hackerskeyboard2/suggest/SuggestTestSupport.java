@@ -19,6 +19,12 @@ import kr.jcb1ee.hackerskeyboard2.LocaleLayouts;
 public final class SuggestTestSupport {
     public static final String QUALIFIERS = "w411dp-h891dp-xxhdpi";
     static final File DICT_DIR = new File("src/main/assets/dicts");
+    /**
+     * The optional dictionaries (tools/mkdicts.sh, ./gradlew optionalDicts): root build/dicts,
+     * as the Gradle test task says; tests of a language without one there are skipped.
+     */
+    static final File OPTIONAL_DICT_DIR = new File(System.getProperty(
+            "hk.suggest.optionalDicts", "../build/dicts"));
 
     private SuggestTestSupport() {}
 
@@ -36,12 +42,23 @@ public final class SuggestTestSupport {
                 NativeLibrary.load());
         for (String name : AospSuggestionEngine.dictionaryNames(locale)) {
             File dict = new File(DICT_DIR, "main_" + name + ".dict");
+            if (!dict.isFile()) dict = new File(OPTIONAL_DICT_DIR, "main_" + name + ".dict");
             if (!dict.isFile()) continue;
             AospSuggestionEngine engine = AospSuggestionEngine.open(dict, locale);
             if (engine == null) throw new AssertionError("could not open " + dict);
             return engine;
         }
         throw new AssertionError("no dictionary for " + locale + " in " + DICT_DIR);
+    }
+
+    /**
+     * The optional dictionary file {@code name} ("de") from build/dicts, or the test is
+     * skipped when it has not been built.
+     */
+    public static File optionalDict(String name) {
+        File f = new File(OPTIONAL_DICT_DIR, "main_" + name + ".dict");
+        assumeTrue("not built (./gradlew optionalDicts): " + f, f.isFile());
+        return f;
     }
 
     /** The key geometry of the English 5-row PC layout at the test screen size. */

@@ -29,7 +29,8 @@ import java.util.Set;
 
 /**
  * {@link SuggestionEngine} on the AOSP LatinIME decoder (libjni_latinime) and an AOSP-format
- * main dictionary (assets/dicts/main_LANG.dict, stored uncompressed and mapped in place).
+ * main dictionary (assets/dicts/main_LANG.dict, stored uncompressed and mapped in place, or
+ * one the user imported into files/dicts, see {@link DictionaryFiles}).
  */
 public final class AospSuggestionEngine implements SuggestionEngine {
     /** Where the main dictionaries are, inside the assets. */
@@ -78,12 +79,18 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     }
 
     /**
-     * Opens the bundled dictionary for {@code locale} (see {@link #dictionaryNames}). Returns
-     * null when there is none, the native library is missing or the file is not a dictionary.
+     * Opens the dictionary for {@code locale} (see {@link #dictionaryNames}): for each name,
+     * one the user imported ({@link DictionaryFiles}), else the bundled one. Returns null when
+     * there is none, the native library is missing or the file is not a dictionary.
      */
     public static AospSuggestionEngine open(Context context, String locale) {
         if (!NativeLibrary.load()) return null;
         for (String name : dictionaryNames(locale)) {
+            File imported = DictionaryFiles.file(context, name);
+            if (imported.isFile()) {
+                AospSuggestionEngine engine = open(imported, locale);
+                if (engine != null) return engine;
+            }
             try (AssetFileDescriptor fd = context.getAssets().openFd(assetName(name))) {
                 String apk = context.getApplicationInfo().sourceDir;
                 return open(apk, fd.getStartOffset(), fd.getLength(), locale);
