@@ -23,6 +23,9 @@ Usage (from the repository root), as the bundled dictionaries were made
   tools/aosp-dicttool/makedict.sh iw.combined app/src/main/assets/dicts/main_iw.dict -t on
   tools/aosp-dicttool/makedict.sh ar.combined app/src/main/assets/dicts/main_ar.dict -t on
 
+The optional (downloadable) dictionaries are made by tools/mkdicts.sh, which uses the
+Leipzig scripts ukrainian, bulgarian, hungarian, slovak and catalan here.
+
 The limit (third argument) keeps the N most frequent words; 0 keeps all.
 """
 import gzip
@@ -45,11 +48,39 @@ def arabic_letter(c):
     return 'ء' <= c <= 'غ' or 'ف' <= c <= 'ي'
 
 
+def alphabet(letters):
+    """A letter test for a cased alphabet given in lower case."""
+    allowed = set(letters) | set(letters.upper())
+    return lambda c: c in allowed
+
+
+LATIN = 'abcdefghijklmnopqrstuvwxyz'
+
+# The cased scripts (Leipzig lists for the optional dictionaries, tools/mkdicts.sh): case
+# variants of a word (sentence-initial "Також") count as one, spelt as most often; "inner"
+# characters may only stand between letters (Ukrainian apostrophe, hyphenated words, Catalan
+# l·l); "split" characters separate words as the keyboard does (Catalan "d'un" is "d" and
+# "un"); "fix" maps old encodings and look-alike apostrophes to what is typed.
 SCRIPTS = {
     'hebrew': dict(letter=hebrew_letter, extra="'\"", header=dict(
         dictionary='main:iw', locale='iw', description='עברית')),
     'arabic': dict(letter=arabic_letter, extra='', header=dict(
         dictionary='main:ar', locale='ar', description='العربية')),
+    'ukrainian': dict(letter=alphabet('абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'), cased=True,
+                      inner="'-", fix={'’': "'", 'ʼ': "'"}, header=dict(
+        dictionary='main:uk', locale='uk', description='Українська')),
+    'bulgarian': dict(letter=alphabet('абвгдежзийклмнопрстуфхцчшщъьюяѝ'), cased=True,
+                      inner='-', header=dict(
+        dictionary='main:bg', locale='bg', description='Български')),
+    'hungarian': dict(letter=alphabet(LATIN + 'áéíóöőúüű'), cased=True, inner='-',
+                      fix={'õ': 'ő', 'Õ': 'Ő', 'û': 'ű', 'Û': 'Ű'}, header=dict(
+        dictionary='main:hu', locale='hu', description='Magyar')),
+    'slovak': dict(letter=alphabet(LATIN + 'áäčďéíĺľňóôŕšťúýž'), cased=True, inner='-',
+                   header=dict(
+        dictionary='main:sk', locale='sk', description='Slovenčina')),
+    'catalan': dict(letter=alphabet(LATIN + 'àéèíïòóúüç'), cased=True, inner='-·',
+                    split="'’", header=dict(
+        dictionary='main:ca', locale='ca', description='Català')),
 }
 
 
@@ -64,6 +95,11 @@ def acceptable(word, script):
     s = SCRIPTS[script]
     if not word or not s['letter'](word[0]):
         return False
+    if 'inner' in s:
+        return s['letter'](word[-1]) and all(
+            s['letter'](c) or (c in s['inner'] and s['letter'](word[i - 1])
+                               and s['letter'](word[i + 1]))
+            for i, c in enumerate(word))
     if not all(s['letter'](c) or c in s['extra'] for c in word):
         return False
     if script == 'hebrew' and any(c in HEBREW_FINALS for c in word[:-1]):
@@ -93,6 +129,24 @@ def read_leipzig(paths):
     return counts
 
 
+def split(word, separators):
+    for c in separators:
+        word = word.replace(c, ' ')
+    return word.split()
+
+
+def merge_case(counts):
+    """One entry per word whatever its case, spelt as most often ("Також" is "також")."""
+    groups = {}
+    for w, n in counts.items():
+        groups.setdefault(w.lower(), []).append((n, w))
+    merged = {}
+    for forms in groups.values():
+        forms.sort(key=lambda nw: (-nw[0], nw[1]))
+        merged[forms[0][1]] = sum(n for n, _ in forms)
+    return merged
+
+
 def main():
     fmt, script, limit, dst = sys.argv[1:5]
     sources = sys.argv[5:]
@@ -104,10 +158,20 @@ def main():
                 words[w] = (f, flags)
     elif fmt == 'leipzig':
         counts = {}
+        s = SCRIPTS[script]
         for raw, n in read_leipzig(sources).items():
             w = normalise(raw)
-            if acceptable(w, script):
-                counts[w] = counts.get(w, 0) + n
+            for a, b in s.get('fix', {}).items():
+                w = w.replace(a, b)
+            for part in split(w, s.get('split', '')):
+                if acceptable(part, script):
+                    counts[part] = counts.get(part, 0) + n
+        if s.get('cased'):
+            # Only lower, Capitalised or UPPER parts ("campanyaHospital" is two run
+            # together), each seen at least twice.
+            counts = {w: n for w, n in merge_case(counts).items() if n >= 2 and all(
+                p.islower() or p.isupper() or (p[0].isupper() and p[1:].islower())
+                for p in w.replace('-', ' ').split())}
         top = max(counts.values())
         for w, n in counts.items():
             f = round(210 + 21 * math.log10(n / top))
