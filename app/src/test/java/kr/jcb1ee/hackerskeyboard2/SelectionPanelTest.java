@@ -653,7 +653,7 @@ public class SelectionPanelTest {
     @Test
     public void backspaceSwipeSlowIsOneWordPerStep() throws Exception {
         assertEquals("4 words (14dp each): \"qq rr ss tt\"", 11, backspaceSwipe(64, 800));
-        assertEquals("the keyboard says how many", "4 words", mLastOverlay);
+        assertEquals("the keyboard says what release does", "Release to delete 4 words", mLastOverlay);
         assertTrue("the field follows the growing end", mFocusAtStart);
         assertEquals("deleted on release", "aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp ",
                 mField.getText().toString());
@@ -800,7 +800,7 @@ public class SelectionPanelTest {
         mField.setText("one two three four");
         sConnection.setSelection(mField.length(), mField.length());
         View panel = ((FrameLayout) emoji.getChildAt(1)).getChildAt(1);
-        assertEquals("2 words", labelMidDrag(find(panel, "⌫"), -40 * d, false, emoji));
+        assertEquals("Release to delete 2 words", labelMidDrag(find(panel, "⌫"), -40 * d, false, emoji));
         View space = findByDescription(panel, mIme.getString(R.string.toolbar_emoji_space));
         assertEquals("Moving the cursor", labelMidDrag(space, 40 * d, true, emoji));
 

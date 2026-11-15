@@ -2695,6 +2695,7 @@ public class LatinIME extends InputMethodService implements
         mDeleteSwipeAnchor = end;
         mDeleteSwipeChars = 0;
         mDeleteSwipeWords = 0;
+        mDeleteSwipeAtEdge = false;
         showDeleteSwipeStatus(0);
         return true;
     }
@@ -2729,13 +2730,23 @@ public class LatinIME extends InputMethodService implements
         if (view != null) view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
     }
 
-    /** The keyboard's label for the backspace swipe: how many words, and how it works. */
+    /** The keyboard's label for the backspace swipe: what release does, how to back out. */
     private void showDeleteSwipeStatus(int words) {
+        mDeleteSwipeShownWords = words;
         KeyboardToolbar view = mKeyboardSwitcher.getInputContainer();
         if (view == null) return;
-        view.setGestureLabel(words == 0 ? getString(R.string.gesture_nothing_selected)
-                        : getResources().getQuantityString(R.plurals.gesture_words, words, words),
-                getString(R.string.gesture_delete_hint));
+        String[] label = GestureLabel.deleteSwipe(getResources(), words, mDeleteSwipeAtEdge);
+        view.setGestureLabel(label[0], label[1]);
+    }
+
+    private int mDeleteSwipeShownWords;
+    private boolean mDeleteSwipeAtEdge;
+
+    /** The backspace swipe's finger rests at the screen's left edge (it keeps taking words). */
+    void setDeleteSwipeAtEdge(boolean atEdge) {
+        if (atEdge == mDeleteSwipeAtEdge) return;
+        mDeleteSwipeAtEdge = atEdge;
+        if (mDeleteSwipeText != null) showDeleteSwipeStatus(mDeleteSwipeShownWords);
     }
 
     private static boolean isSwipeWordChar(char c) {
@@ -2756,6 +2767,7 @@ public class LatinIME extends InputMethodService implements
         }
         mDeleteSwipeText = null;
         mDeleteSwipeChars = 0;
+        mDeleteSwipeAtEdge = false;
         KeyboardToolbar label = mKeyboardSwitcher.getInputContainer();
         if (label != null) label.setGestureLabel(null, null);
         mDeleteSwipeWords = 0;

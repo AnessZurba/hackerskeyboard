@@ -236,6 +236,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         return mGestureLabel.status();
     }
 
+    /** The gesture label's second line, or null (tests). */
+    String gestureLabelHint() {
+        return mGestureLabel.hint();
+    }
+
     /** Puts a (new) keyboard view below the toolbar, e.g. after a theme change. */
     void setKeyboardView(LatinKeyboardView view) {
         closePanel();
@@ -696,9 +701,8 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             active[0] = true;
             dragging[0] = ime().getCurrentInputConnection() != null
                     && ime().beginCursorDrag(selectButton && mSelecting);
-            setGestureLabel(mIme.getString(selectButton && mSelecting
-                            ? R.string.gesture_selecting : R.string.gesture_moving_cursor),
-                    mIme.getString(R.string.gesture_trackpad_hint));
+            String[] label = GestureLabel.trackpad(getResources(), selectButton && mSelecting);
+            setGestureLabel(label[0], label[1]);
             cell.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             cell.setAlpha(0.6f);
         };
@@ -962,6 +966,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                         // edge (but not back on the key, which cancels), it gives them back.
                         int toEdge = EdgeRepeat.direction(e.getRawX(), 0, screenWidth(), edgeZone());
                         if (toEdge > 0 && accel.backOnKey(e.getRawX(), e.getRawY())) toEdge = 0;
+                        ime().setDeleteSwipeAtEdge(toEdge < 0);
                         edge.set(toEdge,
                                 direction -> {
                                     if (state[2]) ime().setDeleteSwipeWords(direction < 0

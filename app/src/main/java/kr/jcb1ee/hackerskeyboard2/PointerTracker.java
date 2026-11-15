@@ -372,6 +372,7 @@ public class PointerTracker {
             int width = keys != null ? keys.getWidth() : Integer.MAX_VALUE;
             int edge = EdgeRepeat.direction(x, 0, width, EdgeRepeat.zone(mDensity));
             if (edge > 0 && mDeleteAccel.backOnKey(x, y)) edge = 0;
+            LatinIME.sInstance.setDeleteSwipeAtEdge(edge < 0);
             mEdgeDelete.set(edge, direction -> {
                 if (mDeleteSlide && LatinIME.sInstance != null) {
                     LatinIME.sInstance.setDeleteSwipeWords(direction < 0
@@ -512,9 +513,8 @@ public class PointerTracker {
         KeyboardToolbar label = mKeyboardSwitcher.getInputContainer();
         if (label != null) {
             boolean selecting = mCursorDragging && LatinIME.sInstance.mCursorDrag.isSelecting();
-            label.setGestureLabel(label.getContext().getString(selecting
-                            ? R.string.gesture_selecting : R.string.gesture_moving_cursor),
-                    label.getContext().getString(R.string.gesture_trackpad_hint));
+            String[] text = GestureLabel.trackpad(label.getResources(), selecting);
+            label.setGestureLabel(text[0], text[1]);
         }
         mTrackpad.start(x, mKeyState.getLastY(), android.os.SystemClock.uptimeMillis());
         mSlideStartY = mKeyState.getLastY();

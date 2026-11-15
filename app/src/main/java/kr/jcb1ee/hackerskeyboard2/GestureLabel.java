@@ -15,6 +15,7 @@
 package kr.jcb1ee.hackerskeyboard2;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -25,7 +26,7 @@ import android.view.View;
 /**
  * Laid over the keys (or a panel) while a gesture runs: the space-bar or Select-button
  * trackpad, or a backspace swipe. The keys fade, as on iOS, and a label in the middle says
- * what the gesture is doing ("3 words") and how it works. Touches pass through.
+ * what releasing will do ("Release to delete 3 words") and how to back out. Touches pass through.
  */
 final class GestureLabel extends View {
     private String mStatus, mHint;
@@ -39,6 +40,30 @@ final class GestureLabel extends View {
 
     String status() {
         return mStatus;
+    }
+
+    String hint() {
+        return mHint;
+    }
+
+    /**
+     * The backspace swipe's label: what release will do and how to back out; at the screen's
+     * left edge, that holding there takes more.
+     */
+    static String[] deleteSwipe(Resources res, int words, boolean atEdge) {
+        if (words == 0) {
+            return new String[] {res.getString(R.string.gesture_nothing_selected),
+                    res.getString(R.string.gesture_delete_start_hint)};
+        }
+        return new String[] {res.getQuantityString(R.plurals.gesture_delete_words, words, words),
+                res.getString(atEdge ? R.string.gesture_delete_edge_hint : R.string.gesture_delete_hint)};
+    }
+
+    /** A trackpad's label (space bar, Select button): moving the cursor, or selecting. */
+    static String[] trackpad(Resources res, boolean selecting) {
+        return new String[] {
+                res.getString(selecting ? R.string.gesture_selecting : R.string.gesture_moving_cursor),
+                res.getString(selecting ? R.string.gesture_selecting_hint : R.string.gesture_trackpad_hint)};
     }
 
     /** Shows the label over a scrim of {@code scrim}; a null status hides it. */
