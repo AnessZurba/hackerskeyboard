@@ -226,6 +226,14 @@ public class LatinIME extends InputMethodService implements
     public static final GlobalKeyboardSettings sKeyboardSettings = new GlobalKeyboardSettings(); 
     static LatinIME sInstance;
     private AdaptiveKeyTargets mAdaptive;
+    // One-time gesture tips in the toolbar row.
+    HintManager mHints;
+    // True while a held key repeats (tips count taps, not repeats).
+    boolean mRepeatingKey;
+    // When the keyboard last changed the text or cursor itself (to tell taps in the text).
+    private long mLastOwnEditTime;
+    // The next language key comes from the space-bar slide.
+    private boolean mLanguageFromSlide;
     
     private int mHeightPortrait;
     private int mHeightLandscape;
@@ -364,6 +372,20 @@ public class LatinIME extends InputMethodService implements
         LatinKeyboard.loadMicKeyChoice(PreferenceManager.getDefaultSharedPreferences(this));
         listenForNavigationBar();
         mAdaptive = AdaptiveKeyTargets.get(this);
+        mHints = new HintManager(PreferenceManager.getDefaultSharedPreferences(this));
+        mHints.setHost(new HintManager.Host() {
+            @Override
+            public boolean showTip(HintManager.Tip tip) {
+                KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
+                return toolbar != null && toolbar.showTip(tip);
+            }
+
+            @Override
+            public void hideTip() {
+                KeyboardToolbar toolbar = mKeyboardSwitcher != null ? mKeyboardSwitcher.getInputContainer() : null;
+                if (toolbar != null) toolbar.hideTip();
+            }
+        });
         ClipboardHistory.get(this).setEnabled(PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean(ClipboardHistory.PREF_ENABLED, true));
         ClipboardHistory.get(this).catchUp(); // copies made while the keyboard wasn't running
@@ -871,6 +893,12 @@ public class LatinIME extends InputMethodService implements
         // If we just entered a text field, maybe it has some old text that
         // requires correction
         checkReCorrectionOnStart();
+        mHints.onStartInput(attribute, restarting);
+        if (!restarting) {
+            // The swipes tip says what the default swipes do: only while they do that.
+            mHints.onKeyboardOpened(("toolbar".equals(mSwipeUpAction) || "extension".equals(mSwipeUpAction))
+                    && "close".equals(mSwipeDownAction));
+        }
     }
 
     private boolean shouldShowVoiceButton(EditorInfo attribute) {
@@ -1006,6 +1034,8 @@ public class LatinIME extends InputMethodService implements
     public void onFinishInputView(boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         clearAutofillChips();
+        if (mKeyboardSwitcher.getInputContainer() != null) mKeyboardSwitcher.getInputContainer().hideTip();
+        mHints.onFinishSession();
         if (mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().closePanel();
         }
@@ -1037,7 +1067,15 @@ public class LatinIME extends InputMethodService implements
         if (newSelStart != newSelEnd || cursorDelta < -1 || cursorDelta > 1) {
             mAdaptive.onCursorJump();
         }
+        long now = SystemClock.uptimeMillis();
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (oldSelStart == oldSelEnd && newSelStart == newSelEnd && (cursorDelta < -1 || cursorDelta > 1)
+                && !mCursorDrag.isActive() && mDeleteSwipeText == null
+                && now - mLastOwnEditTime > 500 && toolbar != null && !toolbar.panelOpen()) {
+            mHints.onCursorPlaced(now); // most likely a tap in the text to place the cursor
+        }
         if (mCursorDrag.onUpdateSelection(newSelStart, newSelEnd)) {
+            mLastOwnEditTime = now;
             // A trackpad drag: skip the suggestion work for every step.
             mLastSelectionStart = newSelStart;
             mLastSelectionEnd = newSelEnd;
@@ -1869,6 +1907,45 @@ public class LatinIME extends InputMethodService implements
         mAdaptive.beforeKey(primaryCode);
         onKeyInternal(primaryCode, keyCodes, x, y);
         mAdaptive.afterKey(primaryCode);
+        mLastOwnEditTime = SystemClock.uptimeMillis();
+        noteKeyForTips(primaryCode);
+    }
+
+    /** Runs of Backspace or arrow taps, and language switches, can call for a tip. */
+    private void noteKeyForTips(int primaryCode) {
+        switch (primaryCode) {
+        case Keyboard.KEYCODE_DELETE:
+            if (!mRepeatingKey) mHints.onBackspaceTap(SystemClock.uptimeMillis());
+            break;
+        case LatinKeyboardView.KEYCODE_DPAD_LEFT:
+        case LatinKeyboardView.KEYCODE_DPAD_RIGHT:
+        case LatinKeyboardView.KEYCODE_DPAD_UP:
+        case LatinKeyboardView.KEYCODE_DPAD_DOWN:
+            if (!mRepeatingKey) mHints.onArrowTap();
+            break;
+        case LatinKeyboardView.KEYCODE_NEXT_LANGUAGE:
+        case LatinKeyboardView.KEYCODE_PREV_LANGUAGE:
+            if (mLanguageFromSlide) {
+                mLanguageFromSlide = false;
+            } else {
+                mHints.onLanguageSwitchedOtherwise();
+            }
+            break;
+        case Keyboard.KEYCODE_SHIFT:
+        case LatinKeyboardView.KEYCODE_CTRL_LEFT:
+        case LatinKeyboardView.KEYCODE_ALT_LEFT:
+        case LatinKeyboardView.KEYCODE_META_LEFT:
+        case LatinKeyboardView.KEYCODE_FN:
+            break; // modifiers (Shift+arrows) don't break a run
+        default:
+            mHints.onOtherKey();
+        }
+    }
+
+    /** The space bar was slid to switch language; the language key that follows comes from it. */
+    void onSpaceLanguageSlide() {
+        mLanguageFromSlide = true;
+        mHints.learned(HintManager.Tip.LANGUAGE_SLIDE);
     }
 
     private void onKeyInternal(int primaryCode, int[] keyCodes, int x, int y) {
@@ -2031,6 +2108,7 @@ public class LatinIME extends InputMethodService implements
     }
 
     public void onText(CharSequence text) {
+        mLastOwnEditTime = SystemClock.uptimeMillis();
         //mDeadAccentBuffer.clear();  // FIXME
         InputConnection ic = getCurrentInputConnection();
         if (ic == null)
@@ -2697,6 +2775,7 @@ public class LatinIME extends InputMethodService implements
         mDeleteSwipeWords = 0;
         mDeleteSwipeAtEdge = false;
         showDeleteSwipeStatus(0);
+        mHints.learned(HintManager.Tip.BACKSPACE_SWIPE);
         return true;
     }
 
@@ -3273,6 +3352,7 @@ public class LatinIME extends InputMethodService implements
     /** A word tapped in the toolbar strip: it replaces the word being typed. */
     void pickStripSuggestion(String word) {
         if (mWordQueue == null || !mPredicting) return;
+        mLastOwnEditTime = SystemClock.uptimeMillis();
         pickSuggestionManually(-1, word);
     }
 
@@ -3848,7 +3928,10 @@ public class LatinIME extends InputMethodService implements
         //Log.i(TAG, "doSwipeAction + " + action);
         if (action == null || action.equals("") || action.equals("none")) {
             return false;
-        } else if (action.equals("close")) {
+        }
+        mHints.learned(HintManager.Tip.SWIPE_ACTIONS);
+        if (action.equals("lang_prev") || action.equals("lang_next")) mHints.onLanguageSwitchedOtherwise();
+        if (action.equals("close")) {
             handleClose();
         } else if (action.equals("settings")) {
             launchSettings();

@@ -223,6 +223,7 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
         if (me.getAction() == MotionEvent.ACTION_UP) {
             int languageDirection = keyboard.getLanguageChangeDirection();
             if (languageDirection != 0) {
+                if (LatinIME.sInstance != null) LatinIME.sInstance.onSpaceLanguageSlide();
                 getOnKeyboardActionListener().onKey(
                         languageDirection == 1 ? KEYCODE_NEXT_LANGUAGE : KEYCODE_PREV_LANGUAGE,
                         null, mLastX, mLastY);

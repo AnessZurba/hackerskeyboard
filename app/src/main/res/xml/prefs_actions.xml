@@ -55,4 +55,23 @@
             android:persistent="true"
             android:title="@string/title_swipe_right" />
     </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="tips"
+        android:title="@string/title_tips" >
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_show_tips"
+            android:persistent="true"
+            android:summary="@string/summary_show_tips"
+            android:title="@string/title_show_tips" />
+
+        <Preference
+            android:dependency="pref_show_tips"
+            android:key="pref_reset_tips"
+            android:persistent="false"
+            android:summary="@string/summary_reset_tips"
+            android:title="@string/title_reset_tips" />
+    </PreferenceCategory>
 </PreferenceScreen>

@@ -345,7 +345,7 @@ public class PointerTracker {
                 if (mDownOnDelete) {
                     mDeleteDeferred = true; // sent on release unless the repeat or a slide starts
                 } else {
-                    repeatKey(keyIndex);
+                    sendRepeatableKey(keyIndex, false); // the press itself
                 }
                 mHandler.startKeyRepeatTimer(mDelayBeforeKeyRepeatStart, keyIndex, this);
                 mIsRepeatableKey = true;
@@ -516,6 +516,9 @@ public class PointerTracker {
             String[] text = GestureLabel.trackpad(label.getResources(), selecting);
             label.setGestureLabel(text[0], text[1]);
         }
+        if (LatinIME.sInstance != null && LatinIME.sInstance.mHints != null) {
+            LatinIME.sInstance.mHints.learned(HintManager.Tip.SPACE_TRACKPAD);
+        }
         mTrackpad.start(x, mKeyState.getLastY(), android.os.SystemClock.uptimeMillis());
         mSlideStartY = mKeyState.getLastY();
         if (mKeyDetector.mKeyboard instanceof LatinKeyboard) {
@@ -647,12 +650,23 @@ public class PointerTracker {
     }
 
     public void repeatKey(int keyIndex) {
+        sendRepeatableKey(keyIndex, true);
+    }
+
+    /** {@code repeat}: sent by the key repeat, not the press (tips count presses). */
+    private void sendRepeatableKey(int keyIndex, boolean repeat) {
         mDeleteDeferred = false; // the repeat has started deleting
         Key key = getKey(keyIndex);
         if (key != null) {
             // While key is repeating, because there is no need to handle multi-tap key, we can
             // pass -1 as eventTime argument.
-            detectAndSendKey(keyIndex, key.x, key.y, -1);
+            LatinIME ime = LatinIME.sInstance;
+            if (ime != null) ime.mRepeatingKey = repeat;
+            try {
+                detectAndSendKey(keyIndex, key.x, key.y, -1);
+            } finally {
+                if (ime != null) ime.mRepeatingKey = false;
+            }
         }
     }
 

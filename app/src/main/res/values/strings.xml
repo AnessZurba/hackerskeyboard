@@ -520,6 +520,20 @@
     <string name="gesture_delete_hint">Slide back to cancel</string>
     <string name="gesture_delete_edge_hint">Keep holding to take more words</string>
 
+    <!-- One-time tips in the toolbar row (HintManager); keep each to one short line. -->
+    <string name="tip_backspace_swipe">Tip: swipe left from Backspace to delete whole words.</string>
+    <string name="tip_space_trackpad">Tip: hold Space and slide to move the cursor.</string>
+    <string name="tip_select_trackpad">Tip: tap Select, then slide on it to extend the selection.</string>
+    <string name="tip_swipe_actions">Tip: swipe up to hide the toolbar, down to close the keyboard.</string>
+    <string name="tip_language_slide">Tip: slide across the Space bar to switch language.</string>
+    <string name="tip_clip_pin">Tip: long-press a clip, then tap the pin to keep it.</string>
+    <string name="tip_dismiss">Dismiss tip</string>
+    <string name="title_tips">Tips</string>
+    <string name="title_show_tips">Show tips</string>
+    <string name="summary_show_tips">Short one-time tips about gestures, in the toolbar row. Kept on this device only.</string>
+    <string name="title_reset_tips">Reset tips</string>
+    <string name="summary_reset_tips">Show tips you have already seen or dismissed again</string>
+    <string name="tips_reset_done">Tips reset</string>
     <string name="title_cursor_loupe">Cursor loupe</string>
     <string name="summary_cursor_loupe">While you hold the space bar (or the Select button) and drag the cursor, show the text around it, larger, above the cursor.</string>
     <string name="title_edge_zone">Screen edge zone</string>

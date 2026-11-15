@@ -64,6 +64,18 @@ public class PrefScreenActions extends AppCompatActivity {
             removeIconSpace(getPreferenceScreen());
             SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
             prefs.registerOnSharedPreferenceChangeListener(this);
+            androidx.preference.Preference reset = findPreference(HintManager.PREF_RESET_TIPS);
+            if (reset != null) {
+                reset.setOnPreferenceClickListener(p -> {
+                    HintManager.resetAll(prefs);
+                    if (LatinIME.sInstance != null && LatinIME.sInstance.mHints != null) {
+                        LatinIME.sInstance.mHints.reset();
+                    }
+                    android.widget.Toast.makeText(requireContext(), R.string.tips_reset_done,
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+            }
         }
 
         @Override
