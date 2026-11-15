@@ -45,6 +45,7 @@ public final class ThemePreviewPreference extends Preference {
     @android.annotation.SuppressLint("ClickableViewAccessibility") // a picture: nothing to click
     static LatinKeyboardView makePreview(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        loadLookSettings(context, prefs);
         int id = KeyboardTheme.migrate(prefs);
         KeyboardTheme theme = KeyboardTheme.forId(context, id);
         int layout = KeyboardSwitcher.layoutFor(id, theme);
@@ -64,10 +65,31 @@ public final class ThemePreviewPreference extends Preference {
     /** The preview's height, as a share of the screen (smaller than the real keyboard). */
     private static final float PREVIEW_HEIGHT_PERCENT = 25f;
 
+    /** Settings on the theme screen that change how the keyboard looks. */
+    private static final String[] LOOK_KEYS = {KeyboardSwitcher.PREF_KEYBOARD_LAYOUT,
+            KeyboardTheme.PREF_KEY_BORDERS, LatinIME.PREF_HINT_MODE, "pref_label_scale_v2",
+            "pref_top_row_scale"};
+
     /** Whether a settings key changes what the preview shows. */
     static boolean affectsPreview(String key) {
-        return KeyboardSwitcher.PREF_KEYBOARD_LAYOUT.equals(key)
-                || KeyboardTheme.PREF_KEY_BORDERS.equals(key)
-                || "pref_hint_mode".equals(key) || "pref_label_scale_v2".equals(key);
+        for (String k : LOOK_KEYS) if (k.equals(key)) return true;
+        return false;
+    }
+
+    /**
+     * Reads the look settings the keyboard keeps in LatinIME.sKeyboardSettings (hints, label
+     * size, top-row height) from the saved settings: the keyboard service, which normally
+     * updates them, may not be running while the settings screen is open.
+     */
+    private static void loadLookSettings(Context context, SharedPreferences prefs) {
+        GlobalKeyboardSettings s = LatinIME.sKeyboardSettings;
+        try {
+            s.hintMode = Integer.parseInt(prefs.getString(LatinIME.PREF_HINT_MODE,
+                    context.getString(R.string.default_hint_mode)));
+            s.labelScalePref = Float.parseFloat(prefs.getString("pref_label_scale_v2", "1.0"));
+            s.topRowScale = Float.parseFloat(prefs.getString("pref_top_row_scale", "1.0"));
+        } catch (NumberFormatException ignored) {
+            // keep what the keyboard last used
+        }
     }
 }

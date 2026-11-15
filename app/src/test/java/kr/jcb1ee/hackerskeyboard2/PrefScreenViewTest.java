@@ -39,7 +39,20 @@ public class PrefScreenViewTest {
         android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(view.getMeasuredWidth(),
                 Math.max(1, view.getMeasuredHeight()), android.graphics.Bitmap.Config.ARGB_8888);
         view.draw(new android.graphics.Canvas(b));
+        // The other look settings on that screen reach the preview too.
+        prefs.edit().putString(LatinIME.PREF_HINT_MODE, "0")
+                .putString("pref_label_scale_v2", "0.8").putString("pref_top_row_scale", "0.6").commit();
+        ThemePreviewPreference.makePreview(c);
+        org.junit.Assert.assertEquals(0, LatinIME.sKeyboardSettings.hintMode);
+        org.junit.Assert.assertEquals(0.8f, LatinIME.sKeyboardSettings.labelScalePref, 0.001f);
+        org.junit.Assert.assertEquals(0.6f, LatinIME.sKeyboardSettings.topRowScale, 0.001f);
+        for (String key : new String[] {"pref_hint_mode", "pref_label_scale_v2", "pref_top_row_scale",
+                "pref_keyboard_layout", "pref_key_borders"}) {
+            org.junit.Assert.assertTrue(key, ThemePreviewPreference.affectsPreview(key));
+        }
         prefs.edit().clear().commit();
+        LatinIME.sKeyboardSettings.labelScalePref = 1f;
+        LatinIME.sKeyboardSettings.topRowScale = 1f;
     }
 
     private static int idOf(KeyboardTheme t) {
