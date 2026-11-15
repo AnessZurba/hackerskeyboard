@@ -271,6 +271,15 @@
             android:dependency="word_suggestions"
             />
 
+        <Preference
+            android:key="dictionaries"
+            android:title="@string/title_dictionaries"
+            android:summary="@string/summary_dictionaries">
+        <intent
+                android:targetPackage="@string/app_package"
+                android:targetClass="kr.jcb1ee.hackerskeyboard2.DictionariesActivity"/>
+        </Preference>
+
         <CheckBoxPreference
             android:key="quick_fixes"
             android:title="@string/quick_fixes"

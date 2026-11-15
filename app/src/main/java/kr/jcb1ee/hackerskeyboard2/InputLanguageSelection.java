@@ -71,6 +71,15 @@ public class InputLanguageSelection extends AppCompatActivity {
         SystemBars.padContent(this); // edge to edge (Android 15+): keep clear of the bars
     }
 
+    /** "Dictionaries" in the action bar: download and import other languages' dictionaries. */
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        menu.add(0, 1, 0, R.string.menu_dictionaries)
+                .setIntent(new android.content.Intent(this, DictionariesActivity.class))
+                .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        return true;
+    }
+
     public static class SettingsFragment extends PreferenceFragmentCompat {
         private static final String TAG = "PCKeyboardILS";
         private ArrayList<Loc> mAvailableLanguages = new ArrayList<Loc>();

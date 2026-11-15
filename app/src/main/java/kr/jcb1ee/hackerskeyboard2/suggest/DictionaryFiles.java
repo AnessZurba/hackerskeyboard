@@ -139,6 +139,34 @@ public final class DictionaryFiles {
         return f.isFile() && f.delete();
     }
 
+    /** Checksums of imported files already computed: path, length, time -> verified. */
+    private static final Map<String, Boolean> sPublished = new HashMap<>();
+
+    /** Whether the imported dictionary for {@code entry} is the file published for it. */
+    public static boolean isPublished(Context context, DictionaryCatalog.Entry entry) {
+        File f = file(context, entry.name);
+        if (entry.sha256 == null || !f.isFile()) return false;
+        String key = f.getPath() + ':' + f.length() + ':' + f.lastModified();
+        synchronized (sPublished) {
+            Boolean known = sPublished.get(key);
+            if (known != null) return known;
+        }
+        MessageDigest sha256 = sha256();
+        byte[] buf = new byte[64 * 1024];
+        try (InputStream in = new DigestInputStream(new FileInputStream(f), sha256)) {
+            while (in.read(buf) > 0) {
+                // digesting
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        boolean published = entry.sha256.equals(hex(sha256.digest()));
+        synchronized (sPublished) {
+            sPublished.put(key, published);
+        }
+        return published;
+    }
+
     /** The header of an imported dictionary, or null when there is none or it is unreadable. */
     public static Map<String, String> header(Context context, String name) {
         File f = file(context, name);

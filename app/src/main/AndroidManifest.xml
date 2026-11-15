@@ -95,6 +95,11 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="DictionariesActivity"
+                android:label="@string/title_dictionaries"
+                android:theme="@style/Theme.HackersKeyboard.Settings"
+                android:exported="false" />
+
         <activity android:name="PrefScreenActions"
                 android:label="@string/pref_screen_actions_title"
                 android:theme="@style/Theme.HackersKeyboard.Settings"
