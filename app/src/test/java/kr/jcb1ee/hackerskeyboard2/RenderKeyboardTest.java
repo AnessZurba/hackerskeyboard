@@ -38,6 +38,11 @@ public class RenderKeyboardTest {
             prefs.edit().putBoolean(KeyboardTheme.PREF_KEY_BORDERS,
                     Boolean.parseBoolean(System.getProperty("renderBorders"))).commit();
         }
+        // -PrenderMode=2 draws the full 5-row (PC) layout (pref_keyboard_mode_portrait).
+        if (System.getProperty("renderMode") != null) {
+            prefs.edit().putString("pref_keyboard_mode_portrait",
+                    System.getProperty("renderMode")).commit();
+        }
         LatinIME ime = Robolectric.buildService(LatinIME.class).create().get();
         KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
@@ -75,6 +80,20 @@ public class RenderKeyboardTest {
             View bar = ((android.view.ViewGroup) toolbar.getChildAt(0)).getChildAt(1);
             ((android.view.ViewGroup) bar).getChildAt(0).performClick();
             Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        }
+        // -PrenderPress=g,Esc,+Ctrl draws those keys pressed (a "+" key: turned on instead).
+        String press = System.getProperty("renderPress");
+        if (press != null) {
+            LatinKeyboardView view = KeyboardSwitcher.getInstance().getInputView();
+            for (String name : press.split(",")) {
+                boolean on = name.startsWith("+");
+                String label = on ? name.substring(1) : name;
+                for (Keyboard.Key key : view.getKeyboard().getKeys()) {
+                    if (key.label == null || !label.contentEquals(key.label)) continue;
+                    if (on) key.on = true; else key.pressed = true;
+                }
+            }
+            view.invalidateAllKeys();
         }
         int w = ime.getResources().getDisplayMetrics().widthPixels;
         toolbar.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
