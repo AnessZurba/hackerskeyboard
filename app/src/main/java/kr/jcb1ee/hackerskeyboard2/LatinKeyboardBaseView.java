@@ -190,6 +190,17 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     private int mOpenPopupResId;
     /** The colour theme drawn over the layout's own look, or null for an image theme. */
     private KeyboardTheme mTheme;
+    /**
+     * A styled theme's key backgrounds, label colours and icon tints by key class
+     * ({@link KeyboardTheme#keyClass}), or null: every key is drawn alike.
+     */
+    private Drawable[] mClassBackgrounds;
+    private int[] mClassTextColors;
+    private ColorFilter[] mClassIconFilters;
+    /** The label font of a styled theme, or null. */
+    private Typeface mThemeTypeface;
+    /** One key's padding (a styled key's face), when it differs from key to key. */
+    private final Rect mKeyPadding = new Rect();
     private int mBackgroundAlpha;
     private float mBackgroundDimAmount;
     private float mKeyHysteresisDistance;
@@ -914,9 +925,9 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         final Paint paint = mPaint;
         final Paint paintHint = mPaintHint;
         paintHint.setColor(mKeyHintColor);
-        final Drawable keyBackground = mKeyBackground;
+        Drawable keyBackground = mKeyBackground;
         final Rect clipRegion = mClipRegion;
-        final Rect padding = mPadding;
+        Rect padding = mPadding;
         final int kbdPaddingLeft = getPaddingLeft();
         final int kbdPaddingTop = getPaddingTop();
         final Key[] keys = mKeys;
@@ -963,6 +974,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         // Use 60% of the smaller of width or height. This is kind of arbitrary.
         mKeyTextSize = Math.min(medianKeyHeight * 6 / 10, medianKeyWidth * 6 / 10);
         mLabelTextSize = mKeyTextSize * 3 / 4;
+        if (mClassBackgrounds != null) mTheme.setKeyUnit(medianKeyWidth);
 
         int keysDrawn = 0;
         for (int i = 0; i < keyCount; i++) {
@@ -979,6 +991,13 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             }
             keysDrawn++;
             paint.setColor(key.isCursor ? mKeyCursorColor : mKeyTextColor);
+            if (mClassBackgrounds != null) {
+                // A styled theme: modifiers and Esc/Enter have their own caps and labels.
+                int keyClass = KeyboardTheme.keyClass(key);
+                keyBackground = mClassBackgrounds[keyClass];
+                paint.setColor(mClassTextColors[keyClass]);
+                iconColorFilter = mClassIconFilters[keyClass];
+            }
 
             int[] drawableState = key.getCurrentDrawableState();
             keyBackground.setState(drawableState);
@@ -996,6 +1015,12 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 } else {
                     keyBackground.setBounds(0, 0, key.width, key.height);
                 }
+            }
+            if (mClassBackgrounds != null) {
+                // Labels centre on the key's face, whose size follows the key's.
+                mKeyPadding.set(0, 0, 0, 0);
+                keyBackground.getCurrent().getPadding(mKeyPadding);
+                padding = mKeyPadding;
             }
             canvas.translate(key.x + kbdPaddingLeft, key.y + kbdPaddingTop);
             if (yscale != 1.0f) {
@@ -1015,10 +1040,10 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 if (label.length() > 1 && key.codes.length < 2) {
                     //Log.i(TAG, "mLabelTextSize=" + mLabelTextSize + " LatinIME.sKeyboardSettings.labelScale=" + LatinIME.sKeyboardSettings.labelScale);
                     labelSize = (int)(mLabelTextSize * mLabelScale);
-                    paint.setTypeface(Typeface.DEFAULT);
+                    paint.setTypeface(mThemeTypeface != null ? mThemeTypeface : Typeface.DEFAULT);
                 } else {
                     labelSize = (int)(mKeyTextSize * mLabelScale);
-                    paint.setTypeface(mKeyTextStyle);
+                    paint.setTypeface(mThemeTypeface != null ? mThemeTypeface : mKeyTextStyle);
                 }
                 paint.setFakeBoldText(key.isCursor);
                 paint.setTextSize(labelSize);
@@ -1036,7 +1061,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
                     final int hintLabelHeight = getLabelHeight(paintHint, hintTextSize);
                     int x = key.width - padding.right;
-                    int baseline = padding.top + hintLabelHeight * 12/10;
+                    int baseline = hintTop(padding, hintLabelHeight) + hintLabelHeight * 12/10;
                     if (Character.getType(hint.charAt(0)) == Character.NON_SPACING_MARK) {
                         drawDeadKeyLabel(canvas, hint, x, baseline, paintHint);
                     } else {
@@ -1052,7 +1077,8 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
                     final int hintLabelHeight = getLabelHeight(paintHint, hintTextSize);
                     int x = key.width - padding.right;
-                    int baseline = padding.top + hintLabelHeight * (hint.equals("") ? 12 : 26)/10;
+                    int baseline = hintTop(padding, hintLabelHeight)
+                            + hintLabelHeight * (hint.equals("") ? 12 : 26)/10;
                     if (Character.getType(altHint.charAt(0)) == Character.NON_SPACING_MARK) {
                         drawDeadKeyLabel(canvas, altHint, x, baseline, paintHint);
                     } else {
@@ -1089,6 +1115,10 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 shouldDrawIcon = shouldDrawLabelAndIcon(key);
             }
             Drawable icon = key.icon;
+            if (mClassBackgrounds != null && mKeyboard instanceof LatinKeyboard
+                    && ((LatinKeyboard) mKeyboard).isPlainSpaceBar(key)) {
+                icon = null; // styled space bars are blank, like the real ones
+            }
             if (icon != null && shouldDrawIcon) {
                 // Special handing for the upper-right number hint icons
                 final int drawableWidth;
@@ -1363,6 +1393,25 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     void applyTheme(KeyboardTheme theme, boolean borders) {
         mTheme = theme;
         setBackground(theme.keyboardBackground());
+        KeyboardTheme.KeyStyle style = theme.style;
+        if (style != null) {
+            int n = style.caps.length;
+            mClassBackgrounds = new Drawable[n];
+            mClassTextColors = new int[n];
+            mClassIconFilters = new ColorFilter[n];
+            for (int i = 0; i < n; i++) {
+                mClassBackgrounds[i] = theme.keyBackground(getContext(), borders, i);
+                mClassTextColors[i] = style.caps[i].text;
+                mClassIconFilters[i] = new PorterDuffColorFilter(style.caps[i].text,
+                        PorterDuff.Mode.SRC_IN);
+            }
+            if (style.glow != 0) {
+                mShadowColor = style.glow;
+                mShadowRadius = style.glowDp * getResources().getDisplayMetrics().density;
+            }
+        } else {
+            mClassBackgrounds = null;
+        }
         setKeyColours(theme.keyBackground(getContext(), borders), theme);
     }
 
@@ -1370,11 +1419,22 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         mKeyBackground = keyBackground;
         mPadding.set(0, 0, 0, 0);
         mKeyBackground.getPadding(mPadding);
-        mKeyTextColor = theme.text;
+        boolean popup = mTheme == null;
+        mKeyTextColor = popup ? theme.popupText : theme.text;
         mKeyHintColor = theme.hint;
         mKeyCursorColor = theme.hint;
+        mThemeTypeface = theme.style != null ? theme.style.typeface() : null;
         mKeyboardChanged = true;
         invalidateAllKeys();
+    }
+
+    /**
+     * Where a key's hints start. Round (typewriter) keys put them half above the key's
+     * top-right corner, outside the circle, where they do not crowd the label.
+     */
+    private int hintTop(Rect padding, int hintLabelHeight) {
+        boolean round = mClassBackgrounds != null && mTheme.style.shape == KeyCapDrawable.ROUND;
+        return round ? padding.top - hintLabelHeight * 8 / 10 : padding.top;
     }
 
     KeyboardTheme getTheme() {

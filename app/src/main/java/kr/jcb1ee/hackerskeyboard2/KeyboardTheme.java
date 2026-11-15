@@ -3,6 +3,7 @@ package kr.jcb1ee.hackerskeyboard2;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -29,6 +30,14 @@ final class KeyboardTheme {
     static final int HIGH_CONTRAST = 10;
     /** Black on white with black outlines; replaced the Stone image theme (id 2). */
     static final int HIGH_CONTRAST_LIGHT = 11;
+    /** Round typewriter keys: ivory faces in chrome rims on a dark body. */
+    static final int TYPEWRITER = 12;
+    /** Sculpted keycaps, retro beige alphas, grey modifiers, red Esc and Enter. */
+    static final int KEYCAPS_RETRO = 13;
+    /** Sculpted keycaps, black alphas with pink legends, pink Esc and Enter. */
+    static final int KEYCAPS_MIDNIGHT = 14;
+    /** Green phosphor on black, outlined cells and glowing labels. */
+    static final int TERMINAL = 15;
     /** Stone (bold), an image theme replaced by HIGH_CONTRAST_LIGHT. */
     private static final int STONE = 2;
 
@@ -73,9 +82,20 @@ final class KeyboardTheme {
     final int hint;
     final int popup;
     final int popupStroke;
+    /** Labels in the popup panel (styled themes: the panel is not the key face). */
+    final int popupText;
+    /** How keys are shaped and coloured beyond the flat rounded rectangle, or null. */
+    final KeyStyle style;
 
     private KeyboardTheme(boolean light, int background, int key, int keyPressed, int keyActive,
             int keyStroke, float strokeDp, int text, int hint, int popup, int popupStroke) {
+        this(light, background, key, keyPressed, keyActive, keyStroke, strokeDp, text, hint,
+                popup, popupStroke, text, null);
+    }
+
+    private KeyboardTheme(boolean light, int background, int key, int keyPressed, int keyActive,
+            int keyStroke, float strokeDp, int text, int hint, int popup, int popupStroke,
+            int popupText, KeyStyle style) {
         this.light = light;
         this.background = background;
         this.key = key;
@@ -87,12 +107,136 @@ final class KeyboardTheme {
         this.hint = hint;
         this.popup = popup;
         this.popupStroke = popupStroke;
+        this.popupText = popupText;
+        this.style = style;
+    }
+
+    // ------------------------------------------------------------------ key styles
+
+    /** Plain letters, digits and the space bar. */
+    static final int CLASS_NORMAL = 0;
+    /** Modifiers and editing keys: Shift, Ctrl, Alt, Tab, Backspace, arrows, F-keys... */
+    static final int CLASS_MODIFIER = 1;
+    /** Esc and Enter, in an accent colour. */
+    static final int CLASS_ACCENT = 2;
+
+    /** Which colours a key takes in a styled theme. */
+    static int keyClass(Keyboard.Key key) {
+        int code = key.codes != null && key.codes.length > 0 ? key.codes[0] : 0;
+        if (code == LatinIME.ASCII_ENTER || code == LatinKeyboardView.KEYCODE_ESCAPE) {
+            return CLASS_ACCENT;
+        }
+        if (key.modifier && code != LatinIME.ASCII_SPACE) return CLASS_MODIFIER;
+        return CLASS_NORMAL;
+    }
+
+    /** One kind of key: its face, the skirt around it (keycaps), and its label. */
+    static final class Cap {
+        final int face;
+        final int skirt;
+        final int text;
+
+        Cap(int face, int skirt, int text) {
+            this.face = face;
+            this.skirt = skirt;
+            this.text = text;
+        }
+    }
+
+    /**
+     * A key style: a shape ({@link KeyCapDrawable#ROUND}, SCULPTED or TERMINAL) and colours
+     * per key class, a face for a toggle that is on, the label font and an optional glow.
+     */
+    static final class KeyStyle {
+        final int shape;
+        final Cap[] caps;
+        /** A modifier (or caps lock) that is on; its label keeps its class colour. */
+        final Cap active;
+        /** Metal rim (round) or outline (terminal). */
+        final int rim;
+        final String font;
+        final int fontStyle;
+        /** Label glow colour, or 0. */
+        final int glow;
+        final float glowDp;
+        /** The usual key width in pixels, shared by this style's drawables (0: unknown). */
+        final float[] unit = new float[1];
+
+        KeyStyle(int shape, Cap normal, Cap modifier, Cap accent, Cap active, int rim,
+                String font, int fontStyle, int glow, float glowDp) {
+            this.shape = shape;
+            this.caps = new Cap[] {normal, modifier, accent};
+            this.active = active;
+            this.rim = rim;
+            this.font = font;
+            this.fontStyle = fontStyle;
+            this.glow = glow;
+            this.glowDp = glowDp;
+        }
+
+        /** The label font, or null for the keyboard's own. */
+        Typeface typeface() {
+            return font == null ? null : Typeface.create(font, fontStyle);
+        }
+    }
+
+    private static KeyboardTheme styled(int background, int hint, int popup, int popupStroke,
+            int popupText, KeyStyle s) {
+        Cap n = s.caps[CLASS_NORMAL];
+        return new KeyboardTheme(false, background, n.face,
+                KeyCapDrawable.blend(n.face, Color.BLACK, 0.15f), s.active.face, 0, 0, n.text,
+                hint, popup, popupStroke, popupText, s);
+    }
+
+    /** Ivory keys with dark ink, black glass modifiers, an oxblood Enter, chrome rims. */
+    private static KeyboardTheme typewriter() {
+        return styled(0xFF1C1713, 0xFF8A6A3E, 0xFF2A231D, 0xFFB9B4A8, 0xFFF1E7CF,
+                new KeyStyle(KeyCapDrawable.ROUND,
+                        new Cap(0xFFF1E7CF, 0, 0xFF2A1F16),
+                        new Cap(0xFF2B2724, 0, 0xFFEDE3C8),
+                        new Cap(0xFF8E2B21, 0, 0xFFF6EAD2),
+                        new Cap(0xFFA8342A, 0, 0),
+                        0xFFA9A9A4, "serif-monospace", Typeface.BOLD, 0, 0));
+    }
+
+    /** Beige alphas, grey modifiers and red Esc/Enter, as on classic beige computers. */
+    private static KeyboardTheme keycapsRetro() {
+        return styled(0xFF3A3834, 0xFF7A7466, 0xFF3A3834, 0xFF6F6B62, 0xFFE9E3D5,
+                new KeyStyle(KeyCapDrawable.SCULPTED,
+                        new Cap(0xFFE6E0D1, 0xFFBDB5A3, 0xFF3A3731),
+                        new Cap(0xFF77756F, 0xFF55534E, 0xFFF1EDE4),
+                        new Cap(0xFFC9402F, 0xFF92281D, 0xFFFFF4EA),
+                        new Cap(0xFF3E8A8C, 0xFF2A6365, 0),
+                        0, null, 0, 0, 0));
+    }
+
+    /** Black alphas with pink legends, grey modifiers, pink Esc/Enter. */
+    private static KeyboardTheme keycapsMidnight() {
+        return styled(0xFF0A0A0C, 0xFF9C7880, 0xFF1B1B1E, 0xFF3A3A40, 0xFFF0BFCB,
+                new KeyStyle(KeyCapDrawable.SCULPTED,
+                        new Cap(0xFF2D2D32, 0xFF202024, 0xFFF0BFCB),
+                        new Cap(0xFF404047, 0xFF2C2C32, 0xFFE4E4E8),
+                        new Cap(0xFFE9A8B8, 0xFFB57585, 0xFF2A2A2E),
+                        new Cap(0xFFA5466A, 0xFF73304A, 0),
+                        0, null, 0, 0, 0));
+    }
+
+    /** Green phosphor: outlined cells, glowing monospace labels. */
+    private static KeyboardTheme terminal() {
+        return styled(0xFF020702, 0xFF2E9E4E, 0xFF020702, 0xFF1F7A3A, 0xFF4BFF7E,
+                new KeyStyle(KeyCapDrawable.TERMINAL,
+                        new Cap(0xFF061409, 0, 0xFF4BFF7E),
+                        new Cap(0xFF04100A, 0, 0xFF3FD7FF),
+                        new Cap(0xFF140F02, 0, 0xFFFFC94B),
+                        new Cap(0xFF0E4A1E, 0, 0),
+                        0xFF1F7A3A, "monospace", Typeface.BOLD, 0xCC1EFF5A, 4));
     }
 
     static boolean isColourTheme(int id) {
         return id == MATERIAL_DARK || id == MATERIAL_LIGHT || id == MATERIAL_BLACK
                 || id == MATERIAL_YOU || id == AMOLED_BLACK || id == HIGH_CONTRAST
-                || id == HIGH_CONTRAST_LIGHT;
+                || id == HIGH_CONTRAST_LIGHT || id == TYPEWRITER || id == KEYCAPS_RETRO
+                || id == KEYCAPS_MIDNIGHT || id == TERMINAL;
     }
 
     /** The theme for a stored id, or null for an image-based one. */
@@ -117,6 +261,10 @@ final class KeyboardTheme {
                 return new KeyboardTheme(true, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFBDBDBD, 0xFFFFD600,
                         0xFF000000, 1.5f, 0xFF000000, 0xFF0D47A1, 0xFFFFFFFF, 0xFF000000);
             case MATERIAL_YOU: return materialYou(context);
+            case TYPEWRITER: return typewriter();
+            case KEYCAPS_RETRO: return keycapsRetro();
+            case KEYCAPS_MIDNIGHT: return keycapsMidnight();
+            case TERMINAL: return terminal();
             default: return null;
         }
     }
@@ -173,7 +321,7 @@ final class KeyboardTheme {
     boolean sameAs(KeyboardTheme o) {
         return o != null && light == o.light && background == o.background && key == o.key
                 && keyPressed == o.keyPressed && keyActive == o.keyActive && text == o.text
-                && hint == o.hint && popup == o.popup;
+                && hint == o.hint && popup == o.popup && style == o.style;
     }
 
     // ------------------------------------------------------------------ drawables
@@ -184,7 +332,16 @@ final class KeyboardTheme {
 
     /** Key background with the same states as the old btn_keyboard_key_material_* selectors. */
     Drawable keyBackground(Context context, boolean borders) {
+        return keyBackground(context, borders, CLASS_NORMAL);
+    }
+
+    /**
+     * The background for one key class ({@link #keyClass}). Flat themes draw every class the
+     * same. Styled keys are their shape, so the key borders setting does not apply to them.
+     */
+    Drawable keyBackground(Context context, boolean borders, int keyClass) {
         float d = context.getResources().getDisplayMetrics().density;
+        if (style != null) return styledBackground(style, style.caps[keyClass], d);
         Drawable normal = borders ? shape(key, keyStroke, d) : new ColorDrawable(Color.TRANSPARENT);
         Drawable pressed = shape(keyPressed, keyStroke, d);
         Drawable active = shape(keyActive, keyStroke, d);
@@ -209,11 +366,66 @@ final class KeyboardTheme {
         return s;
     }
 
+    private static Drawable styledBackground(KeyStyle st, Cap cap, float d) {
+        Drawable normal = cap(st, cap, false, d);
+        Drawable pressed = cap(st, cap, true, d);
+        Drawable active = cap(st, st.active, false, d);
+        Drawable activePressed = cap(st, st.active, true, d);
+        // The padding is the face, which differs from key to key: the keyboard asks the
+        // current state's drawable (getCurrent()) once it has the key's bounds.
+        StateListDrawable s = new StateListDrawable();
+        int A = android.R.attr.state_active, P = android.R.attr.state_pressed,
+                K = android.R.attr.state_checkable, C = android.R.attr.state_checked,
+                E = android.R.attr.state_empty;
+        s.addState(new int[] {A, P}, activePressed);
+        s.addState(new int[] {A}, active);
+        s.addState(new int[] {K, C, P}, activePressed);
+        s.addState(new int[] {K, P}, pressed);
+        s.addState(new int[] {K, C}, active);
+        s.addState(new int[] {K}, normal);
+        s.addState(new int[] {E, P}, pressed);
+        s.addState(new int[] {E}, new ColorDrawable(Color.TRANSPARENT));
+        s.addState(new int[] {P}, pressed);
+        s.addState(new int[0], normal);
+        return s;
+    }
+
+    private static Drawable cap(KeyStyle st, Cap cap, boolean pressed, float d) {
+        int face = cap.face;
+        if (pressed && st.shape == KeyCapDrawable.ROUND) {
+            // Ivory darkens, black glass lightens.
+            face = luminance(face) > 0.3f ? KeyCapDrawable.blend(face, Color.BLACK, 0.16f)
+                    : KeyCapDrawable.blend(face, Color.WHITE, 0.14f);
+        }
+        int rim = st.rim;
+        if (st.shape == KeyCapDrawable.TERMINAL && pressed) {
+            // A pressed cell lights up in the phosphor colour.
+            rim = st.caps[CLASS_NORMAL].text;
+            face = KeyCapDrawable.blend(cap.face, rim, 0.22f);
+        }
+        return new KeyCapDrawable(st.shape, face, cap.skirt, rim, pressed, d, st.unit);
+    }
+
+    private static float luminance(int c) {
+        return (0.299f * Color.red(c) + 0.587f * Color.green(c) + 0.114f * Color.blue(c)) / 255f;
+    }
+
+    /**
+     * Tells a styled theme's keys the usual key width (the keyboard's median), so a round key
+     * on a wide key matches its neighbours. No effect on flat themes.
+     */
+    void setKeyUnit(int px) {
+        if (style != null) style.unit[0] = px;
+    }
+
     /** Keys inside a popup panel: no shape until pressed. */
     Drawable popupKeyBackground(Context context) {
         float d = context.getResources().getDisplayMetrics().density;
         StateListDrawable s = new StateListDrawable();
-        s.addState(new int[] {android.R.attr.state_pressed}, shape(keyPressed, 0, d));
+        // A styled theme's panel is not its key face: a pressed key there takes the face of
+        // a key that is on, which its labels are drawn to stand out on.
+        int fill = style != null ? style.active.face : keyPressed;
+        s.addState(new int[] {android.R.attr.state_pressed}, shape(fill, 0, d));
         s.addState(new int[0], new ColorDrawable(Color.TRANSPARENT));
         return s;
     }

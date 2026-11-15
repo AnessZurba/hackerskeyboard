@@ -234,6 +234,10 @@
     <string name="summary_key_borders_off">Labels only; a key lights up while pressed (colour themes)</string>
     <string name="layout_material_dark" translatable="false">Material Dark</string>
     <string name="layout_material_light" translatable="false">Material Light</string>
+    <string name="layout_typewriter" translatable="false">Typewriter</string>
+    <string name="layout_keycaps_retro" translatable="false">Keycaps (retro beige)</string>
+    <string name="layout_keycaps_midnight" translatable="false">Keycaps (midnight)</string>
+    <string name="layout_terminal" translatable="false">Retro terminal</string>
 
     <string-array name="keyboard_layout_modes" translatable="false">
         <item>@string/layout_material_you</item>
@@ -243,6 +247,10 @@
         <item>@string/layout_amoled_black</item>
         <item>@string/layout_high_contrast</item>
         <item>@string/layout_high_contrast_light</item>
+        <item>@string/layout_typewriter</item>
+        <item>@string/layout_keycaps_retro</item>
+        <item>@string/layout_keycaps_midnight</item>
+        <item>@string/layout_terminal</item>
     </string-array>
 
     <!--
@@ -259,6 +267,10 @@
         <item>9</item>
         <item>10</item>
         <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
     </string-array>
 
 
