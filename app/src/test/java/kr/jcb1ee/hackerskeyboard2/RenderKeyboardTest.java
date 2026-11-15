@@ -68,6 +68,17 @@ public class RenderKeyboardTest {
         if ("words".equals(panel)) toolbar.showSuggestions("helo", "hello", "help", true);
         if ("words-plain".equals(panel)) toolbar.showSuggestions("help", "hello", "held", false);
         if ("words-rtl".equals(panel)) toolbar.showSuggestions("שלום", "שלומי", "שלומות", false);
+        // A tip in the row (tip, tip-long), and the gesture label (label-delete, label-trackpad).
+        if ("tip".equals(panel)) toolbar.showTip(HintManager.Tip.BACKSPACE_SWIPE);
+        if ("tip-long".equals(panel)) toolbar.showTip(HintManager.Tip.SELECT_TRACKPAD);
+        if ("label-delete".equals(panel)) {
+            String[] label = GestureLabel.deleteSwipe(ime.getResources(), 3, false);
+            toolbar.setGestureLabel(label[0], label[1]);
+        }
+        if ("label-trackpad".equals(panel)) {
+            String[] label = GestureLabel.trackpad(ime.getResources(), false);
+            toolbar.setGestureLabel(label[0], label[1]);
+        }
         if ("clipboard".equals(panel)) {
             ClipboardHistory h = ClipboardHistory.get(ime);
             h.add("ssh user@example.com -p 2222");
