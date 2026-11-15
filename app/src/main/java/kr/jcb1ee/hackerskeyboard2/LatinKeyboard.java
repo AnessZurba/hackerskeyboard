@@ -64,6 +64,8 @@ public class LatinKeyboard extends Keyboard {
     private Key mF1Key;
     private final Drawable mHintIcon;
     private Key mSpaceKey;
+    /** Whether the space bar shows only the plain space mark (no language, no LED). */
+    private boolean mPlainSpaceBar = true;
     private Key m123Key;
     private final int[] mSpaceKeyIndexArray;
     private int mSpaceDragStartX;
@@ -430,8 +432,14 @@ public class LatinKeyboard extends Keyboard {
         return mLocale != null;
     }
 
+    /** Whether a key is the space bar with only the plain space mark on it. */
+    boolean isPlainSpaceBar(Key key) {
+        return key == mSpaceKey && mPlainSpaceBar;
+    }
+
     private void updateSpaceBarForLocale(boolean isAutoCompletion) {
         if (mSpaceKey == null) return;
+        mPlainSpaceBar = mLocale == null && !isAutoCompletion;
         // If application locales are explicitly selected.
         if (mLocale != null) {
             mSpaceKey.icon = new BitmapDrawable(mRes,

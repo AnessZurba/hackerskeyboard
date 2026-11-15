@@ -85,6 +85,12 @@ public class KeyboardSwitcher implements
         R.layout.input_material_dark,
         R.layout.input_material_dark,
         R.layout.input_material_light,
+        // 12-15: Typewriter, Keycaps (retro beige, midnight), Retro terminal: styled colour
+        // themes (KeyboardTheme.KeyStyle), all drawn over input_material_dark.
+        R.layout.input_material_dark,
+        R.layout.input_material_dark,
+        R.layout.input_material_dark,
+        R.layout.input_material_dark,
     };
 
     /** The colour theme in use, or null for an image theme. */
