@@ -64,6 +64,16 @@ public class PrefScreenFeedback extends AppCompatActivity {
             removeIconSpace(getPreferenceScreen());
             SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
             prefs.registerOnSharedPreferenceChangeListener(this);
+            updateClickVolume(prefs);
+        }
+
+        /** The click volume only applies when the click method isn't "System default". */
+        private void updateClickVolume(SharedPreferences prefs) {
+            androidx.preference.Preference volume = findPreference("pref_click_volume");
+            if (volume == null) return;
+            String method = prefs.getString("pref_click_method",
+                    getString(R.string.default_click_method));
+            volume.setEnabled(!"0".equals(method));
         }
 
         @Override
@@ -75,6 +85,7 @@ public class PrefScreenFeedback extends AppCompatActivity {
 
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             (new BackupManager(requireContext())).dataChanged();
+            if ("pref_click_method".equals(key)) updateClickVolume(prefs);
         }
     }
 }

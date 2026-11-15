@@ -65,14 +65,6 @@
             android:persistent="true"
             />
 
-    <CheckBoxPreference
-            android:key="suggestions_in_landscape"
-            android:title="@string/title_suggestions_in_landscape"
-            android:persistent="true" 
-            android:defaultValue="@bool/default_suggestions_in_landscape"
-            android:summaryOn="@string/summary_suggestions_in_landscape_true"
-            android:summaryOff="@string/summary_suggestions_in_landscape_false"
-            />
 
     <PreferenceScreen
             android:title="@string/pref_screen_view_title"
@@ -103,7 +95,7 @@
             android:persistent="true"
             android:entryValues="@array/voice_input_modes_values"
             android:entries="@array/voice_input_modes"
-            android:defaultValue="@string/voice_mode_symbols"
+            android:defaultValue="@string/voice_mode_main"
             />
 
     <PreferenceScreen
@@ -271,36 +263,9 @@
             android:dependency="word_suggestions"
             />
 
-        <CheckBoxPreference
-            android:key="quick_fixes"
-            android:title="@string/quick_fixes"
-            android:summary="@string/quick_fixes_summary"
-            android:persistent="true"
-            android:defaultValue="@bool/default_quick_fixes"
-            />
 
-        <CheckBoxPreference
-            android:key="show_suggestions"
-            android:title="@string/show_suggestions"
-            android:summary="@string/show_suggestions_summary"
-            android:persistent="true"
-            android:defaultValue="@bool/default_suggestions"
-            />
 
-        <CheckBoxPreference
-            android:key="auto_complete"
-            android:title="@string/auto_complete"
-            android:summary="@string/auto_complete_summary"
-            android:persistent="true" 
-            android:defaultValue="@bool/enable_autocorrect"
-            android:dependency="show_suggestions"
-            />
 
-        <kr.jcb1ee.hackerskeyboard2.AutoSummaryEditTextPreference
-            android:key="pref_suggested_punctuation"
-            android:title="@string/title_suggested_punctuation"
-            android:defaultValue="@string/suggested_punctuations"
-            />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -353,17 +318,10 @@
             />
     </PreferenceCategory>
 
+
     <PreferenceCategory
             android:title="@string/title_input_mode_settings"
             android:key="input_mode_settings">
-
-    <CheckBoxPreference
-            android:key="recorrection_enabled"
-            android:title="@string/prefs_enable_recorrection"
-            android:summary="@string/prefs_enable_recorrection_summary"
-            android:persistent="true"
-            android:defaultValue="@bool/default_recorrection_enabled"
-            />
 
     <CheckBoxPreference
             android:key="fullscreen_override"
@@ -384,11 +342,6 @@
             />
     </PreferenceCategory>
 
-    <PreferenceCategory
-            android:title="@string/title_application_category"
-            android:key="application_settings">
-
-    </PreferenceCategory>
 
     <PreferenceCategory
             android:title="@string/title_debugging"

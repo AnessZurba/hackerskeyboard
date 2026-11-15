@@ -77,6 +77,18 @@ public final class AospSuggestionEngine implements SuggestionEngine {
         return names;
     }
 
+    /** Whether a dictionary for {@code locale} is bundled (see {@link #dictionaryNames}). */
+    public static boolean hasDictionary(Context context, String locale) {
+        for (String name : dictionaryNames(locale)) {
+            try (AssetFileDescriptor fd = context.getAssets().openFd(assetName(name))) {
+                return true;
+            } catch (IOException e) {
+                // not bundled under this name
+            }
+        }
+        return false;
+    }
+
     /**
      * Opens the bundled dictionary for {@code locale} (see {@link #dictionaryNames}). Returns
      * null when there is none, the native library is missing or the file is not a dictionary.

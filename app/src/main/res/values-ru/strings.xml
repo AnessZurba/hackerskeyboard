@@ -31,7 +31,6 @@
     <string name="title_key_layout_options">Настройка раскладки</string>
     <string name="title_key_behavior_settings">Настройка поведения клавиш</string>
     <string name="title_long_press_alternate_keys">Альтернативные символы</string>
-    <string name="title_suggested_punctuation">Пунктуация</string>
     <string name="title_input_mode_settings">Настройка способа ввода</string>
     <string name="title_debugging">Отладка</string>
     <string name="title_input_connection_details">Где печатаем:</string>
@@ -61,20 +60,8 @@
     <!-- Option to enable auto capitalization of sentences -->
     <string name="auto_cap">Заглавные автоматически</string>
 
-    <!-- Option to enable quick fixes -->
-    <string name="quick_fixes">Быстрое исправление</string>
-    <!-- Description for quick fixes -->
-    <string name="quick_fixes_summary">Исправлять распространенные опечатки</string>
 
-    <!-- Option to enable showing suggestions -->
-    <string name="show_suggestions">Предлагать варианты</string>
-    <!-- Description for show suggestions -->
-    <string name="show_suggestions_summary">Предлагать варианты слов во время ввода</string>
 
-    <!-- Option to enable auto completion -->
-    <string name="auto_complete">Автозавершение</string>
-    <!-- Description for auto completion -->
-    <string name="auto_complete_summary">При нажатии пробела вставлять предложенное слово</string>
 
     <!-- Option to show/hide the settings key -->
     <string name="prefs_settings_key">Кнопка настроек</string>
@@ -176,10 +163,6 @@
     <!-- Inform the user that a particular language has an available dictionary -->
     <string name="has_dictionary">Доступен словарь</string>
 
-    <!-- Preferences item for enabling to correct suggestions by touching words you have typed -->
-    <string name="prefs_enable_recorrection">Нажмите для исправления</string>
-    <!-- The summary for the preferences item for enabling to correct suggestions by touching words you have typed -->
-    <string name="prefs_enable_recorrection_summary">Нажмите на введеные слова для исправления</string>
 
     <string name="pref_screen_feedback_title">Обратная связь</string>
     <string name="pref_screen_feedback_title_summary">Настройка звука клавиш, виброотклика, увеличение нажатых и т.п.</string>
@@ -228,9 +211,6 @@
         <item>Правая Meta</item>
     </string-array>
 
-    <string name="title_suggestions_in_landscape">Подсказки в ландшафтном режиме</string>
-    <string name="summary_suggestions_in_landscape_true">Как в портретном режиме</string>
-    <string name="summary_suggestions_in_landscape_false">Подсказки спрятаны</string>
 
     <string name="title_fullscreen_override">Откл. полноэкранный ввод</string>
     <string name="summary_fullscreen_override_true">Отключен, используется стандартный вид</string>
@@ -241,7 +221,6 @@
     <string name="summary_force_keyboard_on_false">Скрывать клавиатуру при наличии внешней</string>
 
 
-    <string name="title_application_category">Настройки совместимости</string>
 
 
     <string name="title_caps_lock">Двойное нажатие Shift</string>
@@ -268,7 +247,6 @@
     <string name="title_top_row_scale">Высота 5-го ряда</string>
 
     <string name="title_label_scale">Размер шрифта клавиш</string>
-    <string name="title_candidate_scale">Размер шрифта вариантов</string>
 
     <string name="title_vibrate_len">Длительность вибрации</string>
 

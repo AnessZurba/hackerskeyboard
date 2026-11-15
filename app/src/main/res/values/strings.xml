@@ -21,7 +21,7 @@
     <!-- Title for Latin keyboard  -->
     <string name="english_ime_name">Hacker\'s Keyboard 2 AZ</string>
     <!-- Title for Latin keyboard settings activity / dialog -->
-    <string name="english_ime_settings">Settings for Hacker\'s Keyboard</string>
+    <string name="english_ime_settings">Settings</string>
     <!-- Title for Latin keyboard input options dialog -->
 
     <!-- Various configuration titles -->
@@ -31,14 +31,13 @@
     <string name="title_key_layout_options">Key layout options</string>
     <string name="title_key_behavior_settings">Key behavior settings</string>
     <string name="title_long_press_alternate_keys">Long-press alternate keys</string>
-    <string name="title_suggested_punctuation">Suggested punctuation</string>
     <string name="title_input_mode_settings">Input mode settings</string>
     <string name="title_debugging">Debugging</string>
     <string name="title_input_connection_details">Input connection details</string>
     <string name="title_version">Version</string>
     <!-- Where the bundled word data comes from; the details are in assets/dicts/NOTICE.txt. -->
     <string name="title_dictionary_licences">Dictionaries</string>
-    <string name="summary_dictionary_licences">English and Hebrew: AOSP LatinIME word lists (Apache License 2.0).\nArabic: word frequencies from the Leipzig Corpora Collection, Arabic news 2020 and Wikipedia 2021 (CC BY 4.0, wortschatz.uni-leipzig.de), reduced to the 150,000 most frequent words without diacritics.\nArabic key targets: Hermit Dave\'s FrequencyWords from OpenSubtitles (CC BY-SA 4.0).</string>
+    <string name="summary_dictionary_licences">English and Hebrew: AOSP LatinIME word lists (Apache License 2.0).\nArabic: word frequencies from the Leipzig Corpora Collection, Arabic news 2020 and Wikipedia 2021 (Leipzig: CC BY 4.0, wortschatz.uni-leipzig.de; Wikipedia text: CC BY-SA 4.0), reduced to the 150,000 most frequent words without diacritics; this dictionary is distributed under CC BY-SA 4.0.\nArabic key targets: Hermit Dave\'s FrequencyWords from OpenSubtitles (CC BY-SA 4.0).</string>
     <string name="title_swipe_gestures">Swipe gestures (experimental)</string>
 
     <!-- Option to provide vibrate/haptic feedback on keypress -->
@@ -60,29 +59,17 @@
     <string name="prediction_category">Word suggestion settings</string>
     <!-- Settings: word suggestions in the toolbar row (AOSP decoder, bundled dictionaries) -->
     <string name="title_word_suggestions">Word suggestions</string>
-    <string name="summary_word_suggestions">Suggest words in the toolbar row while typing (English for now)</string>
+    <string name="summary_word_suggestions">Suggest words in the toolbar row while typing (English, Hebrew and Arabic)</string>
     <string name="title_auto_correction">Auto-correction</string>
     <string name="summary_auto_correction">Space and punctuation correct a mistyped word when the suggestion is clear; Backspace undoes it</string>
 	
     
 	
     <!-- Option to enable auto capitalization of sentences -->
-    <string name="auto_cap">Auto-capitalization</string> 
+    <string name="auto_cap">Auto-capitalize sentences</string>
     
-    <!-- Option to enable quick fixes -->
-    <string name="quick_fixes">Quick fixes</string>
-    <!-- Description for quick fixes -->
-    <string name="quick_fixes_summary">Corrects commonly typed mistakes</string>
     
-    <!-- Option to enable showing suggestions -->
-    <string name="show_suggestions">Show suggestions</string>
-    <!-- Description for show suggestions -->
-    <string name="show_suggestions_summary">Display suggested words while typing</string>
     
-    <!-- Option to enable auto completion -->
-    <string name="auto_complete">Auto-complete</string>
-    <!-- Description for auto completion -->
-    <string name="auto_complete_summary">Spacebar and punctuation automatically insert highlighted word</string>
     
     <!-- Option to show/hide the settings key -->
     <string name="prefs_settings_key">Show settings key</string>
@@ -211,10 +198,6 @@
     <!-- Inform the user that a particular language has an available dictionary -->
     <string name="has_dictionary">Dictionary available</string>
 
-    <!-- Preferences item for enabling to correct suggestions by touching words you have typed -->
-    <string name="prefs_enable_recorrection">Touch to correct words</string>
-    <!-- The summary for the preferences item for enabling to correct suggestions by touching words you have typed -->
-    <string name="prefs_enable_recorrection_summary">Touch entered words to correct them</string>
 
     <string name="pref_screen_feedback_title">Key feedback settings</string>
     <string name="pref_screen_feedback_title_summary">Configure key sound, vibrate, preview popup etc.</string>
@@ -265,10 +248,10 @@
     <string name="title_keyboard_mode_portrait">Keyboard mode, portrait</string>
     <string name="title_keyboard_mode_landscape">Keyboard mode, landscape</string>
     <string-array name="keyboard_mode_entries">
-        <item>4-row Gingerbread layout</item>
-        <item>5-row compact layout (US QWERTY only!)</item>
-        <item>Full 5-row layout</item>
-        <item>Full 5-row layout (swap Ctrl/Esc keys)</item>
+        <item>Compact 4-row</item>
+        <item>PC 5-row, compact (US QWERTY only)</item>
+        <item>PC 5-row</item>
+        <item>PC 5-row, Ctrl and Esc swapped</item>
     </string-array>
     <string-array name="keyboard_mode_values">
         <item>0</item>
@@ -317,20 +300,16 @@
         <item>118</item>
     </string-array>
     
-    <string name="title_suggestions_in_landscape">Suggestions in landscape mode</string>
-    <string name="summary_suggestions_in_landscape_true">Same as in portrait mode</string>
-    <string name="summary_suggestions_in_landscape_false">Hide suggestions in landscape mode</string>
 
-    <string name="title_fullscreen_override">Landscape mode fullscreen editor</string>
-    <string name="summary_fullscreen_override_true">Disabled, use standard view</string>
-    <string name="summary_fullscreen_override_false">Enabled on small devices</string>
+    <string name="title_fullscreen_override">No fullscreen editor in landscape</string>
+    <string name="summary_fullscreen_override_true">The app stays visible above the keyboard</string>
+    <string name="summary_fullscreen_override_false">Small screens may switch to a fullscreen text box</string>
 
     <string name="title_force_keyboard_on">Show soft keyboard</string>
     <string name="summary_force_keyboard_on_true">Always</string>
     <string name="summary_force_keyboard_on_false">When no hardware keyboard is available</string>
 
 
-    <string name="title_application_category">Application-specific settings</string>
     
 
     <string name="title_caps_lock">Double-tap Shift mode</string>
@@ -364,7 +343,6 @@
     <string name="title_top_row_scale">5th row height adjustment</string>
         
     <string name="title_label_scale">Key label scaling</string>
-    <string name="title_candidate_scale">Suggestion label scaling</string>
 
     <string name="title_vibrate_len">Vibrate duration</string>
 
@@ -389,7 +367,7 @@
 
         
     <string name="pref_screen_actions_title">Gesture and key actions</string>
-    <string name="pref_screen_actions_title_summary">Configure actions for swipe gestures and hardware keys</string>
+    <string name="pref_screen_actions_title_summary">Configure actions for swipe gestures</string>
     <string name="title_swipe_up">Swipe up</string>
     <string name="title_swipe_down">Swipe down</string>
     <string name="title_swipe_left">Swipe left</string>

@@ -231,29 +231,10 @@ public class InputLanguageSelection extends AppCompatActivity {
             }
         }
 
+        /** Whether word suggestions have a dictionary for this language (the new engine's). */
         private boolean hasDictionary(Locale locale) {
-            // That language's resources, without switching the app's own language.
-            android.content.Context lc = LocaleContext.of(requireContext(), locale);
-            boolean haveDictionary = false;
-
-            int[] dictionaries = LatinIME.getDictionary(lc.getResources());
-            BinaryDictionary bd = new BinaryDictionary(lc, dictionaries, Suggest.DIC_MAIN);
-
-            // Is the dictionary larger than a placeholder? Arbitrarily chose a lower limit of
-            // 4000-5000 words, whereas the LARGE_DICTIONARY is about 20000+ words.
-            if (bd.getSize() > Suggest.LARGE_DICTIONARY_THRESHOLD / 4) {
-                haveDictionary = true;
-            } else {
-                BinaryDictionary plug = PluginManager.getDictionary(requireContext().getApplicationContext(), locale.getLanguage());
-                if (plug != null) {
-                    bd.close();
-                    bd = plug;
-                    haveDictionary = true;
-                }
-            }
-
-            bd.close();
-            return haveDictionary;
+            return kr.jcb1ee.hackerskeyboard2.suggest.AospSuggestionEngine.hasDictionary(
+                    requireContext(), locale.toString());
         }
 
         private String get5Code(Locale locale) {

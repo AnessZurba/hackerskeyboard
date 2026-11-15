@@ -27,12 +27,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"Mostrar popup ao premir tecla"</string>
     <string name="prediction_category" msgid="7027100625580696660">"Definições de sugestão de palavras"</string>
     <string name="auto_cap" msgid="1719746674854628252">"Letras maiúsculas automáticas"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"Correcções rápidas"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"Corrige os erros de escrita comuns"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"Mostrar sugestões"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"Apresentar sugestões de palavras ao escrever"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"Conclusão automática"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"A barra de espaços e a pontuação inserem automaticamente uma palavra realçada"</string>
     <string name="prefs_settings_key" msgid="4623341240804046498">"Mostrar tecla das definições"</string>
     <string name="settings_key_mode_auto_name" msgid="2993460277873684680">"Automático"</string>
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"Mostrar sempre"</string>
@@ -66,7 +60,5 @@
     <string name="language_selection_summary" msgid="187110938289512256">"Deslize o dedo pela barra de espaço para alterar o idioma"</string>
     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Toque novamente para guardar"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Dicionário disponível"</string>
-    <string name="prefs_enable_recorrection" msgid="4588408906649533582">"Tocar para corrigir palavras"</string>
-    <string name="prefs_enable_recorrection_summary" msgid="1056068922330206170">"Tocar nas palavras introduzidas para as corrigir"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"Tema do teclado"</string>
 </resources>

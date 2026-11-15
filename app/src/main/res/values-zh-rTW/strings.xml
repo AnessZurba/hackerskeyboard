@@ -27,12 +27,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"按鍵時顯示彈出式視窗"</string>
     <string name="prediction_category" msgid="7027100625580696660">"字詞建議設定"</string>
     <string name="auto_cap" msgid="1719746674854628252">"自動大寫"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"快速修正"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"修正一般打字錯誤"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"顯示建議"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"打字時顯示建議字詞"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"自動完成"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"在反白顯示的字詞處自動插入空白鍵和標點符號鍵盤"</string>
     <string name="prefs_settings_key" msgid="4623341240804046498">"顯示設定金鑰"</string>
     <string name="settings_key_mode_auto_name" msgid="2993460277873684680">"自動"</string>
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"永遠顯示"</string>
@@ -66,7 +60,5 @@
     <string name="language_selection_summary" msgid="187110938289512256">"以手指在空白鍵上滑動可變更語言"</string>
     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← 再次輕觸即可儲存"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"可使用字典"</string>
-    <string name="prefs_enable_recorrection" msgid="4588408906649533582">"輕觸此處可修正字詞"</string>
-    <string name="prefs_enable_recorrection_summary" msgid="1056068922330206170">"輕觸輸入的字詞即可加以修正"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"鍵盤主題"</string>
 </resources>

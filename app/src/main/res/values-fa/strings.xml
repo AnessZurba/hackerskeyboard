@@ -27,12 +27,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"بازشو با فشار کلید"</string>
     <string name="prediction_category" msgid="7027100625580696660">"تنظیمات پیشنهاد کلمه"</string>
     <string name="auto_cap" msgid="1719746674854628252">"نوشتن با حروف بزرگ خودکار"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"راه حل های سریع"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"تصحیح خطاهای تایپی رایج"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"نمایش پیشنهادات"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"نمایش واژه های پیشنهادی در حین تایپ"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"تکمیل خودکار"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"کلید خط فاصله و علائم نگارشی به صورت خودکار کلمه برجسته شده را وارد می کنند."</string>
     <string name="prefs_settings_key" msgid="4623341240804046498">"نمایش کلید تنظیمات"</string>
     <string name="settings_key_mode_auto_name" msgid="2993460277873684680">"خودکار"</string>
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"همیشه نمایش"</string>
@@ -66,7 +60,5 @@
     <string name="language_selection_summary" msgid="187110938289512256">"برای تغییر زبان انگشت را روی کلید فاصله بلغزانید"</string>
     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← جهت ذخیره دوباره لمس کنید"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"دیکشنری موجود است"</string>
-    <string name="prefs_enable_recorrection" msgid="4588408906649533582">"برای تصحیح کلمات لمس کنید"</string>
-    <string name="prefs_enable_recorrection_summary" msgid="1056068922330206170">"برای تصحیح کلمات وارد شده آنها را لمس کنید"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"طرح زمینه صفحه کلید"</string>
 </resources>

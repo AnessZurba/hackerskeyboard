@@ -32,7 +32,10 @@ main_ar.dict - Arabic
     superscript alef and tatweel (NFKC); only single words made of the 36 letters of the
     Arabic alphabet (U+0621-U+063A, U+0641-U+064A) were kept; the 150,000 most frequent
     were turned into dictionary frequencies (210 + 21 * log10(count / top count)).
-    This dictionary is licensed under CC BY 4.0 as well.
+    Licence of this dictionary: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).
+    Leipzig publishes its word lists under CC BY 4.0, but one of the two counts comes
+    from Wikipedia text, which is CC BY-SA 4.0; to be safe this file is distributed under
+    the share-alike licence. That applies to this data file only, not to the app's code.
 
 The word lists for adaptive key targets (assets/wordlists) carry their sources in their
 headers: en.txt and he.txt from the same AOSP lists (Apache License 2.0); ar.txt from

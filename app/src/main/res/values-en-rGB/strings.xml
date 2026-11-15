@@ -29,12 +29,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"Pop-up on key press"</string>
     <string name="prediction_category" msgid="7027100625580696660">"Word suggestion settings"</string>
     <string name="auto_cap" msgid="1719746674854628252">"Auto-capitalisation"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"Quick fixes"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"Corrects commonly typed mistakes"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"Show suggestions"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"Display suggested words while typing"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"Auto-complete"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"Spacebar and punctuation automatically insert highlighted word"</string>
     <string name="prefs_settings_key" msgid="4623341240804046498">"Show settings key"</string>
     <string name="settings_key_mode_auto_name" msgid="2993460277873684680">"Automatic"</string>
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"Always show"</string>
@@ -68,8 +62,6 @@
     <string name="language_selection_summary" msgid="187110938289512256">"Slide finger on spacebar to change language"</string>
     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Touch again to save"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Dictionary available"</string>
-    <string name="prefs_enable_recorrection" msgid="4588408906649533582">"Touch to correct words"</string>
-    <string name="prefs_enable_recorrection_summary" msgid="1056068922330206170">"Touch words entered to correct them"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"Keyboard Theme"</string>
     <string name="title_hint_mode">Labelled alternative keys</string>
 </resources>

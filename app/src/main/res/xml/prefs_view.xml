@@ -45,15 +45,6 @@
             android:persistent="true"
             android:title="@string/title_label_scale" />
 
-        <kr.jcb1ee.hackerskeyboard2.SeekBarPreferenceString
-            android:defaultValue="1.0"
-            hk:minValue="0.5"
-            hk:maxValue="8.0"
-            hk:logScale="true"
-            hk:asPercent="true"
-            android:key="pref_candidate_scale"
-            android:persistent="true"
-            android:title="@string/title_candidate_scale" />
 
         <kr.jcb1ee.hackerskeyboard2.SeekBarPreferenceString
             android:defaultValue="1.0"

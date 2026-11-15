@@ -27,13 +27,11 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.text.AutoText;
 import android.text.InputType;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.CheckBoxPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -57,8 +55,6 @@ public class LatinIMESettings extends AppCompatActivity {
             implements SharedPreferences.OnSharedPreferenceChangeListener,
             DialogInterface.OnDismissListener {
 
-        private static final String QUICK_FIXES_KEY = "quick_fixes";
-        private static final String PREDICTION_SETTINGS_KEY = "prediction_settings";
         private static final String VOICE_SETTINGS_KEY = "voice_mode";
         static final String INPUT_CONNECTION_INFO = "input_connection_info";
 
@@ -67,7 +63,6 @@ public class LatinIMESettings extends AppCompatActivity {
         // Dialog ids
         private static final int VOICE_INPUT_CONFIRM_DIALOG = 0;
 
-        private CheckBoxPreference mQuickFixes;
         private Preference mAdaptiveClear;
         private ListPreference mVoicePreference;
         private ListPreference mSettingsKeyPreference;
@@ -105,7 +100,6 @@ public class LatinIMESettings extends AppCompatActivity {
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.prefs);
             removeIconSpace(getPreferenceScreen());
-            mQuickFixes = (CheckBoxPreference) findPreference(QUICK_FIXES_KEY);
             mVoicePreference = (ListPreference) findPreference(VOICE_SETTINGS_KEY);
             mSettingsKeyPreference = (ListPreference) findPreference(PREF_SETTINGS_KEY);
             mInputConnectionInfo = (Preference) findPreference(INPUT_CONNECTION_INFO);
@@ -136,11 +130,6 @@ public class LatinIMESettings extends AppCompatActivity {
         @Override
         public void onResume() {
             super.onResume();
-            int autoTextSize = AutoText.getSize(getListView());
-            if (autoTextSize < 1) {
-                ((PreferenceGroup) findPreference(PREDICTION_SETTINGS_KEY))
-                        .removePreference(mQuickFixes);
-            }
 
             Log.i(TAG, "compactModeEnabled=" + LatinIME.sKeyboardSettings.compactModeEnabled);
             if (!LatinIME.sKeyboardSettings.compactModeEnabled) {

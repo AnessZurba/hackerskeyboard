@@ -34,6 +34,7 @@
             hk:logScale="true"
             hk:displayFormat="%.0f ms"
             android:key="vibrate_len"
+            android:dependency="vibrate_on"
             android:title="@string/title_vibrate_len"
             android:persistent="true"
             />
@@ -46,6 +47,7 @@
 
     <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
             android:key="pref_click_method"
+            android:dependency="sound_on"
             android:title="@string/title_click_method"
             android:entryValues="@array/click_method_values"
             android:entries="@array/click_method_entries"
@@ -59,6 +61,7 @@
             hk:maxValue="1"
             hk:asPercent="true"
             android:key="pref_click_volume"
+            android:dependency="sound_on"
             android:title="@string/title_click_volume"
             android:persistent="true"
             />

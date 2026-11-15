@@ -28,12 +28,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"Pop-up cun smatgar ina tasta"</string>
     <string name="prediction_category" msgid="7027100625580696660">"Parameters da las propostas per pleds"</string>
     <string name="auto_cap" msgid="1719746674854628252">"Maiusclas automaticas"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"Correcturas sveltas"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"Curregia sbagls da tippar currents"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"Mussar las propostas"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"Mussar pleds proponids durant l\'endataziun"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"Cumplettaziun automatica"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"Inserir auto. il pled marcà cun la tasta da vid/interpuncziun"</string>
     <!-- no translation found for prefs_settings_key (4623341240804046498) -->
     <skip />
     <!-- no translation found for settings_key_mode_auto_name (2993460277873684680) -->
@@ -72,9 +66,7 @@
     <string name="language_selection_summary" msgid="187110938289512256">"Stritgar cun il det sur la tasta da vid per midar la lingua"</string>
     <!-- outdated translation 8058519710062071085 -->     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Tippar danovamain per memorisar"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Dicziunari disponibel"</string>
-    <!-- no translation found for prefs_enable_recorrection (4588408906649533582) -->
     <skip />
-    <!-- no translation found for prefs_enable_recorrection_summary (1056068922330206170) -->
     <skip />
     <string name="keyboard_layout" msgid="437433231038683666">"Design da la tastatura"</string>
 </resources>

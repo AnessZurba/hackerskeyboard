@@ -27,12 +27,6 @@
     <string name="popup_on_keypress" msgid="123894815723512944">"Legyen nagyobb billentyű lenyomásakor"</string>
     <string name="prediction_category" msgid="7027100625580696660">"Szójavaslati beállítások"</string>
     <string name="auto_cap" msgid="1719746674854628252">"Automatikusan nagy kezdőbetű"</string>
-    <string name="quick_fixes" msgid="5353213327680897927">"Gyorsjavítások"</string>
-    <string name="quick_fixes_summary" msgid="3405028402510332373">"Kijavítja a gyakori gépelési hibákat"</string>
-    <string name="show_suggestions" msgid="507074425254289133">"Javaslatok megjelenítése"</string>
-    <string name="show_suggestions_summary" msgid="1989672863935759654">"A javasolt szavak megjelenítése gépelés közben"</string>
-    <string name="auto_complete" msgid="1103196318775486023">"Automatikus kiegészítés"</string>
-    <string name="auto_complete_summary" msgid="6113149638718274624">"A szóköz és az írásjelek használata automatikusan beszúrja a kiemelt szót"</string>
     <string name="prefs_settings_key" msgid="4623341240804046498">"Beállítások billentyű megjelenítése"</string>
     <string name="settings_key_mode_auto_name" msgid="2993460277873684680">"Automatikus"</string>
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"Mindig látszik"</string>
@@ -66,7 +60,5 @@
     <string name="language_selection_summary" msgid="187110938289512256">"A nyelv módosításához húzza végig az ujját a szóköz billentyűn"</string>
     <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Érintse meg újra a mentéshez"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Van elérhető szótár"</string>
-    <string name="prefs_enable_recorrection" msgid="4588408906649533582">"Javítás a szavak megérintésével"</string>
-    <string name="prefs_enable_recorrection_summary" msgid="1056068922330206170">"A beírt szavakat megérintve kijavíthatja őket"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"Billentyűzettéma"</string>
 </resources>
