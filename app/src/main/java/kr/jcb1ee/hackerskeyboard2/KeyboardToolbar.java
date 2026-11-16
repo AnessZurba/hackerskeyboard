@@ -279,13 +279,17 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mBody.invalidate();
     }
 
-    static final long FLASH_MS = 900;
+    static final long FLASH_MS = 700;
     private final Runnable mEndFlash = () -> setGestureLabel(null, null);
 
-    /** Shows the gesture label for a moment (after a swipe that's over at once: undo, redo). */
+    /**
+     * A small note for a moment near the top of the keys, after a swipe that's over at once
+     * (undo, redo): no scrim, one word. {@code hint} is kept for the label's tests only.
+     */
     void flashGestureLabel(String status, String hint) {
-        setGestureLabel(status, hint);
         mHandler.removeCallbacks(mEndFlash);
+        mGestureLabel.setCompact(status);
+        mBody.invalidate();
         mHandler.postDelayed(mEndFlash, FLASH_MS);
     }
 

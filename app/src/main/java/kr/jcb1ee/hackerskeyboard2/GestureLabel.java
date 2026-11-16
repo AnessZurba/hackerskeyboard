@@ -31,6 +31,8 @@ import android.view.View;
 final class GestureLabel extends View {
     private String mStatus, mHint;
     private int mScrim;
+    /** A small pill near the top, no scrim (a brief note after undo or redo). */
+    private boolean mCompact;
     private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF mRect = new RectF();
 
@@ -88,7 +90,21 @@ final class GestureLabel extends View {
         mStatus = status;
         mHint = hint;
         mScrim = scrim;
+        mCompact = false;
         invalidate();
+    }
+
+    /** A brief, small note ("Undo") near the top of the keys: no scrim, no second line. */
+    void setCompact(String status) {
+        mStatus = status;
+        mHint = null;
+        mScrim = 0;
+        mCompact = true;
+        invalidate();
+    }
+
+    boolean isCompact() {
+        return mCompact && mStatus != null;
     }
 
     @Override
@@ -97,9 +113,10 @@ final class GestureLabel extends View {
         canvas.drawColor(mScrim);
         float density = getResources().getDisplayMetrics().density;
         float scaled = getResources().getDisplayMetrics().scaledDensity;
-        float statusSize = 20 * scaled, hintSize = 13 * scaled, pad = 14 * density, gap = 4 * density;
+        float statusSize = (mCompact ? 14 : 20) * scaled, hintSize = 13 * scaled,
+                pad = (mCompact ? 8 : 14) * density, gap = 4 * density;
         mPaint.setTextAlign(Paint.Align.CENTER);
-        mPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mPaint.setTypeface(mCompact ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
         mPaint.setTextSize(statusSize);
         float width = mPaint.measureText(mStatus);
         float height = statusSize;
@@ -115,14 +132,17 @@ final class GestureLabel extends View {
             width = Math.max(width, hintWidth);
             height += gap + hintSize;
         }
+        if (mCompact) width += pad; // a pill: a little wider than tall
         width = Math.min(width + 2 * pad, getWidth() - 2 * pad);
-        float cx = getWidth() / 2f, cy = getHeight() / 2f;
+        float cx = getWidth() / 2f;
+        float cy = mCompact ? Math.min(getHeight() / 2f, 28 * density) : getHeight() / 2f;
         mRect.set(cx - width / 2, cy - height / 2 - pad, cx + width / 2, cy + height / 2 + pad);
         mPaint.setColor(0xE0202124);
-        canvas.drawRoundRect(mRect, 16 * density, 16 * density, mPaint);
+        float radius = mCompact ? mRect.height() / 2 : 16 * density;
+        canvas.drawRoundRect(mRect, radius, radius, mPaint);
         float y = mRect.top + pad + statusSize * 0.8f;
         mPaint.setColor(0xFFFFFFFF);
-        mPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mPaint.setTypeface(mCompact ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
         mPaint.setTextSize(statusSize);
         canvas.drawText(mStatus, cx, y, mPaint);
         if (mHint != null) {

@@ -176,10 +176,11 @@ public class UndoSwipeTest {
         start();
         mIme.swipeLeft();
         assertEquals("Undo", mToolbar.gestureLabelStatus());
-        assertEquals("Swipe right to redo", mToolbar.gestureLabelHint());
+        // A small note, one word, no second line.
+        assertNull(mToolbar.gestureLabelHint());
         mIme.swipeRight();
         assertEquals("Redo", mToolbar.gestureLabelStatus());
-        assertEquals("Swipe left to undo again", mToolbar.gestureLabelHint());
+        assertNull(mToolbar.gestureLabelHint());
         ShadowLooper.idleMainLooper(KeyboardToolbar.FLASH_MS + 50, TimeUnit.MILLISECONDS);
         assertNull(mToolbar.gestureLabelStatus());
     }
