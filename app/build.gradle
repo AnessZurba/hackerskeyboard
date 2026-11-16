@@ -97,6 +97,19 @@ tasks.register('hostSuggestJni') {
     }
 }
 
+// The optional (downloadable) dictionaries, for the dicts-v1 GitHub release: not in the APK.
+// Writes build/dicts (root build dir, so "clean" keeps it); the unit tests use those found
+// there (SuggestTestSupport.OPTIONAL_DICT_DIR) and skip the languages without one.
+def optionalDictDir = rootProject.layout.buildDirectory.dir('dicts').get().asFile
+tasks.register('optionalDicts') {
+    description = 'Builds the downloadable word suggestion dictionaries (tools/mkdicts.sh).'
+    doLast {
+        providers.exec {
+            commandLine rootProject.file('tools/mkdicts.sh').path, optionalDictDir.path
+        }.result.get()
+    }
+}
+
 android.testOptions.unitTests.includeAndroidResources = true
 // Robolectric downloads its Android runtime jar at test time; pass
 // -ProbolectricDeps=<dir holding the jar> to run offline instead.
@@ -105,6 +118,7 @@ android.testOptions.unitTests.all {
     jvmArgs '--add-opens=java.base/java.io=ALL-UNNAMED', '--add-exports=java.base/jdk.internal.access=ALL-UNNAMED'
     dependsOn 'hostSuggestJni'
     systemProperty 'hk.suggest.hostJni', hostJniLib.path
+    systemProperty 'hk.suggest.optionalDicts', optionalDictDir.path
     if (project.hasProperty('robolectricDeps')) {
         systemProperty 'robolectric.offline', 'true'
         systemProperty 'robolectric.dependency.dir', project.property('robolectricDeps')

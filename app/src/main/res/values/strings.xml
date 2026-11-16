@@ -59,7 +59,7 @@
     <string name="prediction_category">Word suggestion settings</string>
     <!-- Settings: word suggestions in the toolbar row (AOSP decoder, bundled dictionaries) -->
     <string name="title_word_suggestions">Word suggestions</string>
-    <string name="summary_word_suggestions">Suggest words in the toolbar row while typing (English, Hebrew and Arabic)</string>
+    <string name="summary_word_suggestions">Suggest words in the toolbar row while typing</string>
     <string name="title_auto_correction">Auto-correction</string>
     <string name="summary_auto_correction">Space and punctuation correct a mistyped word when the suggestion is clear; Backspace undoes it</string>
 	

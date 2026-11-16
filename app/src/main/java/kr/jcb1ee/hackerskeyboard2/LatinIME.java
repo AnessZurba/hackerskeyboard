@@ -20,6 +20,7 @@ import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW;
 import static kr.jcb1ee.hackerskeyboard2.KeyboardSwitcher.FULL_MODE_5_ROW_COMPACT;
 import kr.jcb1ee.hackerskeyboard2.LatinIMEUtil.RingCharBuffer;
 import kr.jcb1ee.hackerskeyboard2.suggest.AospSuggestionEngine;
+import kr.jcb1ee.hackerskeyboard2.suggest.DictionaryFiles;
 import kr.jcb1ee.hackerskeyboard2.suggest.KeyGeometry;
 import kr.jcb1ee.hackerskeyboard2.suggest.Suggestion;
 import kr.jcb1ee.hackerskeyboard2.suggest.SuggestionEngine;
@@ -3825,8 +3826,11 @@ public class LatinIME extends InputMethodService implements
         if (ClipboardHistory.PREF_ENABLED.equals(key)) {
             ClipboardHistory.get(this).setEnabled(sharedPreferences.getBoolean(key, true));
         }
-        if (PREF_WORD_SUGGESTIONS.equals(key) || PREF_AUTO_CORRECTION.equals(key)) {
+        if (PREF_WORD_SUGGESTIONS.equals(key) || PREF_AUTO_CORRECTION.equals(key)
+                || DictionaryFiles.PREF_CHANGED.equals(key)) {
             commitTyped(getCurrentInputConnection(), true);
+            // A dictionary was imported or removed: reopen whichever the language uses now.
+            if (DictionaryFiles.PREF_CHANGED.equals(key)) closeWordSuggestions();
             openWordSuggestions(sharedPreferences);
             updateCorrectionMode();
             if (mKeyboardSwitcher.getInputView() != null) updateSuggestions();

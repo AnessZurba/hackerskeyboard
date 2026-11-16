@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Dictionaries screen (DictionariesActivity): word suggestion dictionaries per language,
+     bundled or downloaded in the browser and imported from a file. -->
+<resources>
+    <string name="title_dictionaries">Dictionaries</string>
+    <string name="summary_dictionaries">Word suggestion dictionaries for more languages: download and import</string>
+    <string name="dictionaries_intro">English, Hebrew and Arabic come with the keyboard. For another language, tap Download: the file opens in your browser (the keyboard itself has no internet access). Then tap Browse and pick the downloaded main_….dict file.</string>
+    <string name="dictionaries_your_languages">Your keyboard languages</string>
+    <string name="dictionaries_other_languages">Other languages</string>
+    <string name="dictionary_status_bundled">Included</string>
+    <string name="dictionary_status_installed">Installed</string>
+    <string name="dictionary_status_installed_other">Installed (not the published file)</string>
+    <string name="dictionary_status_not_installed">Not installed</string>
+    <string name="dictionary_download">Download</string>
+    <string name="dictionary_browse">Browse</string>
+    <string name="dictionary_remove">Remove</string>
+    <string name="dictionary_imported">%1$s dictionary installed</string>
+    <string name="dictionary_removed">%1$s dictionary removed</string>
+    <string name="dictionary_importing">Checking the file…</string>
+    <string name="dictionary_no_browser">No app can open the link: %1$s</string>
+    <string name="dictionary_error_io">Could not read the file.</string>
+    <string name="dictionary_error_not_a_dictionary">This is not a word suggestion dictionary (main_….dict).</string>
+    <string name="dictionary_error_size">This file is too small or too large to be a dictionary.</string>
+    <string name="dictionary_error_language">This is a dictionary for another language (%1$s).</string>
+    <string name="menu_dictionaries">Dictionaries</string>
+</resources>

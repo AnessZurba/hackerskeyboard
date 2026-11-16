@@ -42,6 +42,13 @@ import kr.jcb1ee.hackerskeyboard2.LocaleLayouts;
  * and Hebrew the same AOSP lists the dictionaries come from, for Arabic a subtitle corpus
  * (OpenSubtitles), not the news and Wikipedia text of the dictionary.
  *
+ * <p>The optional (downloadable) dictionaries are measured when tools/mkdicts.sh has built
+ * them (build/dicts; skipped otherwise), on their language's layout, with words from their
+ * own word list (build/dicts/src), 500 by default. There "variant" is a letter with a
+ * diacritic typed as its base letter (é as e, ł as l, ё as е, ά as α: typing without
+ * accents), "digraph" (German) an umlaut typed as ae/oe/ue. Letters only on a long press
+ * are tapped on their base letter's key.
+ *
  * <p>Run alone with {@code ./gradlew testDebugUnitTest --tests '*SuggestionQualityTest*'};
  * {@code -PsuggestWords=N} changes the sample size (default 1000).
  */
@@ -50,7 +57,10 @@ import kr.jcb1ee.hackerskeyboard2.LocaleLayouts;
 public class SuggestionQualityTest {
     private static final File REPORTS = new File("build/reports");
 
-    private enum Error { NONE, NEIGHBOUR, OMISSION, TRANSPOSITION, EXTRA, NOISY_TAPS, VARIANT, VARIANT_WORD }
+    private enum Error {
+        NONE, NEIGHBOUR, OMISSION, TRANSPOSITION, EXTRA, NOISY_TAPS, VARIANT, VARIANT_WORD,
+        DIGRAPH
+    }
 
     /** One mistyped word: the letters and where they were tapped. */
     private static final class Typed {
@@ -74,8 +84,11 @@ public class SuggestionQualityTest {
     private static final class Layout {
         final KeyGeometry keys;
         final Map<Integer, KeyGeometry.Key> taps = new HashMap<>();
+        /** Letters with no key are tapped on their base letter's (a long press there). */
+        final boolean longPressOnBase;
 
-        Layout(String locale) {
+        Layout(String locale, boolean longPressOnBase) {
+            this.longPressOnBase = longPressOnBase;
             Keyboard kb = LocaleLayouts.fullKeyboard(locale);
             keys = KeyGeometry.fromKeyboard(kb);
             for (KeyGeometry.Key k : keys.keys()) taps.put(k.code, k);
@@ -90,8 +103,45 @@ public class SuggestionQualityTest {
 
         KeyGeometry.Key tap(int c) {
             KeyGeometry.Key k = taps.get(c);
-            return k != null ? k : taps.get(Character.toLowerCase(c));
+            if (k == null) k = taps.get(Character.toLowerCase(c));
+            if (k == null && longPressOnBase) {
+                // A letter on a long press only (Catalan à, Portuguese ã on the default
+                // layout): tapped where its base letter's key is.
+                int base = baseLetter(c);
+                KeyGeometry.Key b = base != c ? taps.get(base) : null;
+                if (b != null) k = new KeyGeometry.Key(c, b.x, b.y, b.width, b.height);
+            }
+            return k;
         }
+    }
+
+    /**
+     * The letter a diacritic letter is typed as when typing without accents (é as e, ł as l,
+     * Turkish ı as i, Greek ά as α, Russian ё as е), or {@code c} itself. Cyrillic й (a letter
+     * of its own) and ß stay; these are the letters the decoder folds (CharUtils::BASE_CHARS).
+     */
+    static int baseLetter(int c) {
+        switch (c) {
+            case 'ł': return 'l';
+            case 'đ': return 'd';
+            case 'ı': return 'i';
+            case 'ø': return 'o';
+            case 'й': case 'ß': return c;
+            default:
+                String d = java.text.Normalizer.normalize(String.valueOf((char) c),
+                        java.text.Normalizer.Form.NFD);
+                return d.length() > 1 && Character.isLetter(d.charAt(0)) ? d.charAt(0) : c;
+        }
+    }
+
+    /** {variant, typed instead} pairs: each letter of the language with a diacritic. */
+    private static int[][] accentVariants(String letters) {
+        List<int[]> out = new ArrayList<>();
+        for (char c : letters.toCharArray()) {
+            int b = baseLetter(c);
+            if (b != c) out.add(new int[] {c, b});
+        }
+        return out.toArray(new int[0][]);
     }
 
     @Test
@@ -124,18 +174,63 @@ public class SuggestionQualityTest {
         assertTrue(rate(s.get(Error.VARIANT), false) > 0.80);
     }
 
+    // ---------------------------------------------------------------- optional dictionaries
+
+    @Test public void german() throws IOException { optional("de", "de", "äöü"); }
+    @Test public void french() throws IOException { optional("fr", "fr", "àâæçéèêëîïôœùûüÿ"); }
+    @Test public void spanish() throws IOException { optional("es", "es", "áéíñóúü"); }
+    @Test public void portuguese() throws IOException { optional("pt", "pt_PT", "áâãàçéêíóôõú"); }
+    @Test public void italian() throws IOException { optional("it", "it", "àèéìíîòóùú"); }
+    @Test public void polish() throws IOException { optional("pl", "pl", "ąćęłńóśźż"); }
+    @Test public void czech() throws IOException { optional("cs", "cs", "áčďéěíňóřšťúůýž"); }
+    @Test public void swedish() throws IOException { optional("sv", "sv", "åäö"); }
+    @Test public void turkish() throws IOException { optional("tr", "tr", "çğıöşü"); }
+    @Test public void romanian() throws IOException { optional("ro", "ro", "ăâîșțşţ"); }
+    @Test public void russian() throws IOException { optional("ru", "ru", "ё"); }
+    @Test public void ukrainian() throws IOException { optional("uk", "uk", "ї"); }
+    @Test public void bulgarian() throws IOException { optional("bg", "bg", "ѝ"); }
+    @Test public void greek() throws IOException { optional("el", "el", "άέήίόύώϊϋΐΰ"); }
+    @Test public void hungarian() throws IOException { optional("hu", "hu", "áéíóöőúüű"); }
+    @Test public void catalan() throws IOException { optional("ca", "ca", "àéèíïòóúüç"); }
+
+    /**
+     * An optional dictionary on {@code layoutLocale}'s layout, with {@code accents} (the
+     * language's letters with diacritics) typed without them as the "variant" errors.
+     */
+    private void optional(String name, String layoutLocale, String accents) throws IOException {
+        File dict = SuggestTestSupport.optionalDict(name);
+        File wordlist = new File(SuggestTestSupport.OPTIONAL_DICT_DIR, "src/" + name + ".combined");
+        Map<Error, Score> s = measure(dictLocale(name), layoutLocale, wordlist, dict.getName(),
+                accentVariants(accents), "suggestion-quality-" + name + ".txt", true,
+                Integer.getInteger("suggestWords", 500), name.equals("de"));
+        assertTrue(rate(s.get(Error.NONE), true) > 0.85);
+        assertTrue(rate(s.get(Error.NEIGHBOUR), false) > 0.50);
+    }
+
+    /** A locale that opens dictionary {@code name} ("pt_pt" is pt_PT). */
+    private static String dictLocale(String name) {
+        int sep = name.indexOf('_');
+        return sep < 0 ? name : name.substring(0, sep) + "_" + name.substring(sep + 1).toUpperCase(Locale.ROOT);
+    }
+
+    private Map<Error, Score> measure(String locale, String layoutLocale, String wordlist,
+            String dictName, int[][] variants, String reportName) throws IOException {
+        return measure(locale, layoutLocale, new File("src/main/assets/wordlists/" + wordlist),
+                dictName, variants, reportName, false, Integer.getInteger("suggestWords", 1000),
+                false);
+    }
+
     /**
      * Runs every error kind on {@code locale}'s layout; {@code variants} are the letter
      * variants as {variant, typed instead} pairs.
      */
-    private Map<Error, Score> measure(String locale, String layoutLocale, String wordlist,
-            String dictName, int[][] variants, String reportName) throws IOException {
+    private Map<Error, Score> measure(String locale, String layoutLocale, File wordlist,
+            String dictName, int[][] variants, String reportName, boolean longPressOnBase,
+            int n, boolean digraphs) throws IOException {
         AospSuggestionEngine engine = SuggestTestSupport.engine(locale);
-        Layout layout = new Layout(layoutLocale);
+        Layout layout = new Layout(layoutLocale, longPressOnBase);
         KeyGeometry keys = layout.keys;
-        int n = Integer.getInteger("suggestWords", 1000);
-        List<String> words = sampleWords(engine, layout,
-                new File("src/main/assets/wordlists/" + wordlist), n);
+        List<String> words = sampleWords(engine, layout, wordlist, n);
         Random random = new Random(20261114);
         Map<Error, Score> scores = new LinkedHashMap<>();
         // Warm up (page in the dictionary, JIT) so the latencies are steady state.
@@ -145,6 +240,7 @@ public class SuggestionQualityTest {
         for (Error error : Error.values()) {
             boolean variant = error == Error.VARIANT || error == Error.VARIANT_WORD;
             if (variant && variants.length == 0) continue;
+            if (error == Error.DIGRAPH && !digraphs) continue;
             Score score = new Score();
             for (String word : words) {
                 Typed typed = mistype(word, error, layout, variants, random);
@@ -175,7 +271,7 @@ public class SuggestionQualityTest {
                             + " (" + word + ")");
                 }
             }
-            scores.put(error, score);
+            if (score.n > 0) scores.put(error, score);
         }
         engine.close();
 
@@ -213,11 +309,38 @@ public class SuggestionQualityTest {
      */
     private static List<String> sampleWords(AospSuggestionEngine engine, Layout layout,
             File wordlist, int n) throws IOException {
+        // Combined lists can be large (Romanian: 1.1M words): first find the frequency the
+        // 100,000 most frequent reach, then keep only those, read line by line.
+        int[] perF = new int[256];
+        try (java.util.stream.Stream<String> lines = Files.lines(wordlist.toPath())) {
+            lines.filter(l -> l.startsWith(" word=")).forEach(l -> {
+                int f = l.indexOf(",f=");
+                int end = l.indexOf(',', f + 3);
+                perF[Math.max(0, Math.min(255, Integer.parseInt(
+                        l.substring(f + 3, end < 0 ? l.length() : end))))]++;
+            });
+        }
+        int minF = 255, kept = 0;
+        while (minF > 0 && kept + perF[minF] < 100_000) kept += perF[minF--];
+        if (kept > 0) minF++; // not the frequency that goes past (Romanian: 392,000 at 74)
         List<String[]> entries = new ArrayList<>();
-        for (String line : Files.readAllLines(wordlist.toPath(), StandardCharsets.UTF_8)) {
-            if (line.startsWith("#") || line.isEmpty()) continue;
-            String[] parts = line.split("\t");
-            entries.add(parts);
+        try (java.io.BufferedReader in = Files.newBufferedReader(wordlist.toPath())) {
+            for (String line = in.readLine(); line != null; line = in.readLine()) {
+                if (line.startsWith("#") || line.isEmpty()) continue;
+                if (line.startsWith(" word=")) {
+                    // An AOSP combined list: " word=W,f=N,flags=...".
+                    String[] fields = line.trim().split(",");
+                    if (line.contains("not_a_word=true") || line.contains("possibly_offensive")) {
+                        continue;
+                    }
+                    if (Integer.parseInt(fields[1].substring(2)) < minF) continue;
+                    entries.add(new String[] {fields[0].substring(5), fields[1].substring(2)});
+                    continue;
+                }
+                if (line.startsWith(" ")) continue; // shortcuts, bigrams; the header
+                String[] parts = line.split("\t");
+                if (parts.length >= 2) entries.add(parts);
+            }
         }
         entries.sort((a, b) -> Integer.parseInt(b[1]) - Integer.parseInt(a[1]));
         List<String> pool = new ArrayList<>();
@@ -283,8 +406,22 @@ public class SuggestionQualityTest {
                     }
                 }
                 if (at.isEmpty()) return null;
+                if (layout.longPressOnBase) {
+                    // Diacritics (optional dictionaries): all of them left out.
+                    for (int[] p : at) s.setCharAt(p[0], (char) p[1]);
+                    break;
+                }
                 int[] pick = at.get(random.nextInt(at.size()));
                 s.setCharAt(pick[0], (char) pick[1]);
+                break;
+            }
+            case DIGRAPH: {
+                // German: one umlaut typed as ae, oe or ue.
+                List<Integer> at = new ArrayList<>();
+                for (int i = 0; i < len; i++) if ("äöü".indexOf(word.charAt(i)) >= 0) at.add(i);
+                if (at.isEmpty()) return null;
+                int i = at.get(random.nextInt(at.size()));
+                s.replace(i, i + 1, (char) baseLetter(word.charAt(i)) + "e");
                 break;
             }
         }
