@@ -38,3 +38,10 @@ The word lists for adaptive key targets (assets/wordlists) carry their sources i
 headers: en.txt and he.txt from the same AOSP lists (Apache License 2.0); ar.txt from
 Hermit Dave's FrequencyWords, OpenSubtitles 2018 (CC BY-SA 4.0,
 https://github.com/hermitdave/FrequencyWords), distributed under the same licence.
+
+Dictionaries for other languages are not in the app: they are optional downloads (the
+"dicts-v1" release of this repository, made by tools/mkdicts.sh), each with its source and
+licence in the NOTICE.txt published next to them and on the app's Dictionaries screen:
+AOSP LatinIME word lists (Apache License 2.0) for cs da de el es fi fr hr it lt lv nb nl
+pl pt pt_PT ro ru sl sr sv tr; Leipzig Corpora Collection news corpora (CC BY 4.0) for
+uk bg hu sk ca.

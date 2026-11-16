@@ -309,21 +309,38 @@ public class SuggestionQualityTest {
      */
     private static List<String> sampleWords(AospSuggestionEngine engine, Layout layout,
             File wordlist, int n) throws IOException {
+        // Combined lists can be large (Romanian: 1.1M words): first find the frequency the
+        // 100,000 most frequent reach, then keep only those, read line by line.
+        int[] perF = new int[256];
+        try (java.util.stream.Stream<String> lines = Files.lines(wordlist.toPath())) {
+            lines.filter(l -> l.startsWith(" word=")).forEach(l -> {
+                int f = l.indexOf(",f=");
+                int end = l.indexOf(',', f + 3);
+                perF[Math.max(0, Math.min(255, Integer.parseInt(
+                        l.substring(f + 3, end < 0 ? l.length() : end))))]++;
+            });
+        }
+        int minF = 255, kept = 0;
+        while (minF > 0 && kept + perF[minF] < 100_000) kept += perF[minF--];
+        if (kept > 0) minF++; // not the frequency that goes past (Romanian: 392,000 at 74)
         List<String[]> entries = new ArrayList<>();
-        for (String line : Files.readAllLines(wordlist.toPath(), StandardCharsets.UTF_8)) {
-            if (line.startsWith("#") || line.isEmpty()) continue;
-            if (line.startsWith(" word=")) {
-                // An AOSP combined list: " word=W,f=N,flags=...".
-                String[] fields = line.trim().split(",");
-                if (line.contains("not_a_word=true") || line.contains("possibly_offensive")) {
+        try (java.io.BufferedReader in = Files.newBufferedReader(wordlist.toPath())) {
+            for (String line = in.readLine(); line != null; line = in.readLine()) {
+                if (line.startsWith("#") || line.isEmpty()) continue;
+                if (line.startsWith(" word=")) {
+                    // An AOSP combined list: " word=W,f=N,flags=...".
+                    String[] fields = line.trim().split(",");
+                    if (line.contains("not_a_word=true") || line.contains("possibly_offensive")) {
+                        continue;
+                    }
+                    if (Integer.parseInt(fields[1].substring(2)) < minF) continue;
+                    entries.add(new String[] {fields[0].substring(5), fields[1].substring(2)});
                     continue;
                 }
-                entries.add(new String[] {fields[0].substring(5), fields[1].substring(2)});
-                continue;
+                if (line.startsWith(" ")) continue; // shortcuts, bigrams; the header
+                String[] parts = line.split("\t");
+                if (parts.length >= 2) entries.add(parts);
             }
-            if (line.startsWith(" ")) continue; // shortcuts, bigrams; the header
-            String[] parts = line.split("\t");
-            if (parts.length >= 2) entries.add(parts);
         }
         entries.sort((a, b) -> Integer.parseInt(b[1]) - Integer.parseInt(a[1]));
         List<String> pool = new ArrayList<>();

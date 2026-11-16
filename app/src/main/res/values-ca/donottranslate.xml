@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Catalan, as French and Italian: the apostrophe ends a word, so an elision ("l'home",
+     "d'un") is two words for the suggestions, as the Catalan dictionary has them. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Symbols that are commonly considered word separators in this language -->
+    <string name="word_separators">.\u0009 ,;:!?\'\n()[]*&amp;@{}/&lt;&gt;_+=|"</string>
+</resources>
