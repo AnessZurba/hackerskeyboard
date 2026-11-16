@@ -76,6 +76,32 @@ public class RenderKeyboardTest {
         if ("words".equals(panel)) toolbar.showSuggestions("helo", "hello", "help", true);
         if ("words-plain".equals(panel)) toolbar.showSuggestions("help", "hello", "held", false);
         if ("words-rtl".equals(panel)) toolbar.showSuggestions("שלום", "שלומי", "שלומות", false);
+        // The more-suggestions panel over the keys (words-more, words-more-rtl), and the
+        // toolbar after the strip's arrow (words-toolbar).
+        java.util.List<String> more = java.util.Arrays.asList("hello", "help", "helo", "held",
+                "helm", "hell", "hello's", "helot", "helps", "helped", "helper", "helpful",
+                "helium", "helix", "helmet", "Helen", "Helena", "helping", "hellish", "helms");
+        if ("words-more".equals(panel) || "words-more-open".equals(panel)) {
+            toolbar.showSuggestions("helo", "hello", "help", true, more);
+        }
+        if ("words-more-rtl".equals(panel)) {
+            toolbar.showSuggestions("שלום", "שלומי", "שלומות", false, java.util.Arrays.asList(
+                    "שלומי", "שלום", "שלומות", "שלוש", "שלושה", "שלי", "שלה", "שלו", "שלנו",
+                    "שלכם", "שלהם", "שלווה", "שליח", "שלט"));
+        }
+        if (panel != null && panel.startsWith("words-more")) {
+            int w0 = ime.getResources().getDisplayMetrics().widthPixels;
+            toolbar.measure(View.MeasureSpec.makeMeasureSpec(w0, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            toolbar.layout(0, 0, w0, toolbar.getMeasuredHeight());
+            if (!"words-more".equals(panel)) toolbar.openMoreSuggestions();
+        }
+        if ("words-toolbar".equals(panel)) {
+            toolbar.showSuggestions("helo", "hello", "help", true);
+            toolbar.suggestionStrip().toolbarButton().performClick();
+        }
+        // Let the animations finish.
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(2));
         // A tip in the row (tip, tip-long), and the gesture label (label-delete, label-trackpad).
         if ("tip".equals(panel)) toolbar.showTip(HintManager.Tip.BACKSPACE_SWIPE);
         if ("tip-long".equals(panel)) toolbar.showTip(HintManager.Tip.SELECT_TRACKPAD);

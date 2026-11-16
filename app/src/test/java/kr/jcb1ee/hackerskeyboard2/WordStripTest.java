@@ -657,4 +657,212 @@ public class WordStripTest {
                 View.MeasureSpec.makeMeasureSpec(120, View.MeasureSpec.EXACTLY));
         v.layout(0, 0, 1080, 120);
     }
+
+    // ------------------------------------------------------------------ more, and the arrow
+
+    @Test
+    public void stripHasMoreAtTheStartAndTheToolbarArrowAtTheEnd() {
+        start(MULTI_LINE);
+        type("hel");
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        assertEquals(strip.moreButton(), strip.getChildAt(0));
+        assertEquals(strip.toolbarButton(), strip.getChildAt(strip.getChildCount() - 1));
+        assertEquals("More suggestions", strip.moreButton().getContentDescription());
+        assertEquals("Show toolbar", strip.toolbarButton().getContentDescription());
+        assertTrue(strip.moreButton().isFocusable());
+        assertTrue(strip.toolbarButton().isFocusable());
+        assertTrue(strip.slotView(SuggestionStrip.MIDDLE).isFocusable());
+        assertFalse(mToolbar.moreSuggestionsOpen());
+    }
+
+    @Test
+    public void moreOpensAPanelOverTheKeysWithMoreCandidates() {
+        start(MULTI_LINE);
+        type("hel");
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        List<String> shown = stripWords();
+        assertEquals("few candidates while closed", 6, mIme.wordQuerySize());
+        strip.moreButton().performClick();
+        assertTrue(mToolbar.moreSuggestionsOpen());
+        assertTrue(strip.isExpanded());
+        assertEquals("Fewer suggestions", strip.moreButton().getContentDescription());
+        assertEquals("more asked for only while open", LatinIME.MORE_QUERY_SIZE,
+                mIme.wordQuerySize());
+        MoreSuggestionsPanel panel = mToolbar.moreSuggestionsPanel();
+        assertNotNull(panel.getParent());
+        settle();
+        List<String> words = panel.words();
+        assertTrue(words.toString(), words.size() > 6);
+        for (String w : shown) if (w != null) assertTrue(w, words.contains(w));
+        assertEquals("best first", strip.wordAt(SuggestionStrip.MIDDLE), words.get(0));
+        assertTrue("the strip stays", mToolbar.suggestionsShown());
+        // The dots are the collapse control now.
+        strip.moreButton().performClick();
+        assertFalse(mToolbar.moreSuggestionsOpen());
+        assertFalse(strip.isExpanded());
+        assertEquals(6, mIme.wordQuerySize());
+        assertTrue(mToolbar.suggestionsShown());
+    }
+
+    @Test
+    public void pickingFromThePanelCommitsTheWord() {
+        start(MULTI_LINE);
+        type("hel");
+        mToolbar.suggestionStrip().moreButton().performClick();
+        settle();
+        MoreSuggestionsPanel panel = mToolbar.moreSuggestionsPanel();
+        List<String> words = panel.words();
+        String word = words.get(4); // one the strip doesn't show (it has the first three)
+        assertFalse(stripWords().contains(word));
+        panel.chip(word).performClick();
+        settle();
+        assertEquals(word + " |", field());
+        assertFalse(composing());
+        assertFalse(mToolbar.moreSuggestionsOpen());
+        assertEquals(View.VISIBLE, mIme.mKeyboardSwitcher.getInputView().getVisibility());
+        assertEquals(6, mIme.wordQuerySize());
+    }
+
+    @Test
+    public void thePanelClosesWhenTheWordEndsOrTheKeyboardGoes() {
+        start(MULTI_LINE);
+        type("hel");
+        mToolbar.suggestionStrip().moreButton().performClick();
+        type(" ");
+        assertFalse("a new word", mToolbar.moreSuggestionsOpen());
+        type("wor");
+        mToolbar.suggestionStrip().moreButton().performClick();
+        type("\b\b\b");
+        assertFalse("suggestions cleared", mToolbar.moreSuggestionsOpen());
+        type("wor");
+        mToolbar.suggestionStrip().moreButton().performClick();
+        assertTrue(mIme.onKeyDown(android.view.KeyEvent.KEYCODE_BACK,
+                new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,
+                        android.view.KeyEvent.KEYCODE_BACK)));
+        assertFalse("Back collapses it", mToolbar.moreSuggestionsOpen());
+        assertTrue("and keeps the keyboard", composing());
+        mToolbar.suggestionStrip().moreButton().performClick();
+        assertTrue(mToolbar.moreSuggestionsOpen());
+        mIme.onFinishInputView(true);
+        assertFalse("keyboard hidden", mToolbar.moreSuggestionsOpen());
+        assertNull(mToolbar.moreSuggestionsPanel().getParent());
+    }
+
+    @Test
+    public void theArrowSwapsInTheToolbarUntilTheNextWord() {
+        start(MULTI_LINE);
+        type("hel");
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        strip.toolbarButton().performClick();
+        assertFalse(mToolbar.suggestionsShown());
+        assertTrue(mToolbar.wordsDismissed());
+        View back = mToolbar.wordsBackButton();
+        assertEquals(View.VISIBLE, back.getVisibility());
+        assertEquals("Show suggestions", back.getContentDescription());
+        assertTrue(back.isFocusable());
+        type("p");
+        assertFalse("still this word", mToolbar.suggestionsShown());
+        assertEquals(View.VISIBLE, back.getVisibility());
+        back.performClick();
+        assertTrue("words back", mToolbar.suggestionsShown());
+        assertEquals(View.GONE, back.getVisibility());
+        strip.toolbarButton().performClick();
+        assertFalse(mToolbar.suggestionsShown());
+        type(" wo");
+        assertTrue("the next word has them again", mToolbar.suggestionsShown());
+        assertFalse(mToolbar.wordsDismissed());
+        assertEquals(View.GONE, back.getVisibility());
+    }
+
+    @Test
+    public void theArrowClosesThePanel() {
+        start(MULTI_LINE);
+        type("hel");
+        mToolbar.suggestionStrip().moreButton().performClick();
+        mToolbar.suggestionStrip().toolbarButton().performClick();
+        assertFalse(mToolbar.moreSuggestionsOpen());
+        assertEquals(View.VISIBLE, mIme.mKeyboardSwitcher.getInputView().getVisibility());
+    }
+
+    @Test
+    public void rightToLeftMirrorsTheButtonsAndThePanel() {
+        start(MULTI_LINE);
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        mToolbar.showSuggestions("שלום", "שלומי", "של",
+                false, Arrays.asList("שלומי", "שלום", "של", "שלומות", "שלוש", "שלושה", "שלי"));
+        assertEquals("the arrow at the end: on the left", strip.toolbarButton(), strip.getChildAt(0));
+        assertEquals(strip.moreButton(), strip.getChildAt(strip.getChildCount() - 1));
+        assertEquals(-1f, strip.toolbarButton().getScaleX(), 0f);
+        mToolbar.openMoreSuggestions();
+        MoreSuggestionsPanel panel = mToolbar.moreSuggestionsPanel();
+        assertTrue(panel.isRightToLeft());
+        layOutPanel(panel);
+        assertTrue("best on the right", panel.chipLeft(0) > panel.chipLeft(1));
+        mToolbar.closeMoreSuggestions(false);
+        mToolbar.showSuggestions("help", "hello", "held", false);
+        assertEquals(strip.moreButton(), strip.getChildAt(0));
+        assertEquals(strip.toolbarButton(), strip.getChildAt(strip.getChildCount() - 1));
+        assertEquals(1f, strip.toolbarButton().getScaleX(), 0f);
+        mToolbar.openMoreSuggestions();
+        assertFalse(panel.isRightToLeft());
+        layOutPanel(panel);
+        assertTrue(panel.chipLeft(0) < panel.chipLeft(1));
+    }
+
+    private static void layOutPanel(View v) {
+        v.measure(View.MeasureSpec.makeMeasureSpec(1080, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(600, View.MeasureSpec.EXACTLY));
+        v.layout(0, 0, 1080, 600);
+    }
+
+    @Test
+    public void changedWordsAnimateUnlessAnimationsAreOff() {
+        start(MULTI_LINE);
+        android.content.ContentResolver cr = mIme.getContentResolver();
+        try {
+            mToolbar.showSuggestions("help", "hello", "held", false);
+            SuggestionStrip strip = mToolbar.suggestionStrip();
+            assertTrue(SuggestionStrip.animationsEnabled(mIme));
+            mToolbar.showSuggestions("help", "hello", "helm", false);
+            assertEquals("only the changed word", 1, strip.animatedSlots());
+            mToolbar.showSuggestions("help", "hello", "helm", false);
+            assertEquals("nothing changed", 0, strip.animatedSlots());
+            android.provider.Settings.Global.putFloat(cr,
+                    android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f);
+            assertFalse(SuggestionStrip.animationsEnabled(mIme));
+            mToolbar.showSuggestions("hell", "hello", "help", false);
+            assertEquals(0, strip.animatedSlots());
+            assertEquals(1f, strip.slotView(SuggestionStrip.RIGHT).getAlpha(), 0f);
+            // The panel covers the keys at once, with no reveal.
+            strip.moreButton().performClick();
+            assertEquals(View.INVISIBLE, mIme.mKeyboardSwitcher.getInputView().getVisibility());
+            assertNull(mToolbar.moreSuggestionsPanel().getClipBounds());
+            strip.moreButton().performClick();
+            assertNull(mToolbar.moreSuggestionsPanel().getParent());
+            // The swap to the toolbar, likewise.
+            strip.toolbarButton().performClick();
+            assertEquals(1f, mToolbar.wordsBackButton().getAlpha(), 0f);
+        } finally {
+            android.provider.Settings.Global.putFloat(cr,
+                    android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-land")
+    public void landscapeKeepsTheSystemButtonsAfterTheArrow() {
+        start(MULTI_LINE);
+        type("hel");
+        assertTrue(mToolbar.systemButtonsShown());
+        int w = mIme.getResources().getDisplayMetrics().widthPixels;
+        mToolbar.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        mToolbar.layout(0, 0, w, mToolbar.getMeasuredHeight());
+        SuggestionStrip strip = mToolbar.suggestionStrip();
+        assertTrue(strip.toolbarButton().getWidth() > 0);
+        int arrowRight = strip.getLeft() + strip.toolbarButton().getRight();
+        int buttons = 2 * Math.round(44 * mIme.getResources().getDisplayMetrics().density);
+        assertTrue("arrow before hide / switch: " + arrowRight + " of " + w,
+                arrowRight <= w - buttons);
+    }
 }

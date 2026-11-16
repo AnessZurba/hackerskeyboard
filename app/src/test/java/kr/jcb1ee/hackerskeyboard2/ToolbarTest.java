@@ -175,8 +175,9 @@ public class ToolbarTest {
         LinearLayout bar = (LinearLayout) toolbar.getChildAt(0);
         FrameLayout body = (FrameLayout) toolbar.getChildAt(1);
         assertEquals("three buttons, the (hidden) autofill chip rows and their > button, "
-                + "the (hidden) word suggestions and tip, and the landscape hide/switch buttons",
-                9, bar.getChildCount());
+                + "the (hidden) word suggestions, their way back and the tip, and the landscape "
+                + "hide/switch buttons",
+                10, bar.getChildCount());
         assertFalse("hide/switch buttons are for landscape", toolbar.systemButtonsShown());
         assertTrue(body.getChildAt(0) instanceof LatinKeyboardView);
         assertTrue(toolbar.isToolbarShown());

@@ -190,6 +190,9 @@ public class LatinIME extends InputMethodService implements
     private Keyboard mGeometryKeyboard;
     private long mGeometrySize;
     private static final int WORD_QUERY_SIZE = 6;
+    // While the more-suggestions panel is open (only then: the decoder's work grows with it).
+    static final int MORE_QUERY_SIZE = 24;
+    private boolean mMoreWanted;
     // How long space or punctuation waits for the decoder before keeping the typed word
     // (AOSP waits up to 200 ms the same way); queries take a few milliseconds.
     private static final long AUTO_CORRECTION_WAIT_MS = 200;
@@ -1303,6 +1306,11 @@ public class LatinIME extends InputMethodService implements
             if (event.getRepeatCount() == 0 && mSearchConnection != null
                     && mKeyboardSwitcher.getInputContainer() != null) {
                 mKeyboardSwitcher.getInputContainer().endSearchFromBack();
+                return true;
+            }
+            if (event.getRepeatCount() == 0 && mKeyboardSwitcher.getInputContainer() != null
+                    && mKeyboardSwitcher.getInputContainer().moreSuggestionsOpen()) {
+                mKeyboardSwitcher.getInputContainer().closeMoreSuggestions(true);
                 return true;
             }
             if (event.getRepeatCount() == 0
@@ -3290,7 +3298,7 @@ public class LatinIME extends InputMethodService implements
         }
         // The strip keeps the last word's suggestions until these arrive (no flicker).
         mWordQueue.request(typed.toString(), mWord.getXs(), mWord.getYs(), keyGeometry(),
-                WORD_QUERY_SIZE);
+                mMoreWanted ? MORE_QUERY_SIZE : WORD_QUERY_SIZE);
     }
 
     /** The current keyboard's keys for the decoder, rebuilt when the keys move or resize. */
@@ -3318,7 +3326,26 @@ public class LatinIME extends InputMethodService implements
         mBestWord = correction != null ? correction : r.typed;
         String[] slots = stripSlots(r.typed, r.suggestions, correction);
         KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
-        if (toolbar != null) toolbar.showSuggestions(slots[0], slots[1], slots[2], correction != null);
+        if (toolbar == null) return;
+        List<String> all = new ArrayList<>();
+        for (Suggestion s : r.suggestions) all.add(s.word);
+        if (!all.contains(r.typed)) all.add(r.typed); // the panel can keep the word as typed
+        toolbar.showSuggestions(slots[0], slots[1], slots[2], correction != null, all);
+    }
+
+    /**
+     * The more-suggestions panel opened (ask for more candidates for the word being typed)
+     * or closed (back to the strip's few).
+     */
+    void onMoreSuggestionsShown(boolean shown) {
+        if (mMoreWanted == shown) return;
+        mMoreWanted = shown;
+        if (shown && mWordQueue != null && mPredicting) updateWordStrip();
+    }
+
+    /** How many candidates the next request asks for (tests). */
+    int wordQuerySize() {
+        return mMoreWanted ? MORE_QUERY_SIZE : WORD_QUERY_SIZE;
     }
 
     /** What space would put in place of the typed word, or null to keep it. */

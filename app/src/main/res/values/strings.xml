@@ -447,6 +447,9 @@
     <string name="toolbar_switch_keyboard">Switch keyboard</string>
     <string name="toolbar_hide_chips">Hide suggestions</string>
     <string name="toolbar_gallery">Gallery</string>
+    <string name="suggestions_more">More suggestions</string>
+    <string name="suggestions_fewer">Fewer suggestions</string>
+    <string name="suggestions_show">Show suggestions</string>
     <string name="voice_no_recognizer">No speech recognition app found</string>
     <string name="image_not_accepted">This field doesn\'t take images</string>
     <string name="toolbar_select_all">All</string>

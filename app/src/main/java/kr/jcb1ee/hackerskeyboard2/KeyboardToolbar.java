@@ -80,6 +80,13 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     private final ImageView mChipsDismiss;
     // Word suggestions while a word is typed, in the buttons' place (after autofill chips).
     private final SuggestionStrip mStrip;
+    // The end arrow put the buttons back for the word being typed (until the next word).
+    private boolean mWordsDismissed;
+    private final ImageView mWordsBack; // at the row's end meanwhile: the words again
+    // "⋯": more suggestions over the keys.
+    private MoreSuggestionsPanel mMorePanel;
+    private boolean mMoreOpen;
+    private final List<String> mAllWords = new ArrayList<>(); // best first, for the panel
     // A one-time tip (HintManager), in the buttons' place; words and chips come first.
     private final TipStrip mTip;
     private boolean mTipOn;
@@ -174,9 +181,37 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mChipsDismiss.setVisibility(GONE);
         mBar.addView(mChipsDismiss, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
         mStrip = new SuggestionStrip(ime);
-        mStrip.setListener(word -> ime().pickStripSuggestion(word));
+        mStrip.setListener(new SuggestionStrip.Listener() {
+            @Override
+            public void onSuggestionPicked(String word) {
+                ime().pickStripSuggestion(word);
+            }
+
+            @Override
+            public void onMoreToggled() {
+                toggleMoreSuggestions();
+            }
+
+            @Override
+            public void onShowToolbar() {
+                dismissWords();
+            }
+        });
         mStrip.setVisibility(GONE);
         mBar.addView(mStrip, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        // With the words swapped for the buttons while a word is typed: brings them back.
+        mWordsBack = new ImageView(ime);
+        mWordsBack.setImageResource(R.drawable.ic_toolbar_chips_dismiss);
+        mWordsBack.setScaleX(-1f); // points back, toward the words' place
+        mWordsBack.setScaleType(ImageView.ScaleType.CENTER);
+        mWordsBack.setContentDescription(ime.getString(R.string.suggestions_show));
+        mWordsBack.setFocusable(true);
+        mWordsBack.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            restoreWords();
+        });
+        mWordsBack.setVisibility(GONE);
+        mBar.addView(mWordsBack, new LayoutParams(dp(44), LayoutParams.MATCH_PARENT));
         mTip = new TipStrip(ime);
         mTip.setOnDismiss(() -> {
             if (ime().mHints != null) ime().mHints.dismissed();
@@ -368,6 +403,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             if (!hasChips() && !mSearching) {
                 for (View cell : mCells) cell.setVisibility(VISIBLE); // ready for next time
                 mStrip.setVisibility(GONE);
+                mWordsBack.setVisibility(GONE);
             }
             mBar.setAlpha(1f);
             mBar.setTranslationY(0f);
@@ -428,6 +464,9 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         for (View cell : mCells) cell.setVisibility(any || concealing || words || tip ? GONE : VISIBLE);
         mStrip.setVisibility(words ? VISIBLE : GONE);
         mTip.setVisibility(tip ? VISIBLE : GONE);
+        mWordsBack.setVisibility(!any && !concealing && !words && !tip && wordsWaiting()
+                ? VISIBLE : GONE);
+        if (!words) closeMoreSuggestions(false);
         mChipClip.setVisibility(any ? VISIBLE : GONE);
         mPinnedRow.setVisibility(mPinnedRow.getChildCount() > 0 ? VISIBLE : GONE);
         mChipsDismiss.setVisibility(any ? VISIBLE : GONE);
@@ -477,14 +516,167 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
      * and a row the user hid stays hidden (the words are not shown then).
      */
     void showSuggestions(String left, String middle, String right, boolean middleIsCorrection) {
+        showSuggestions(left, middle, right, middleIsCorrection, null);
+    }
+
+    /**
+     * Like {@link #showSuggestions(String, String, String, boolean)}, with every candidate
+     * (best first) for the more-suggestions panel; null: only the strip's words.
+     */
+    void showSuggestions(String left, String middle, String right, boolean middleIsCorrection,
+            List<String> all) {
         mStrip.setWords(left, middle, right, middleIsCorrection);
+        mAllWords.clear();
+        for (String w : new String[] {middle, left, right}) {
+            if (w != null && !mAllWords.contains(w)) mAllWords.add(w);
+        }
+        if (all != null) {
+            for (String w : all) {
+                if (w != null && !mAllWords.contains(w)) mAllWords.add(w);
+            }
+        }
+        if (!mStrip.hasWords()) {
+            mWordsDismissed = false;
+            closeMoreSuggestions(true);
+        } else if (mMoreOpen) {
+            updateMorePanel(true);
+        }
         updateRowContent();
     }
 
     void clearSuggestions() {
-        if (!mStrip.hasWords()) return;
+        closeMoreSuggestions(true);
+        boolean dismissed = mWordsDismissed;
+        mWordsDismissed = false; // the next word brings the words back
+        mAllWords.clear();
+        if (!mStrip.hasWords() && !dismissed) return;
         mStrip.clear();
         updateRowContent();
+    }
+
+    // ------------------------------------------------------------------ more suggestions
+
+    private void toggleMoreSuggestions() {
+        if (mMoreOpen) closeMoreSuggestions(true);
+        else openMoreSuggestions();
+    }
+
+    /**
+     * "⋯": more suggestions in a panel over the keys, opening downward from the row. LatinIME
+     * asks the engine for more candidates meanwhile; they join the panel as they arrive.
+     */
+    void openMoreSuggestions() {
+        if (mMoreOpen || !suggestionsShown() || panelOpen()) return;
+        int height = mKeyboardView != null && mKeyboardView.getHeight() > 0
+                ? mKeyboardView.getHeight() : dp(220);
+        if (mMorePanel == null) {
+            mMorePanel = new MoreSuggestionsPanel(getContext());
+            mMorePanel.setListener(word -> {
+                closeMoreSuggestions(false); // the word goes in at once, under the keys
+                ime().pickStripSuggestion(word);
+            });
+        }
+        mMorePanel.setColours(mBackground, mForeground, mAccent);
+        boolean animate = SuggestionStrip.animationsEnabled(getContext());
+        mMoreOpen = true;
+        mMorePanel.setWords(java.util.Collections.<String>emptyList(), null, false, false);
+        updateMorePanel(animate);
+        if (mMorePanel.getParent() instanceof ViewGroup) {
+            ((ViewGroup) mMorePanel.getParent()).removeView(mMorePanel);
+        }
+        mBody.addView(mMorePanel, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, height));
+        mStrip.setExpanded(true);
+        final MoreSuggestionsPanel panel = mMorePanel;
+        mMorePanel.reveal(animate, () -> {
+            // Covered: the keys are out of reach (and out of the accessibility tree).
+            if (mMoreOpen && panel == mMorePanel && mKeyboardView != null) {
+                mKeyboardView.setVisibility(INVISIBLE);
+            }
+        });
+        ime().onMoreSuggestionsShown(true);
+    }
+
+    /** Closes the more-suggestions panel (picked, collapsed, keyboard hidden, word ended). */
+    void closeMoreSuggestions(boolean animate) {
+        if (!mMoreOpen) return;
+        mMoreOpen = false;
+        mStrip.setExpanded(false);
+        if (mKeyboardView != null) mKeyboardView.setVisibility(VISIBLE);
+        final MoreSuggestionsPanel panel = mMorePanel;
+        panel.conceal(animate && SuggestionStrip.animationsEnabled(getContext()), () -> {
+            if (!mMoreOpen && panel.getParent() == mBody) mBody.removeView(panel);
+        });
+        ime().onMoreSuggestionsShown(false);
+    }
+
+    private void updateMorePanel(boolean animate) {
+        if (mMorePanel == null) return;
+        mMorePanel.setWords(new ArrayList<>(mAllWords),
+                mStrip.middleIsCorrection() ? mStrip.wordAt(SuggestionStrip.MIDDLE) : null,
+                mStrip.isRightToLeft(), animate);
+    }
+
+    /** Whether the more-suggestions panel is open. */
+    boolean moreSuggestionsOpen() {
+        return mMoreOpen;
+    }
+
+    /** The more-suggestions panel, or null before its first use (tests). */
+    MoreSuggestionsPanel moreSuggestionsPanel() {
+        return mMorePanel;
+    }
+
+    // ------------------------------------------------------------------ words or buttons
+
+    /** The strip's end arrow: the buttons for the rest of this word. */
+    private void dismissWords() {
+        if (!mStrip.hasWords()) return;
+        closeMoreSuggestions(false);
+        mWordsDismissed = true;
+        updateRowContent(true);
+    }
+
+    /** The control at the toolbar's end: the words again. */
+    private void restoreWords() {
+        if (!mWordsDismissed) return;
+        mWordsDismissed = false;
+        updateRowContent(true);
+    }
+
+    /** Whether the user swapped the words for the buttons during this word. */
+    boolean wordsDismissed() {
+        return mWordsDismissed;
+    }
+
+    /** The control that brings the words back (tests). */
+    View wordsBackButton() {
+        return mWordsBack;
+    }
+
+    /** Words swapped away while a word is typed: the control to bring them back shows. */
+    private boolean wordsWaiting() {
+        return mStrip.hasWords() && mToolbarShown && mWordsDismissed;
+    }
+
+    /** The swap between the words and the buttons: what comes in fades and slides in. */
+    private void animateSwap(boolean toWords) {
+        if (!SuggestionStrip.animationsEnabled(getContext())) return;
+        float shift = dp(24) * (mStrip.isRightToLeft() ? -1 : 1);
+        if (toWords) {
+            slideIn(mStrip, shift, 0);
+        } else {
+            for (int i = 0; i < mCells.size(); i++) slideIn(mCells.get(i), -shift, i * 25L);
+            slideIn(mWordsBack, -shift, mCells.size() * 25L);
+        }
+    }
+
+    private static void slideIn(View v, float dx, long delay) {
+        v.animate().cancel();
+        v.setAlpha(0f);
+        v.setTranslationX(dx);
+        v.animate().alpha(1f).translationX(0f).setStartDelay(delay).setDuration(150)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
     }
 
     /** The strip (tests). */
@@ -498,19 +690,30 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private boolean wordsShown() {
-        return mStrip.hasWords() && mToolbarShown;
+        return mStrip.hasWords() && mToolbarShown && !mWordsDismissed;
     }
 
-    /** Buttons or word suggestions, whichever belongs in the row (not during chips or search). */
     private void updateRowContent() {
+        updateRowContent(false);
+    }
+
+    /**
+     * Buttons or word suggestions, whichever belongs in the row (not during chips or search);
+     * {@code animate}: the user swapped them.
+     */
+    private void updateRowContent(boolean animate) {
         if (mSearching || hasChips()) return;
         boolean words = wordsShown();
         if (words && mTipOn) { // a live suggestion comes first
             dropTip();
         }
+        boolean wasWords = mStrip.getVisibility() == VISIBLE;
         for (View cell : mCells) cell.setVisibility(words || mTipOn ? GONE : VISIBLE);
         mStrip.setVisibility(words ? VISIBLE : GONE);
         mTip.setVisibility(mTipOn ? VISIBLE : GONE);
+        mWordsBack.setVisibility(!words && !mTipOn && wordsWaiting() ? VISIBLE : GONE);
+        if (!words) closeMoreSuggestions(false);
+        if (animate && wasWords != words) animateSwap(words);
     }
 
     // ------------------------------------------------------------------ tips
@@ -584,6 +787,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     /** Back to the keyboard; called when input starts or finishes. */
     void closePanel() {
+        closeMoreSuggestions(false);
         endEmojiSearch(false);
         if (mOpenPanel == PANEL_NONE) return;
         mOpenPanel = PANEL_NONE;
@@ -645,7 +849,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
                 == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         mSystemButtons.setVisibility(landscape ? VISIBLE : GONE);
         ColorStateList tint = ColorStateList.valueOf(mForeground);
-        for (ImageView b : new ImageView[] {mHideButton, mSwitchButton}) {
+        for (ImageView b : new ImageView[] {mHideButton, mSwitchButton, mWordsBack}) {
             b.setImageTintList(tint);
             GradientDrawable pressed = new GradientDrawable();
             pressed.setShape(GradientDrawable.OVAL);
@@ -1660,6 +1864,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         mSearching = true;
         for (View cell : mCells) cell.setVisibility(GONE);
         mStrip.setVisibility(GONE);
+        mWordsBack.setVisibility(GONE);
         mChipClip.setVisibility(GONE);
         mPinnedRow.setVisibility(GONE);
         mChipsDismiss.setVisibility(GONE);
@@ -2046,6 +2251,7 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
         invalidate();
         mChipsDismiss.setImageTintList(ColorStateList.valueOf(faded(mForeground)));
         mStrip.setColours(mBackground, mForeground, mAccent);
+        if (mMorePanel != null) mMorePanel.setColours(mBackground, mForeground, mAccent);
         mTip.setColours(mBackground, mForeground);
         updateButtons();
         if (mSystemButtons != null) updateSystemButtons();

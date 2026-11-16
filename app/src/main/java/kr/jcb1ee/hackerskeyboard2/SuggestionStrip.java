@@ -14,37 +14,58 @@
 
 package kr.jcb1ee.hackerskeyboard2;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Up to three word suggestions in the toolbar row, in place of its buttons (Samsung / Gboard
- * style): the best one in the middle, the next ones beside it. Colours come from the toolbar.
+ * Up to three word suggestions in the toolbar row, in place of its buttons (Samsung style):
+ * the best one in the middle, the next ones beside it, "⋯" at the start for more suggestions
+ * (a panel over the keys) and an arrow at the end that brings the toolbar's buttons back.
+ * Right-to-left words mirror the row. Colours come from the toolbar.
  */
 final class SuggestionStrip extends LinearLayout {
-    /** A tapped suggestion. */
+    /** What the strip's taps do. */
     interface Listener {
         void onSuggestionPicked(String word);
+
+        /** "⋯" (or, while the panel is open, its collapse arrow) was tapped. */
+        default void onMoreToggled() {
+        }
+
+        /** The end arrow was tapped: the toolbar's buttons instead of the words. */
+        default void onShowToolbar() {
+        }
     }
 
     static final int LEFT = 0, MIDDLE = 1, RIGHT = 2;
+    /** How long a changed word takes to settle in, before the system's animation scale. */
+    static final long WORD_CHANGE_MS = 130;
 
     /** The three word views, left to right on screen (see {@link #slotView}). */
     private final TextView[] mSlots = new TextView[3];
     private final View[] mDividers = new View[2];
     private final String[] mWords = new String[3];
+    private final ImageView mMore;
+    private final ImageView mArrow;
+    private boolean mExpanded;
     private boolean mMiddleIsCorrection;
     private boolean mRtl;
+    private int mAnimatedSlots;
     private int mBackground = Color.BLACK, mForeground = Color.WHITE, mAccent = 0xFF8AB4F8;
 
     private Listener mListener;
@@ -53,6 +74,13 @@ final class SuggestionStrip extends LinearLayout {
         super(context);
         setOrientation(HORIZONTAL);
         setGravity(Gravity.CENTER_VERTICAL);
+        mMore = button(R.drawable.ic_suggestions_more, R.string.suggestions_more, () -> {
+            if (mListener != null) mListener.onMoreToggled();
+        });
+        mArrow = button(R.drawable.ic_toolbar_chips_dismiss, R.string.toolbar_show_buttons, () -> {
+            if (mListener != null) mListener.onShowToolbar();
+        });
+        addView(mMore, new LayoutParams(dp(40), LayoutParams.MATCH_PARENT));
         for (int i = 0; i < 3; i++) {
             if (i > 0) {
                 View divider = new View(context);
@@ -82,7 +110,21 @@ final class SuggestionStrip extends LinearLayout {
             lp.setMargins(dp(2), dp(3), dp(2), dp(3));
             addView(v, lp);
         }
+        addView(mArrow, new LayoutParams(dp(40), LayoutParams.MATCH_PARENT));
         applyColours();
+    }
+
+    private ImageView button(int icon, int description, Runnable action) {
+        ImageView b = new ImageView(getContext());
+        b.setImageResource(icon);
+        b.setScaleType(ImageView.ScaleType.CENTER);
+        b.setContentDescription(getContext().getString(description));
+        b.setFocusable(true);
+        b.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            action.run();
+        });
+        return b;
     }
 
     void setListener(Listener listener) {
@@ -91,25 +133,62 @@ final class SuggestionStrip extends LinearLayout {
 
     /**
      * Shows the words (any may be null); {@code middleIsCorrection}: the middle one is what
-     * space will put in place of the typed word.
+     * space will put in place of the typed word. Words that changed settle in with a short
+     * fade and slide (none when the system's animations are off).
      */
     void setWords(String left, String middle, String right, boolean middleIsCorrection) {
+        boolean had = hasWords();
+        String[] before = new String[3];
+        for (int i = 0; i < 3; i++) before[i] = mSlots[i].getText().toString();
         mWords[LEFT] = left;
         mWords[MIDDLE] = middle;
         mWords[RIGHT] = right;
         mMiddleIsCorrection = middleIsCorrection && middle != null;
         // Right-to-left words: the second and third suggestions swap sides, as the keyboard
-        // apps for those languages do; the best one stays in the middle. The views are swapped
-        // here rather than through the layout direction: the app does not declare
-        // supportsRtl, so views never lay out right to left.
-        mRtl = isRtl(middle != null ? middle : left != null ? left : right);
+        // apps for those languages do; the best one stays in the middle, and "⋯" and the arrow
+        // swap ends. The views are swapped here rather than through the layout direction: the
+        // app does not declare supportsRtl, so views never lay out right to left.
+        boolean rtl = isRtl(middle != null ? middle : left != null ? left : right);
+        if (rtl != mRtl) {
+            mRtl = rtl;
+            placeButtons();
+        }
+        boolean animate = had && hasWords() && getVisibility() == VISIBLE
+                && animationsEnabled(getContext());
+        mAnimatedSlots = 0;
         for (int i = 0; i < 3; i++) {
             String word = mWords[slotAt(i)];
-            mSlots[i].setText(word != null ? word : "");
-            mSlots[i].setClickable(word != null);
-            mSlots[i].setContentDescription(word);
+            String text = word != null ? word : "";
+            TextView v = mSlots[i];
+            v.setText(text);
+            v.setClickable(word != null);
+            v.setFocusable(word != null);
+            v.setContentDescription(word);
+            if (animate && !text.equals(before[i])) {
+                mAnimatedSlots++;
+                v.animate().cancel();
+                v.setAlpha(0.3f);
+                v.setTranslationY(dp(5));
+                v.animate().alpha(1f).translationY(0f).setDuration(WORD_CHANGE_MS)
+                        .setInterpolator(new DecelerateInterpolator()).start();
+            } else if (!animate) {
+                v.animate().cancel();
+                v.setAlpha(1f);
+                v.setTranslationY(0f);
+            }
         }
         applyColours();
+    }
+
+    /** "⋯" at the start and the arrow at the end, in reading order. */
+    private void placeButtons() {
+        removeView(mMore);
+        removeView(mArrow);
+        LayoutParams lp = new LayoutParams(dp(40), LayoutParams.MATCH_PARENT);
+        addView(mRtl ? mArrow : mMore, 0, lp);
+        addView(mRtl ? mMore : mArrow, new LayoutParams(dp(40), LayoutParams.MATCH_PARENT));
+        // The arrow points toward the end of the row.
+        mArrow.setScaleX(mRtl ? -1f : 1f);
     }
 
     void clear() {
@@ -144,6 +223,43 @@ final class SuggestionStrip extends LinearLayout {
         return mMiddleIsCorrection;
     }
 
+    /** The "⋯" / collapse button (tests). */
+    ImageView moreButton() {
+        return mMore;
+    }
+
+    /** The arrow that brings the toolbar's buttons back (tests). */
+    ImageView toolbarButton() {
+        return mArrow;
+    }
+
+    /** How many words the last {@link #setWords} animated (tests). */
+    int animatedSlots() {
+        return mAnimatedSlots;
+    }
+
+    /** "⋯" while the more-suggestions panel is closed, a collapse arrow while it's open. */
+    void setExpanded(boolean expanded) {
+        if (mExpanded == expanded) return;
+        mExpanded = expanded;
+        mMore.setImageResource(expanded ? R.drawable.ic_suggestions_collapse
+                : R.drawable.ic_suggestions_more);
+        mMore.setContentDescription(getContext().getString(expanded
+                ? R.string.suggestions_fewer : R.string.suggestions_more));
+        if (animationsEnabled(getContext())) {
+            mMore.animate().cancel();
+            mMore.setAlpha(0.2f);
+            mMore.setRotation(expanded ? 90f : -90f);
+            mMore.animate().alpha(1f).rotation(0f).setDuration(WORD_CHANGE_MS)
+                    .setInterpolator(new DecelerateInterpolator()).start();
+        }
+        applyColours();
+    }
+
+    boolean isExpanded() {
+        return mExpanded;
+    }
+
     void setColours(int background, int foreground, int accent) {
         mBackground = background;
         mForeground = foreground;
@@ -157,20 +273,42 @@ final class SuggestionStrip extends LinearLayout {
             boolean middle = i == MIDDLE;
             v.setTextColor(middle && mMiddleIsCorrection ? mAccent : mForeground);
             v.setTypeface(middle ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
-            GradientDrawable pressed = new GradientDrawable();
-            pressed.setCornerRadius(dp(8));
-            pressed.setColor(blend(mBackground, mForeground, 0.25f));
-            StateListDrawable states = new StateListDrawable();
-            states.addState(new int[] {android.R.attr.state_pressed}, pressed);
-            v.setBackground(states);
+            v.setBackground(pressedBackground(false));
         }
         for (View d : mDividers) {
             d.setBackgroundColor(blend(mBackground, mForeground, 0.3f));
             d.setVisibility(hasWords() ? VISIBLE : INVISIBLE);
         }
+        mMore.setImageTintList(ColorStateList.valueOf(mExpanded ? mAccent
+                : blend(mBackground, mForeground, 0.75f)));
+        mArrow.setImageTintList(ColorStateList.valueOf(blend(mBackground, mForeground, 0.7f)));
+        mMore.setBackground(pressedBackground(true));
+        mArrow.setBackground(pressedBackground(true));
     }
 
-    private static boolean isRtl(String word) {
+    private StateListDrawable pressedBackground(boolean round) {
+        GradientDrawable pressed = new GradientDrawable();
+        if (round) pressed.setShape(GradientDrawable.OVAL);
+        else pressed.setCornerRadius(dp(8));
+        pressed.setColor(blend(mBackground, mForeground, 0.25f));
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[] {android.R.attr.state_pressed}, pressed);
+        return states;
+    }
+
+    /**
+     * Whether the system's animations are on (Settings, Developer options, "Animator duration
+     * scale" not off, nor turned off by battery saver).
+     */
+    static boolean animationsEnabled(Context context) {
+        float scale = Settings.Global.getFloat(context.getContentResolver(),
+                Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
+        if (scale == 0f) return false;
+        return android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O
+                || ValueAnimator.areAnimatorsEnabled();
+    }
+
+    static boolean isRtl(String word) {
         if (word == null) return false;
         for (int i = 0; i < word.length(); ) {
             int c = word.codePointAt(i);
@@ -188,7 +326,7 @@ final class SuggestionStrip extends LinearLayout {
         return false;
     }
 
-    private static int blend(int a, int b, float t) {
+    static int blend(int a, int b, float t) {
         return Color.rgb(
                 Math.round(Color.red(a) + (Color.red(b) - Color.red(a)) * t),
                 Math.round(Color.green(a) + (Color.green(b) - Color.green(a)) * t),
