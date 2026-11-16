@@ -431,6 +431,60 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Practice: gestures to try in the field above, ticked off once done (PracticeCard). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/main_practice_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/setup_text_muted"
+            app:cardBackgroundColor="@color/setup_surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/practice_title"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/setup_text_primary" />
+
+                <TextView
+                    android:id="@+id/main_practice_summary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/practice_summary"
+                    android:textSize="13sp"
+                    android:textColor="@color/setup_text_secondary"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="4dp" />
+
+                <LinearLayout
+                    android:id="@+id/main_practice_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/main_practice_hide"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="@string/practice_hide"
+                    android:textAllCaps="false" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Version info -->
         <TextView
             android:id="@+id/main_version"

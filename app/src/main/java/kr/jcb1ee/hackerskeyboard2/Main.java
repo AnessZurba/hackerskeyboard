@@ -28,6 +28,24 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class Main extends AppCompatActivity {
+    private PracticeCard mPractice;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPractice.start();
+    }
+
+    @Override
+    protected void onPause() {
+        mPractice.stop();
+        super.onPause();
+    }
+
+    /** The practice card (tests). */
+    PracticeCard practiceCard() {
+        return mPractice;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,6 +125,8 @@ public class Main extends AppCompatActivity {
                     }
                     return split.second;
                 });
+
+        mPractice = new PracticeCard(this);
 
         final Button setup5 = findViewById(R.id.main_setup_btn_settings);
         setup5.setOnClickListener(v ->
