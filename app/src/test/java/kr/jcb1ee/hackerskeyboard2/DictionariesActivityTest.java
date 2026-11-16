@@ -99,7 +99,11 @@ public class DictionariesActivityTest {
         mFragment.download(DictionaryCatalog.byName("de"));
         Intent i = Shadows.shadowOf(mController.get()).getNextStartedActivity();
         assertEquals(Intent.ACTION_VIEW, i.getAction());
-        assertEquals(Uri.parse(DictionaryCatalog.DOWNLOAD_BASE_URL + "main_de.dict"), i.getData());
+        assertEquals(Uri.parse(DictionaryCatalog.HELIBOARD_BASE_URL + "main_de__legacy.dict"),
+                i.getData());
+        mFragment.download(DictionaryCatalog.byName("uk"));
+        i = Shadows.shadowOf(mController.get()).getNextStartedActivity();
+        assertEquals(Uri.parse(DictionaryCatalog.DOWNLOAD_BASE_URL + "main_uk.dict"), i.getData());
     }
 
     @Test

@@ -98,7 +98,35 @@ public class DictionaryFilesTest {
         File[] assets = SuggestTestSupport.DICT_DIR.listFiles((d, n) -> n.endsWith(".dict"));
         assertEquals(3, assets.length);
         assertEquals("https://github.com/AnessZurba/hackerskeyboard/releases/download/dicts-v1/"
-                + "main_pt_pt.dict", entry("pt_pt").downloadUrl());
+                + "main_uk.dict", entry("uk").downloadUrl());
+        assertEquals("https://codeberg.org/Helium314/aosp-dictionaries/raw/commit/"
+                + "ff0cd52be8d9530200fefe8b296c53d4f662091e/dictionaries/main_de__legacy.dict",
+                entry("de").downloadUrl());
+    }
+
+    /**
+     * AOSP's lists come from HeliBoard's repository at a pinned commit; ours are only the
+     * languages AOSP has no list for, and Brazilian Portuguese (HeliBoard's is not AOSP's).
+     */
+    @Test
+    public void downloadsComeFromHeliBoardOrOurRelease() {
+        Set<String> ours = new HashSet<>();
+        for (DictionaryCatalog.Entry e : DictionaryCatalog.all()) {
+            if (e.bundled) {
+                assertNull(e.downloadUrl());
+                continue;
+            }
+            String url = e.downloadUrl();
+            if (url.startsWith(DictionaryCatalog.DOWNLOAD_BASE_URL)) {
+                ours.add(e.name);
+                assertEquals(DictionaryCatalog.DOWNLOAD_BASE_URL + e.fileName(), url);
+            } else {
+                assertTrue(url, url.startsWith(DictionaryCatalog.HELIBOARD_BASE_URL));
+                assertTrue(e.attribution, e.attribution.contains("Apache License 2.0")
+                        && e.attribution.contains("HeliBoard"));
+            }
+        }
+        assertEquals(new HashSet<>(Arrays.asList("uk", "bg", "hu", "sk", "ca", "pt")), ours);
     }
 
     /** Every dictionary is for a language the keyboard lists (InputLanguageSelection). */
@@ -120,8 +148,10 @@ public class DictionaryFilesTest {
     public void publishedChecksumsMatchTheBuild() throws IOException {
         File sums = new File(SuggestTestSupport.OPTIONAL_DICT_DIR, "SHA256SUMS");
         assumeTrue("not built (./gradlew optionalDicts): " + sums, sums.isFile());
-        assertEquals(new String(Files.readAllBytes(sums.toPath()), StandardCharsets.UTF_8).trim(),
-                DictionaryCatalog.SHA256SUMS.trim());
+        List<String> built = Files.readAllLines(sums.toPath(), StandardCharsets.UTF_8);
+        String[] ours = DictionaryCatalog.SHA256SUMS.trim().split("\n");
+        assertEquals(6, ours.length);
+        for (String line : ours) assertTrue(line, built.contains(line));
     }
 
     // ---------------------------------------------------------------- the header
@@ -205,22 +235,27 @@ public class DictionaryFilesTest {
 
     @Test
     public void importsAPublishedDictionaryAsVerified() throws Exception {
-        File de = SuggestTestSupport.optionalDict("de");
+        File hu = SuggestTestSupport.optionalDict("hu");
         DictionaryFiles.Imported imported;
-        try (InputStream in = new FileInputStream(de)) {
-            imported = DictionaryFiles.install(mContext, entry("de"), in);
+        try (InputStream in = new FileInputStream(hu)) {
+            imported = DictionaryFiles.install(mContext, entry("hu"), in);
         }
-        assertTrue(imported.verified);
-        assertEquals("de", imported.header.get("locale"));
+        assertTrue(imported.verified); // our release's file
+        assertTrue(DictionaryFiles.isPublished(mContext, entry("hu")));
+        assertEquals("hu", imported.header.get("locale"));
+        // Our own build of an AOSP list is a good dictionary, but not HeliBoard's file.
+        try (InputStream in = new FileInputStream(SuggestTestSupport.optionalDict("de"))) {
+            assertFalse(DictionaryFiles.install(mContext, entry("de"), in).verified);
+        }
         assumeTrue(NativeLibrary.load());
-        AospSuggestionEngine engine = AospSuggestionEngine.open(mContext, "de_NE");
+        AospSuggestionEngine engine = AospSuggestionEngine.open(mContext, "hu_QY");
         assertNotNull(engine);
         try {
             List<String> words = new ArrayList<>();
-            for (Suggestion s : engine.suggestions("uber", null, null, null, null, 3)) {
+            for (Suggestion s : engine.suggestions("kozott", null, null, null, null, 3)) {
                 words.add(s.word);
             }
-            assertTrue(words.toString(), words.contains("über"));
+            assertTrue(words.toString(), words.contains("között"));
         } finally {
             engine.close();
         }

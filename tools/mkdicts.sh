@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# Builds the optional (downloadable) word suggestion dictionaries, which are not in the APK:
-# the user downloads one from the "dicts-v1" GitHub release (Settings > Word suggestions >
-# Dictionaries > Download) and imports it with "Browse". Only English, Hebrew and Arabic are
-# bundled (app/src/main/assets/dicts).
+# Builds the optional (downloadable) word suggestion dictionaries, which are not in the APK
+# (only English, Hebrew and Arabic are: app/src/main/assets/dicts). The user downloads one
+# (Settings > Word suggestions > Dictionaries > Download) and imports it with "Browse".
 #
 #   tools/mkdicts.sh [OUTPUT_DIR [LANG...]]        (default build/dicts, every language)
 #   ./gradlew optionalDicts                         (the same, from Gradle)
 #
 # Writes OUTPUT_DIR/main_<lang>.dict, a NOTICE.txt with each file's source, licence and
-# changes, and SHA256SUMS: upload all of them as the assets of the release. The intermediate
-# word lists stay in OUTPUT_DIR/src (the quality tests sample words from them).
+# changes, and SHA256SUMS. The intermediate word lists stay in OUTPUT_DIR/src (the quality
+# tests sample words from them).
+#
+# What is published: the app downloads the AOSP-list dictionaries from HeliBoard's repository
+# (the same lists, pinned to a commit: suggest.DictionaryCatalog), so only RELEASE below goes
+# on this repository's "dicts-v1" GitHub release, with NOTICE.txt and SHA256SUMS. The other
+# AOSP builds here are for the quality tests (and self-hosting, should that repository go).
+RELEASE="pt uk bg hu sk ca"
 #
 # Sources (see NOTICE.txt as written below):
 #   AOSP LatinIME word lists (Apache 2.0) at the decoder's pinned commit, converted as is,
@@ -62,6 +67,8 @@ differ from the app's (Apache License 2.0). Download the one for your language, 
 keyboard's settings open Word suggestions > Dictionaries and import it with "Browse".
 They were built with tools/mkdicts.sh (AOSP's own dicttool, tools/aosp-dicttool/makedict.sh,
 and tools/mkcombined.py) from the sources below. SHA256SUMS has the files' checksums.
+The keyboard takes the other languages (AOSP's lists) from HeliBoard's dictionary repository,
+https://codeberg.org/Helium314/aosp-dictionaries , pinned to a commit.
 
 AOSP LatinIME word lists
     Source: https://android.googlesource.com/platform/packages/inputmethods/LatinIME ,
@@ -95,8 +102,10 @@ for entry in $AOSP; do
         > "$out/src/$name.combined"
     n=$(grep -c '^ word=' "$out/src/$name.combined")
     desc=$(head -1 "$out/src/$name.combined" | sed 's/.*description=\([^,]*\).*/\1/')
-    printf '    main_%s.dict  %s  %s words  AOSP %s_wordlist (Apache 2.0)\n' \
-        "$name" "$desc" "$n" "$list" >> "$notice"
+    if wanted "$name" $RELEASE; then
+        printf '    main_%s.dict  %s  %s words  AOSP %s_wordlist (Apache 2.0)\n' \
+            "$name" "$desc" "$n" "$list" >> "$notice"
+    fi
     echo "main_$name.dict: $n words, $(wc -c < "$out/main_$name.dict") bytes"
 done
 
@@ -109,8 +118,10 @@ for entry in $LEIPZIG; do
     "$here/aosp-dicttool/makedict.sh" "$out/src/$name.combined" "$out/main_$name.dict" -t on > "$out/src/$name.log" 2>&1 || { cat "$out/src/$name.log"; exit 1; }
     n=$(grep -c '^ word=' "$out/src/$name.combined")
     desc=$(head -1 "$out/src/$name.combined" | sed 's/.*description=\([^,]*\).*/\1/')
-    printf '    main_%s.dict  %s  %s words  Leipzig %s (CC BY 4.0)\n' \
-        "$name" "$desc" "$n" "${corpora//,/ + }" >> "$notice"
+    if wanted "$name" $RELEASE; then
+        printf '    main_%s.dict  %s  %s words  Leipzig %s (CC BY 4.0)\n' \
+            "$name" "$desc" "$n" "${corpora//,/ + }" >> "$notice"
+    fi
     echo "main_$name.dict: $n words, $(wc -c < "$out/main_$name.dict") bytes"
 done
 
@@ -120,5 +131,6 @@ if [ $# -gt 0 ]; then
     exit 0
 fi
 mv "$notice" "$out/NOTICE.txt"
-(cd "$out" && sha256sum main_*.dict > SHA256SUMS)
-echo "Wrote $out (upload main_*.dict, NOTICE.txt and SHA256SUMS to the dicts-v1 release)"
+(cd "$out" && for name in $RELEASE; do sha256sum "main_$name.dict"; done > SHA256SUMS)
+echo "Wrote $out. For the dicts-v1 release, upload NOTICE.txt, SHA256SUMS and:"
+for name in $RELEASE; do echo "  $out/main_$name.dict"; done
