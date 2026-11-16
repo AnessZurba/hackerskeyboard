@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Theme settings (kr.jcb1ee.hackerskeyboard2.theme). -->
+<resources>
+    <!-- Description for keyboard theme switcher -->
+    <string name="keyboard_layout">Keyboard Theme</string>
+    <string name="title_key_borders">Key borders</string>
+    <string name="summary_key_borders_on">Keys are drawn as shapes</string>
+    <string name="summary_key_borders_off">Labels only; a key lights up while pressed (flat themes)</string>
+
+    <string name="theme_family_material" translatable="false">Material</string>
+    <string name="theme_family_material_you" translatable="false">Material You (wallpaper colours)</string>
+    <string name="theme_family_high_contrast" translatable="false">High contrast</string>
+    <string name="theme_family_typewriter" translatable="false">Typewriter</string>
+    <string name="theme_family_keycaps" translatable="false">Keycaps</string>
+    <string name="theme_family_terminal" translatable="false">Retro terminal</string>
+    <string name="theme_family_custom">Custom</string>
+
+    <!--
+    The stored value is a theme family id (kr.jcb1ee.hackerskeyboard2.theme.ThemeFamily).
+    Do *NOT* renumber existing entries, this would lead to people's stored preferences
+    being reinterpreted as different themes. Ids of removed themes (0-4, 6, 9) and of
+    variants (5, 11, 14, 16) must not be reused either. A new theme takes the next free
+    number (18 and up).
+    -->
+    <string-array name="keyboard_layout_modes" translatable="false">
+        <item>@string/theme_family_material_you</item>
+        <item>@string/theme_family_material</item>
+        <item>@string/theme_family_high_contrast</item>
+        <item>@string/theme_family_typewriter</item>
+        <item>@string/theme_family_keycaps</item>
+        <item>@string/theme_family_terminal</item>
+        <item>@string/theme_family_custom</item>
+    </string-array>
+    <string-array name="keyboard_layout_modes_values" translatable="false">
+        <item>8</item>
+        <item>7</item>
+        <item>10</item>
+        <item>12</item>
+        <item>13</item>
+        <item>15</item>
+        <item>17</item>
+    </string-array>
+
+    <!-- The custom theme's base: every theme but Custom. -->
+    <string-array name="custom_theme_base_names" translatable="false">
+        <item>@string/theme_family_material_you</item>
+        <item>@string/theme_family_material</item>
+        <item>@string/theme_family_high_contrast</item>
+        <item>@string/theme_family_typewriter</item>
+        <item>@string/theme_family_keycaps</item>
+        <item>@string/theme_family_terminal</item>
+    </string-array>
+    <string-array name="custom_theme_base_values" translatable="false">
+        <item>8</item>
+        <item>7</item>
+        <item>10</item>
+        <item>12</item>
+        <item>13</item>
+        <item>15</item>
+    </string-array>
+
+    <string name="title_theme_mode">Light or dark</string>
+    <string name="theme_mode_system">Follow the system</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string-array name="theme_mode_names">
+        <item>@string/theme_mode_system</item>
+        <item>@string/theme_mode_light</item>
+        <item>@string/theme_mode_dark</item>
+    </string-array>
+    <string-array name="theme_mode_values" translatable="false">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+
+    <!-- The custom theme screen -->
+    <string name="theme_custom_title">Custom theme</string>
+    <string name="theme_custom_summary">Start from any theme and change its colours</string>
+    <string name="theme_custom_use">Use the custom theme</string>
+    <string name="theme_custom_use_on">The keyboard uses these colours</string>
+    <string name="theme_custom_use_off">The keyboard uses another theme</string>
+    <string name="theme_custom_base">Start from</string>
+    <string name="theme_custom_editing">Colours for</string>
+    <string name="theme_custom_colours_light">Light colours</string>
+    <string name="theme_custom_colours_dark">Dark colours</string>
+    <string name="theme_custom_reset">Reset</string>
+    <string name="theme_custom_reset_light">Put the light colours back to the base theme\'s</string>
+    <string name="theme_custom_reset_dark">Put the dark colours back to the base theme\'s</string>
+    <string name="theme_colour_from_base">%1$s, from the base theme</string>
+    <string name="theme_colour_use_base">Base colour</string>
+    <string name="theme_colour_hex">Colour as hex, #RRGGBB</string>
+
+    <string name="theme_slot_background">Keyboard background</string>
+    <string name="theme_slot_key">Keys</string>
+    <string name="theme_slot_key_top">Key tops</string>
+    <string name="theme_slot_label">Key labels</string>
+    <string name="theme_slot_skirt">Key sides</string>
+    <string name="theme_slot_modifier">Modifier keys (Shift, Ctrl, Tab…)</string>
+    <string name="theme_slot_modifier_label">Modifier key labels</string>
+    <string name="theme_slot_modifier_skirt">Modifier key sides</string>
+    <string name="theme_slot_accent">Enter and Esc</string>
+    <string name="theme_slot_accent_label">Enter and Esc labels</string>
+    <string name="theme_slot_accent_skirt">Enter and Esc sides</string>
+    <string name="theme_slot_pressed">Pressed key</string>
+    <string name="theme_slot_active">Key that is on (Shift, Ctrl, Caps lock)</string>
+    <string name="theme_slot_outline">Key outline</string>
+    <string name="theme_slot_rim">Key rims</string>
+    <string name="theme_slot_hint">Hints (small labels)</string>
+    <string name="theme_slot_glow">Label glow</string>
+    <string name="theme_slot_panel">Long-press popup background</string>
+    <string name="theme_slot_panel_outline">Long-press popup outline</string>
+</resources>

@@ -31,13 +31,21 @@ public class RenderKeyboardTest {
         android.content.SharedPreferences prefs = androidx.preference.PreferenceManager
                 .getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
         if (System.getProperty("renderTheme") != null) {
-            prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT,
+            prefs.edit().putString(kr.jcb1ee.hackerskeyboard2.theme.Themes.PREF_THEME,
                     System.getProperty("renderTheme")).commit();
         }
         if (System.getProperty("renderBorders") != null) {
-            prefs.edit().putBoolean(KeyboardTheme.PREF_KEY_BORDERS,
+            prefs.edit().putBoolean(kr.jcb1ee.hackerskeyboard2.theme.Themes.PREF_KEY_BORDERS,
                     Boolean.parseBoolean(System.getProperty("renderBorders"))).commit();
         }
+        // -PrenderVariant=light|dark|system sets "Light or dark"; -PrenderNight=true makes the
+        // system dark.
+        if (System.getProperty("renderVariant") != null) {
+            prefs.edit().putString(kr.jcb1ee.hackerskeyboard2.theme.Themes.PREF_MODE,
+                    System.getProperty("renderVariant")).commit();
+        }
+        org.robolectric.RuntimeEnvironment.setQualifiers(
+                Boolean.parseBoolean(System.getProperty("renderNight")) ? "+night" : "+notnight");
         // -PrenderMode=2 draws the full 5-row (PC) layout (pref_keyboard_mode_portrait).
         if (System.getProperty("renderMode") != null) {
             prefs.edit().putString("pref_keyboard_mode_portrait",
@@ -104,7 +112,44 @@ public class RenderKeyboardTest {
                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         toolbar.layout(0, 0, w, toolbar.getMeasuredHeight());
         Bitmap bmp = Bitmap.createBitmap(w, toolbar.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
-        toolbar.draw(new Canvas(bmp));
+        // -PrenderLongPress=e opens that key's long-press popup and draws it above the key.
+        View popup = null;
+        int popupX = 0, popupY = 0;
+        String longPress = System.getProperty("renderLongPress");
+        if (longPress != null) {
+            LatinKeyboardView view = KeyboardSwitcher.getInstance().getInputView();
+            for (Keyboard.Key key : view.getKeyboard().getKeys()) {
+                if (key.label == null || !longPress.contentEquals(key.label)) continue;
+                try {
+                    view.onLongPress(key);
+                } catch (RuntimeException e) {
+                    // no window to show it in: the popup is laid out all the same
+                }
+                java.lang.reflect.Field f =
+                        LatinKeyboardBaseView.class.getDeclaredField("mMiniKeyboardContainer");
+                f.setAccessible(true);
+                popup = (View) f.get(view);
+                popup.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.AT_MOST),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                popup.layout(0, 0, popup.getMeasuredWidth(), popup.getMeasuredHeight());
+                int[] at = new int[2];
+                view.getLocationInWindow(at);
+                int[] base = new int[2];
+                toolbar.getLocationInWindow(base);
+                popupX = Math.max(0, Math.min(w - popup.getMeasuredWidth(),
+                        at[0] - base[0] + key.x + key.width / 2 - popup.getMeasuredWidth() / 2));
+                popupY = Math.max(0, at[1] - base[1] + key.y - popup.getMeasuredHeight()
+                        + popup.getPaddingBottom());
+                view.invalidateAllKeys();
+                break;
+            }
+        }
+        Canvas canvas = new Canvas(bmp);
+        toolbar.draw(canvas);
+        if (popup != null) {
+            canvas.translate(popupX, popupY);
+            popup.draw(canvas);
+        }
         try (java.io.FileOutputStream file = new java.io.FileOutputStream(out)) {
             bmp.compress(Bitmap.CompressFormat.PNG, 100, file);
         }

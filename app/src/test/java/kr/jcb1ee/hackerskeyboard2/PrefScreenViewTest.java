@@ -14,6 +14,9 @@ import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
+import kr.jcb1ee.hackerskeyboard2.theme.KeyKind;
+import kr.jcb1ee.hackerskeyboard2.theme.Themes;
+
 /** Opens the "View" settings screen and the keyboard theme picker. */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 36)
@@ -25,13 +28,20 @@ public class PrefScreenViewTest {
         android.content.Context c = androidx.test.core.app.ApplicationProvider.getApplicationContext();
         android.content.SharedPreferences prefs =
                 androidx.preference.PreferenceManager.getDefaultSharedPreferences(c);
-        prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, "10").commit();
+        prefs.edit().putString(Themes.PREF_THEME, "10")
+                .putString(Themes.PREF_MODE, Themes.MODE_DARK).commit();
         LatinKeyboardView view = ThemePreviewPreference.makePreview(c);
         assertNotNull(view.getKeyboard());
-        org.junit.Assert.assertEquals(KeyboardTheme.HIGH_CONTRAST, idOf(view.getTheme()));
-        prefs.edit().putString(KeyboardSwitcher.PREF_KEYBOARD_LAYOUT, "5").commit();
+        org.junit.Assert.assertTrue(view.getLook().sameAs(Themes.forKeyboard(c)));
+        org.junit.Assert.assertFalse("High contrast, dark", view.getLook().isLight());
+        // The light/dark setting reaches the preview.
+        prefs.edit().putString(Themes.PREF_MODE, Themes.MODE_LIGHT).commit();
         view = ThemePreviewPreference.makePreview(c);
-        org.junit.Assert.assertTrue("Material Light is light", view.getTheme().light);
+        org.junit.Assert.assertTrue("High contrast, light", view.getLook().isLight());
+        prefs.edit().putString(Themes.PREF_THEME, "5").commit(); // Material Light, migrated
+        view = ThemePreviewPreference.makePreview(c);
+        org.junit.Assert.assertTrue("Material Light is light", view.getLook().isLight());
+        org.junit.Assert.assertEquals("7", prefs.getString(Themes.PREF_THEME, null));
         // It draws (no crash with no keyboard service running).
         view.measure(android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
                 android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED));
@@ -47,7 +57,8 @@ public class PrefScreenViewTest {
         org.junit.Assert.assertEquals(0.8f, LatinIME.sKeyboardSettings.labelScalePref, 0.001f);
         org.junit.Assert.assertEquals(0.6f, LatinIME.sKeyboardSettings.topRowScale, 0.001f);
         for (String key : new String[] {"pref_hint_mode", "pref_label_scale_v2", "pref_top_row_scale",
-                "pref_keyboard_layout", "pref_key_borders"}) {
+                "pref_keyboard_layout", "pref_key_borders", "pref_theme_mode",
+                "pref_custom_theme_light_key", "custom_theme_editing"}) {
             org.junit.Assert.assertTrue(key, ThemePreviewPreference.affectsPreview(key));
         }
         prefs.edit().clear().commit();
@@ -55,8 +66,52 @@ public class PrefScreenViewTest {
         LatinIME.sKeyboardSettings.topRowScale = 1f;
     }
 
-    private static int idOf(KeyboardTheme t) {
-        return t.keyStroke == 0xFFFFFFFF ? KeyboardTheme.HIGH_CONTRAST : -1;
+    /** The keyboard tells the theme each key's kind by its code. */
+    @Test
+    public void keyKinds() {
+        android.content.Context c = androidx.test.core.app.ApplicationProvider.getApplicationContext();
+        org.junit.Assert.assertEquals(KeyKind.ACCENT, KeyKind.of(LatinIME.ASCII_ENTER, true));
+        org.junit.Assert.assertEquals(KeyKind.ACCENT,
+                KeyKind.of(LatinKeyboardView.KEYCODE_ESCAPE, true));
+        org.junit.Assert.assertEquals(KeyKind.NORMAL, KeyKind.of(LatinIME.ASCII_SPACE, true));
+        LatinKeyboard kbd = new LatinKeyboard(c, R.xml.kbd_full, 0, 30f);
+        java.util.Map<String, Integer> found = new java.util.HashMap<>();
+        for (Keyboard.Key k : kbd.getKeys()) {
+            int code = k.codes != null && k.codes.length > 0 ? k.codes[0] : 0;
+            String name = k.label != null ? k.label.toString() : String.valueOf(code);
+            found.put(name, KeyKind.of(code, k.modifier));
+        }
+        org.junit.Assert.assertEquals(Integer.valueOf(KeyKind.NORMAL), found.get("a"));
+        org.junit.Assert.assertEquals(Integer.valueOf(KeyKind.NORMAL), found.get("1"));
+        org.junit.Assert.assertEquals("space", Integer.valueOf(KeyKind.NORMAL), found.get("32"));
+        org.junit.Assert.assertEquals(Integer.valueOf(KeyKind.MODIFIER), found.get("Ctrl"));
+        org.junit.Assert.assertEquals(Integer.valueOf(KeyKind.MODIFIER), found.get("Alt"));
+        org.junit.Assert.assertEquals("shift", Integer.valueOf(KeyKind.MODIFIER), found.get("-1"));
+        org.junit.Assert.assertEquals("backspace", Integer.valueOf(KeyKind.MODIFIER), found.get("-5"));
+        org.junit.Assert.assertEquals(Integer.valueOf(KeyKind.ACCENT), found.get("Esc"));
+        org.junit.Assert.assertEquals("enter", Integer.valueOf(KeyKind.ACCENT), found.get("10"));
+    }
+
+    /** Long-press popups are 10% taller than before (0.325in keys, now 0.3575in). */
+    @Test
+    public void popupKeysAreTaller() {
+        android.content.Context c = androidx.test.core.app.ApplicationProvider.getApplicationContext();
+        android.util.DisplayMetrics dm = c.getResources().getDisplayMetrics();
+        float expected = 0.325f * 1.1f * dm.xdpi;
+        org.junit.Assert.assertEquals(expected,
+                c.getResources().getDimension(R.dimen.popup_key_height), 1f);
+        LatinKeyboard kbd = new LatinKeyboard(c, R.xml.kbd_full, 0, 30f);
+        int checked = 0;
+        for (Keyboard.Key k : kbd.getKeys()) {
+            if (k.label == null || !"e".contentEquals(k.label) && !",".contentEquals(k.label)) continue;
+            Keyboard popup = k.getPopupKeyboard(c, 0);
+            assertNotNull("popup of " + k.label, popup);
+            for (Keyboard.Key p : popup.getKeys()) {
+                org.junit.Assert.assertEquals("popup key of " + k.label, expected, p.height, 1.5f);
+            }
+            checked++;
+        }
+        org.junit.Assert.assertTrue(checked > 0);
     }
 
     @Test
@@ -70,8 +125,9 @@ public class PrefScreenViewTest {
         PreferenceFragmentCompat pf = (PreferenceFragmentCompat) f;
         assertNotNull("theme preview", ((PreferenceFragmentCompat) activity.getSupportFragmentManager()
                 .findFragmentById(android.R.id.content)).findPreference("theme_preview"));
-        for (String key : new String[] {"pref_keyboard_layout", "pref_hint_mode",
-                "pref_label_scale_v2"}) {
+        assertNotNull("custom theme", pf.findPreference("custom_theme"));
+        for (String key : new String[] {"pref_keyboard_layout", "pref_theme_mode",
+                "pref_hint_mode", "pref_label_scale_v2"}) {
             Preference p = pf.findPreference(key);
             assertNotNull(key, p);
             pf.onDisplayPreferenceDialog(p);

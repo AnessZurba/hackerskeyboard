@@ -64,6 +64,19 @@
             android:persistent="true"
             android:title="@string/keyboard_layout" />
 
+        <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
+            android:defaultValue="system"
+            android:entries="@array/theme_mode_names"
+            android:entryValues="@array/theme_mode_values"
+            android:key="pref_theme_mode"
+            android:persistent="true"
+            android:title="@string/title_theme_mode" />
+
+        <kr.jcb1ee.hackerskeyboard2.theme.CustomThemePreference
+            android:key="custom_theme"
+            android:title="@string/theme_custom_title"
+            android:summary="@string/theme_custom_summary" />
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="pref_key_borders"

@@ -76,10 +76,7 @@ public class PrefScreenView extends AppCompatActivity {
 
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             (new BackupManager(requireContext())).dataChanged();
-            if (ThemePreviewPreference.affectsPreview(key)) {
-                ThemePreviewPreference preview = findPreference("theme_preview");
-                if (preview != null) preview.refresh();
-            }
+            // The theme preview follows the settings it shows by itself.
         }
     }
 }

@@ -185,9 +185,8 @@ public class SettingsScreensTest {
     public void everyTheme() {
         Context app = ApplicationProvider.getApplicationContext();
         int[] layouts = {
-            R.layout.input_material_dark, R.layout.input_material_light,
-            R.layout.input_material_black, R.layout.input_popup_material_dark,
-            R.layout.input_popup_material_black, R.layout.input_popup_material_light,
+            // Every theme draws over these (kr.jcb1ee.hackerskeyboard2.theme.KeyboardLook).
+            R.layout.input_material_dark, R.layout.input_popup_material_dark,
         };
         for (int layout : layouts) {
             Context themed = new ContextThemeWrapper(app, android.R.style.Theme_DeviceDefault_InputMethod);
