@@ -1904,6 +1904,7 @@ public class LatinIME extends InputMethodService implements
     // Implementation of KeyboardViewListener
 
     public void onKey(int primaryCode, int[] keyCodes, int x, int y) {
+        if (mModCtrl && (primaryCode == 'z' || primaryCode == 'Z')) mHints.onUndoOtherwise(swipesUndo());
         mAdaptive.beforeKey(primaryCode);
         onKeyInternal(primaryCode, keyCodes, x, y);
         mAdaptive.afterKey(primaryCode);
@@ -3929,9 +3930,10 @@ public class LatinIME extends InputMethodService implements
         if (action == null || action.equals("") || action.equals("none")) {
             return false;
         }
-        mHints.learned(HintManager.Tip.SWIPE_ACTIONS);
         if (action.equals("lang_prev") || action.equals("lang_next")) mHints.onLanguageSwitchedOtherwise();
-        if (action.equals("close")) {
+        if (action.equals("undo") || action.equals("redo")) {
+            undoRedo(action.equals("redo"));
+        } else if (action.equals("close")) {
             handleClose();
         } else if (action.equals("settings")) {
             launchSettings();
@@ -3996,11 +3998,41 @@ public class LatinIME extends InputMethodService implements
     }
 
     public boolean swipeDown() {
-        return doSwipeAction(mSwipeDownAction);
+        if (!doSwipeAction(mSwipeDownAction)) return false;
+        mHints.learned(HintManager.Tip.SWIPE_ACTIONS);
+        return true;
     }
 
     public boolean swipeUp() {
-        return doSwipeAction(mSwipeUpAction);
+        if (!doSwipeAction(mSwipeUpAction)) return false;
+        mHints.learned(HintManager.Tip.SWIPE_ACTIONS);
+        return true;
+    }
+
+    /** Whether swipes left and right undo and redo (what the undo tip says). */
+    boolean swipesUndo() {
+        return "undo".equals(mSwipeLeftAction) && "redo".equals(mSwipeRightAction);
+    }
+
+    /**
+     * Undo (Ctrl+Z) or redo (Ctrl+Shift+Z), as a PC keyboard sends them: text fields (Android
+     * 7+) and terminals both take these. A word being typed is committed first, so the field
+     * undoes that word rather than nothing. The keyboard says briefly what happened.
+     */
+    void undoRedo(boolean redo) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        commitTyped(ic, true);
+        int meta = KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON;
+        if (redo) meta |= KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON;
+        CursorDrag.sendKey(ic, KeyEvent.KEYCODE_Z, meta);
+        mLastOwnEditTime = SystemClock.uptimeMillis();
+        mHints.learned(HintManager.Tip.UNDO_SWIPE);
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar != null) {
+            String[] label = GestureLabel.undoRedo(getResources(), redo, mSwipeLeftAction, mSwipeRightAction);
+            toolbar.flashGestureLabel(label[0], label[1]);
+        }
     }
 
     public void onPress(int primaryCode) {

@@ -593,6 +593,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 // Typing with two thumbs looks like a fast stroke from one key to another
                 // (e.g. ',' then '9' reads as a swipe up). Only one-finger strokes count.
                 if (!mSingleFingerStroke || me1 == null) return false;
+                // Not the end of a backspace swipe or a trackpad drag (a flick left from
+                // Backspace is not an undo).
+                for (PointerTracker t : mPointerTrackers) {
+                    if (t.isSliding()) return false;
+                }
                 final float absX = Math.abs(velocityX);
                 final float absY = Math.abs(velocityY);
                 float deltaX = me2.getX() - me1.getX();

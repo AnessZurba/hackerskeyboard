@@ -30,6 +30,18 @@ public class GestureLabelTest {
     }
 
     @Test
+    public void undoRedo() {
+        assertArrayEquals(new String[] {"Undo", "Swipe right to redo"},
+                GestureLabel.undoRedo(mRes, false, "undo", "redo"));
+        assertArrayEquals(new String[] {"Redo", "Swipe left to undo again"},
+                GestureLabel.undoRedo(mRes, true, "undo", "redo"));
+        assertArrayEquals("swapped by the user", new String[] {"Undo", "Swipe left to redo"},
+                GestureLabel.undoRedo(mRes, false, "redo", "undo"));
+        assertArrayEquals("no redo swipe: no hint", new String[] {"Undo", null},
+                GestureLabel.undoRedo(mRes, false, "undo", "none"));
+    }
+
+    @Test
     public void trackpad() {
         assertArrayEquals(new String[] {"Moving the cursor", "Reach the screen edge to keep going"},
                 GestureLabel.trackpad(mRes, false));

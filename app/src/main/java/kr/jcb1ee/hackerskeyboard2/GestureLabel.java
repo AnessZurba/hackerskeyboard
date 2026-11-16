@@ -59,6 +59,22 @@ final class GestureLabel extends View {
                 res.getString(atEdge ? R.string.gesture_delete_edge_hint : R.string.gesture_delete_hint)};
     }
 
+    /**
+     * After a swipe undid (or redid) an edit: what happened, and the swipe for the other way
+     * (or for once more), whichever swipe has that action.
+     */
+    static String[] undoRedo(Resources res, boolean redo, String leftAction, String rightAction) {
+        String hint = null;
+        if (!redo) { // offer redo, else undoing more
+            if ("redo".equals(rightAction)) hint = res.getString(R.string.gesture_swipe_right_to_redo);
+            else if ("redo".equals(leftAction)) hint = res.getString(R.string.gesture_swipe_left_to_redo);
+        } else {
+            if ("undo".equals(leftAction)) hint = res.getString(R.string.gesture_swipe_left_to_undo);
+            else if ("undo".equals(rightAction)) hint = res.getString(R.string.gesture_swipe_right_to_undo);
+        }
+        return new String[] {res.getString(redo ? R.string.gesture_redo : R.string.gesture_undo), hint};
+    }
+
     /** A trackpad's label (space bar, Select button): moving the cursor, or selecting. */
     static String[] trackpad(Resources res, boolean selecting) {
         return new String[] {

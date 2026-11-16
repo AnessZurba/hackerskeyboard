@@ -396,6 +396,8 @@
         <item>Decrease height</item>
         <item>Previous language</item>
 -       <item>Next language</item>
+        <item>Undo</item>
+        <item>Redo</item>
         </string-array>
     <string-array name="swipe_action_values">
         <item>none</item>
@@ -409,11 +411,13 @@
         <item>height_down</item>
         <item>lang_prev</item>
 -       <item>lang_next</item>
+        <item>undo</item>
+        <item>redo</item>
     </string-array>    
     <string name="default_swipe_up">toolbar</string>
     <string name="default_swipe_down">close</string>
-    <string name="default_swipe_left">none</string>
-    <string name="default_swipe_right">none</string>
+    <string name="default_swipe_left">undo</string>
+    <string name="default_swipe_right">redo</string>
         
     <string name="title_popup_content">Popup mini-keyboard contents</string>
     <string-array name="popup_content_entries">
@@ -519,6 +523,13 @@
     </plurals>
     <string name="gesture_delete_hint">Slide back to cancel</string>
     <string name="gesture_delete_edge_hint">Keep holding to take more words</string>
+    <!-- Shown briefly after a swipe across the keys undid or redid an edit. -->
+    <string name="gesture_undo">Undo</string>
+    <string name="gesture_redo">Redo</string>
+    <string name="gesture_swipe_left_to_undo">Swipe left to undo again</string>
+    <string name="gesture_swipe_right_to_undo">Swipe right to undo again</string>
+    <string name="gesture_swipe_left_to_redo">Swipe left to redo</string>
+    <string name="gesture_swipe_right_to_redo">Swipe right to redo</string>
 
     <!-- One-time tips in the toolbar row (HintManager); keep each to one short line. -->
     <string name="tip_backspace_swipe">Tip: swipe left from Backspace to delete whole words.</string>
@@ -526,6 +537,7 @@
     <string name="tip_select_trackpad">Tip: tap Select, then slide on it to extend the selection.</string>
     <string name="tip_swipe_actions">Tip: swipe up to hide the toolbar, down to close the keyboard.</string>
     <string name="tip_language_slide">Tip: slide across the Space bar to switch language.</string>
+    <string name="tip_undo_swipe">Tip: swipe left across the keys to undo, right to redo.</string>
     <string name="tip_clip_pin">Tip: long-press a clip, then tap the pin to keep it.</string>
     <string name="tip_dismiss">Dismiss tip</string>
     <string name="title_tips">Tips</string>
@@ -534,6 +546,16 @@
     <string name="title_reset_tips">Reset tips</string>
     <string name="summary_reset_tips">Show tips you have already seen or dismissed again</string>
     <string name="tips_reset_done">Tips reset</string>
+    <!-- The home screen's practice card: gestures to try, ticked off once done. -->
+    <string name="practice_title">Practice gestures</string>
+    <string name="practice_summary">Try each one in the field above; it is ticked off when you do it.</string>
+    <string name="practice_done">All done. You know the gestures.</string>
+    <string name="practice_hide">Hide</string>
+    <string name="practice_space_trackpad">Hold Space and slide to move the cursor</string>
+    <string name="practice_backspace_swipe">Swipe left from Backspace to delete a word</string>
+    <string name="practice_undo_swipe">Swipe left across the keys to undo</string>
+    <string name="practice_swipe_actions">Swipe up to hide or show the toolbar</string>
+    <string name="practice_select_trackpad">In the Select panel, tap Select, then slide on it</string>
     <string name="title_cursor_loupe">Cursor loupe</string>
     <string name="summary_cursor_loupe">While you hold the space bar (or the Select button) and drag the cursor, show the text around it, larger, above the cursor.</string>
     <string name="title_edge_zone">Screen edge zone</string>

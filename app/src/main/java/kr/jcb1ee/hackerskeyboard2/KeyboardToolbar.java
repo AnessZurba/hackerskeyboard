@@ -239,8 +239,19 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
      * what it's doing and how it works; a null status ends it.
      */
     void setGestureLabel(String status, String hint) {
+        mHandler.removeCallbacks(mEndFlash); // a new gesture: not cleared under it
         mGestureLabel.set(status, hint, (mBackground & 0x00FFFFFF) | 0xD0000000);
         mBody.invalidate();
+    }
+
+    static final long FLASH_MS = 900;
+    private final Runnable mEndFlash = () -> setGestureLabel(null, null);
+
+    /** Shows the gesture label for a moment (after a swipe that's over at once: undo, redo). */
+    void flashGestureLabel(String status, String hint) {
+        setGestureLabel(status, hint);
+        mHandler.removeCallbacks(mEndFlash);
+        mHandler.postDelayed(mEndFlash, FLASH_MS);
     }
 
     /** The gesture label's status line, or null (tests). */
@@ -941,8 +952,13 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
     }
 
     private Runnable ctrl(final int keyCode, final boolean shift) {
-        return () -> sendKey(keyCode, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON
-                | (shift ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0));
+        return () -> {
+            sendKey(keyCode, KeyEvent.META_CTRL_ON | KeyEvent.META_CTRL_LEFT_ON
+                    | (shift ? KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON : 0));
+            if (keyCode == KeyEvent.KEYCODE_Z && ime().mHints != null) {
+                ime().mHints.onUndoOtherwise(ime().swipesUndo()); // Undo/Redo buttons
+            }
+        };
     }
 
     private Runnable ctx(final int id) {

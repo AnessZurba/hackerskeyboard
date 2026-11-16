@@ -282,6 +282,8 @@
         <item>Уменьшить высоту</item>
         <item>Предыдущий язык</item>
 -       <item>Следующий язык</item>
+        <item>Отменить</item>
+        <item>Повторить</item>
     </string-array>
 
     <string name="title_popup_content">Всплывающая мини клавиатура</string>

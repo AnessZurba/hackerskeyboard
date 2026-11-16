@@ -46,6 +46,12 @@ final class HintManager {
     static final int KEYBOARD_OPENS = 3;
     static final int LANGUAGE_SWITCHES = 3;
     static final int CLIPBOARD_OPENS = 3;
+    static final int UNDOS = 2;
+
+    /** The home screen's practice card: these gestures, ticked off once done (see Main). */
+    static final Tip[] PRACTICE = {Tip.SPACE_TRACKPAD, Tip.BACKSPACE_SWIPE, Tip.UNDO_SWIPE,
+            Tip.SWIPE_ACTIONS, Tip.SELECT_TRACKPAD};
+    static final String PREF_PRACTICE_HIDDEN = "tip_practice_hidden";
 
     /** The tips, each with the gesture it teaches. */
     enum Tip {
@@ -54,7 +60,8 @@ final class HintManager {
         SELECT_TRACKPAD("select_trackpad", R.string.tip_select_trackpad),
         SWIPE_ACTIONS("swipe_actions", R.string.tip_swipe_actions),
         LANGUAGE_SLIDE("language_slide", R.string.tip_language_slide),
-        CLIP_PIN("clip_pin", R.string.tip_clip_pin);
+        CLIP_PIN("clip_pin", R.string.tip_clip_pin),
+        UNDO_SWIPE("undo_swipe", R.string.tip_undo_swipe);
 
         final String key;
         final int text;
@@ -87,6 +94,7 @@ final class HintManager {
     private final long[] mCursorTimes = new long[CURSOR_PLACES];
     private int mCursorPlaces;
     private int mSelectTaps;
+    private int mUndos;
 
     HintManager(SharedPreferences prefs) {
         mPrefs = prefs;
@@ -108,6 +116,11 @@ final class HintManager {
 
     boolean isLearned(Tip tip) {
         return mPrefs.getBoolean(KEY_PREFIX + tip.key + "_learned", false);
+    }
+
+    /** Whether the gesture was really done (not just its tip dismissed): the practice card. */
+    static boolean isPracticed(SharedPreferences prefs, Tip tip) {
+        return prefs.getBoolean(KEY_PREFIX + tip.key + "_practiced", false);
     }
 
     /** The tip on screen now, or null. */
@@ -149,6 +162,7 @@ final class HintManager {
         mArrows = 0;
         mCursorPlaces = 0;
         mSelectTaps = 0;
+        mUndos = 0;
     }
 
     /** Shows {@code tip} if every rule allows it; true if it is now on screen. */
@@ -164,8 +178,9 @@ final class HintManager {
 
     /** The user used the gesture: its tip never shows again (and goes if on screen). */
     void learned(Tip tip) {
-        if (!isLearned(tip)) {
-            mPrefs.edit().putBoolean(KEY_PREFIX + tip.key + "_learned", true).apply();
+        if (!isLearned(tip) || !isPracticed(mPrefs, tip)) {
+            mPrefs.edit().putBoolean(KEY_PREFIX + tip.key + "_learned", true)
+                    .putBoolean(KEY_PREFIX + tip.key + "_practiced", true).apply();
         }
         if (mShowing == tip) {
             mShowing = null;
@@ -243,6 +258,15 @@ final class HintManager {
     void onSelectButtonTap() {
         mSelectTaps++;
         if (mSelectTaps >= SELECT_TAPS && maybeShow(Tip.SELECT_TRACKPAD)) mSelectTaps = 0;
+    }
+
+    /**
+     * Undo or redo by other means (the selection panel's buttons, Ctrl+Z): twice in a session
+     * suggests the swipe, while swipes left/right do undo/redo.
+     */
+    void onUndoOtherwise(boolean swipesUndo) {
+        mUndos++;
+        if (mUndos >= UNDOS && swipesUndo && maybeShow(Tip.UNDO_SWIPE)) mUndos = 0;
     }
 
     /** The keyboard opened (a new field, not a restart); from the third time, the swipes tip. */
