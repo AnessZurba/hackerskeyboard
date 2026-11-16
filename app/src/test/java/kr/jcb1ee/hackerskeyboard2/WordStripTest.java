@@ -693,8 +693,8 @@ public class WordStripTest {
         settle();
         List<String> words = panel.words();
         assertTrue(words.toString(), words.size() > 6);
-        for (String w : shown) if (w != null) assertTrue(w, words.contains(w));
-        assertEquals("best first", strip.wordAt(SuggestionStrip.MIDDLE), words.get(0));
+        // As Samsung: the strip's words stay up there; the panel continues after them.
+        for (String w : shown) if (w != null) assertFalse(w, words.contains(w));
         assertTrue("the strip stays", mToolbar.suggestionsShown());
         // The dots are the collapse control now.
         strip.moreButton().performClick();
@@ -712,7 +712,7 @@ public class WordStripTest {
         settle();
         MoreSuggestionsPanel panel = mToolbar.moreSuggestionsPanel();
         List<String> words = panel.words();
-        String word = words.get(4); // one the strip doesn't show (it has the first three)
+        String word = words.get(4); // the panel has only words the strip doesn't show
         assertFalse(stripWords().contains(word));
         panel.chip(word).performClick();
         settle();
@@ -799,7 +799,8 @@ public class WordStripTest {
         layOutPanel(panel);
         assertTrue("best on the right", panel.chipLeft(0) > panel.chipLeft(1));
         mToolbar.closeMoreSuggestions(false);
-        mToolbar.showSuggestions("help", "hello", "held", false);
+        mToolbar.showSuggestions("help", "hello", "held", false,
+                Arrays.asList("hello", "help", "held", "helm", "hell", "helps", "helped"));
         assertEquals(strip.moreButton(), strip.getChildAt(0));
         assertEquals(strip.toolbarButton(), strip.getChildAt(strip.getChildCount() - 1));
         assertEquals(1f, strip.toolbarButton().getScaleX(), 0f);

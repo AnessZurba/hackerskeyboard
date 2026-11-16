@@ -612,9 +612,41 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
 
     private void updateMorePanel(boolean animate) {
         if (mMorePanel == null) return;
-        mMorePanel.setWords(new ArrayList<>(mAllWords),
-                mStrip.middleIsCorrection() ? mStrip.wordAt(SuggestionStrip.MIDDLE) : null,
-                mStrip.isRightToLeft(), animate);
+        // The strip's words stay in the strip; the panel continues after them.
+        List<String> more = new ArrayList<>(mAllWords);
+        for (int i = 0; i < 3; i++) more.remove(mStrip.wordAt(i));
+        mMorePanel.setWords(more, null, mStrip.isRightToLeft(), animate);
+        alignMoreColumns();
+    }
+
+    /** Lines the panel's three columns up under the strip's three words. */
+    private void alignMoreColumns() {
+        if (mMorePanel == null) return;
+        TextView first = mStrip.slotView(0), last = mStrip.slotView(2);
+        if (first == null || last == null || first.getWidth() == 0 || mBody.getWidth() == 0) {
+            mMorePanel.setColumnInsets(dp(40), dp(40));
+            return;
+        }
+        // Offsets within this view (walking parents: works before the window has drawn).
+        int bodyX = xIn(mBody), ax = xIn(first), bx = xIn(last);
+        if (bodyX < 0 || ax < 0 || bx < 0) {
+            mMorePanel.setColumnInsets(dp(40), dp(40));
+            return;
+        }
+        int left = Math.min(ax, bx) - bodyX;
+        int right = bodyX + mBody.getWidth() - Math.max(ax + first.getWidth(),
+                bx + last.getWidth());
+        mMorePanel.setColumnInsets(Math.max(0, left), Math.max(0, right));
+    }
+
+    /** {@code v}'s left edge in this view, or -1 when it isn't inside it. */
+    private int xIn(View v) {
+        int x = 0;
+        while (v != null && v != this) {
+            x += v.getLeft() + Math.round(v.getTranslationX());
+            v = v.getParent() instanceof View ? (View) v.getParent() : null;
+        }
+        return v == this ? x : -1;
     }
 
     /** Whether the more-suggestions panel is open. */

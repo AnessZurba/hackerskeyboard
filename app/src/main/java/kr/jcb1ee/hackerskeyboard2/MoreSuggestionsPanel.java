@@ -37,15 +37,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * More word suggestions, over the keys (Samsung's expanded suggestions): the candidates as
- * chips that wrap from line to line, best first in reading order. It opens downward from the
- * toolbar row with the chips fading in one after another, and closes back up into the row.
+ * More word suggestions, over the keys (Samsung's expanded suggestions): plain words in three
+ * columns lined up under the strip's three words, continuing from them in reading order. It
+ * opens downward from the toolbar row with the words fading in one after another, and closes
+ * back up into the row.
  */
 final class MoreSuggestionsPanel extends FrameLayout {
+    /** Row height, as the strip's. */
+    static final int ROW_DP = 45;
     static final long REVEAL_MS = 220, CLOSE_MS = 160, CHIP_MS = 150, STAGGER_MS = 18;
 
     private final ScrollView mScroll;
-    private final FlowLayout mFlow;
+    private final Grid mFlow;
     private final List<String> mWords = new ArrayList<>();
     private String mHighlighted;
     private SuggestionStrip.Listener mListener;
@@ -58,8 +61,8 @@ final class MoreSuggestionsPanel extends FrameLayout {
         mScroll = new ScrollView(context);
         mScroll.setVerticalScrollBarEnabled(false);
         mScroll.setClipToPadding(false);
-        mFlow = new FlowLayout(context);
-        mFlow.setPadding(dp(6), dp(4), dp(6), dp(8));
+        mFlow = new Grid(context);
+        mFlow.setPadding(dp(40), 0, dp(40), dp(8));
         mScroll.addView(mFlow, new ScrollView.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         addView(mScroll, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -109,15 +112,14 @@ final class MoreSuggestionsPanel extends FrameLayout {
             chip.setGravity(Gravity.CENTER);
             chip.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
             chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            chip.setPadding(dp(14), 0, dp(14), 0);
-            chip.setMinWidth(dp(56));
+            chip.setPadding(dp(6), 0, dp(6), 0);
             chip.setFocusable(true);
             chip.setOnClickListener(v -> {
                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 if (mListener != null) mListener.onSuggestionPicked(word);
             });
             mFlow.addView(chip, new ViewGroup.MarginLayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, dp(42)));
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(ROW_DP)));
             if (animate) {
                 chip.setAlpha(0f);
                 chip.setTranslationY(-dp(6));
@@ -128,6 +130,15 @@ final class MoreSuggestionsPanel extends FrameLayout {
         }
         for (int i = 0; i < mFlow.getChildCount(); i++) style((TextView) mFlow.getChildAt(i));
         mFlow.requestLayout();
+    }
+
+    /**
+     * Where the strip's first and last word columns start and end, as distances from the
+     * panel's left and right edges, so the columns line up under them.
+     */
+    void setColumnInsets(int left, int right) {
+        if (left == mFlow.getPaddingLeft() && right == mFlow.getPaddingRight()) return;
+        mFlow.setPadding(left, 0, right, mFlow.getPaddingBottom());
     }
 
     List<String> words() {
@@ -157,15 +168,12 @@ final class MoreSuggestionsPanel extends FrameLayout {
         boolean highlighted = chip.getText().toString().equals(mHighlighted);
         chip.setTextColor(highlighted ? mAccent : mForeground);
         chip.setTypeface(highlighted ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
-        GradientDrawable normal = new GradientDrawable();
-        normal.setCornerRadius(dp(10));
-        normal.setColor(SuggestionStrip.blend(mBackground, mForeground, 0.10f));
         GradientDrawable pressed = new GradientDrawable();
         pressed.setCornerRadius(dp(10));
         pressed.setColor(SuggestionStrip.blend(mBackground, mForeground, 0.28f));
         StateListDrawable states = new StateListDrawable();
         states.addState(new int[] {android.R.attr.state_pressed}, pressed);
-        states.addState(new int[0], normal);
+        states.addState(new int[0], new android.graphics.drawable.ColorDrawable(0));
         chip.setBackground(states);
     }
 
@@ -244,75 +252,46 @@ final class MoreSuggestionsPanel extends FrameLayout {
     }
 
     /**
-     * Chips left to right (right to left for Hebrew and Arabic), wrapping to a new line when
-     * full; each full line's chips grow to fill it, so the panel reads as a tidy grid.
+     * Words in three equal columns (as the strip's), left to right row by row; right to left
+     * for Hebrew and Arabic.
      */
-    static final class FlowLayout extends ViewGroup {
+    static final class Grid extends ViewGroup {
+        static final int COLUMNS = 3;
         boolean mRtl;
-        private final int mGap;
 
-        FlowLayout(Context context) {
+        Grid(Context context) {
             super(context);
-            mGap = Math.round(6 * context.getResources().getDisplayMetrics().density);
         }
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             int width = MeasureSpec.getSize(widthMeasureSpec);
             int inner = Math.max(0, width - getPaddingLeft() - getPaddingRight());
-            int x = 0, lineHeight = 0, height = 0;
-            int count = getChildCount();
-            for (int i = 0; i < count; i++) {
+            int column = inner / COLUMNS;
+            int rowHeight = 0;
+            for (int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
-                int h = child.getLayoutParams().height;
-                child.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST),
-                        MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
-                int w = child.getMeasuredWidth();
-                if (x > 0 && x + mGap + w > inner) {
-                    height += lineHeight + mGap;
-                    x = 0;
-                    lineHeight = 0;
-                }
-                x += (x > 0 ? mGap : 0) + w;
-                lineHeight = Math.max(lineHeight, child.getMeasuredHeight());
+                child.measure(MeasureSpec.makeMeasureSpec(column, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(child.getLayoutParams().height,
+                                MeasureSpec.EXACTLY));
+                rowHeight = Math.max(rowHeight, child.getMeasuredHeight());
             }
-            height += lineHeight + getPaddingTop() + getPaddingBottom();
+            int rows = (getChildCount() + COLUMNS - 1) / COLUMNS;
+            int height = rows * rowHeight + getPaddingTop() + getPaddingBottom();
             setMeasuredDimension(width, resolveSize(height, heightMeasureSpec));
         }
 
         @Override
         protected void onLayout(boolean changed, int l, int t, int r, int b) {
             int inner = Math.max(0, getWidth() - getPaddingLeft() - getPaddingRight());
-            int count = getChildCount();
-            int start = 0, y = getPaddingTop();
-            while (start < count) {
-                // One line: as many chips as fit.
-                int end = start, used = 0, lineHeight = 0;
-                while (end < count) {
-                    int w = getChildAt(end).getMeasuredWidth();
-                    int next = used + (end > start ? mGap : 0) + w;
-                    if (end > start && next > inner) break;
-                    used = next;
-                    lineHeight = Math.max(lineHeight, getChildAt(end).getMeasuredHeight());
-                    end++;
-                }
-                boolean full = end < count; // the last line keeps its chips' own widths
-                int extra = full ? (inner - used) / (end - start) : 0;
-                int x = 0;
-                for (int i = start; i < end; i++) {
-                    View child = getChildAt(i);
-                    int w = Math.min(inner, child.getMeasuredWidth() + extra);
-                    if (w != child.getMeasuredWidth()) {
-                        child.measure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
-                                MeasureSpec.makeMeasureSpec(child.getMeasuredHeight(),
-                                        MeasureSpec.EXACTLY));
-                    }
-                    int left = mRtl ? getPaddingLeft() + inner - x - w : getPaddingLeft() + x;
-                    child.layout(left, y, left + w, y + child.getMeasuredHeight());
-                    x += w + mGap;
-                }
-                y += lineHeight + mGap;
-                start = end;
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                int w = child.getMeasuredWidth(), h = child.getMeasuredHeight();
+                int col = i % COLUMNS, row = i / COLUMNS;
+                int x = inner * col / COLUMNS;
+                int left = mRtl ? getPaddingLeft() + inner - x - w : getPaddingLeft() + x;
+                int top = getPaddingTop() + row * h;
+                child.layout(left, top, left + w, top + h);
             }
         }
     }
