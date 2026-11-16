@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The custom theme screen (kr.jcb1ee.hackerskeyboard2.theme.CustomThemeActivity). The colour
+     rows are added in code, for the base theme's key style and the variant being edited. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:key="prefs_custom_theme"
+    android:title="@string/theme_custom_title"
+    app:iconSpaceReserved="false">
+
+    <kr.jcb1ee.hackerskeyboard2.ThemePreviewPreference
+        android:key="custom_theme_preview" />
+
+    <SwitchPreferenceCompat
+        android:key="custom_theme_use"
+        android:persistent="false"
+        android:title="@string/theme_custom_use"
+        android:summaryOn="@string/theme_custom_use_on"
+        android:summaryOff="@string/theme_custom_use_off"
+        app:iconSpaceReserved="false" />
+
+    <kr.jcb1ee.hackerskeyboard2.AutoSummaryListPreference
+        android:defaultValue="7"
+        android:entries="@array/custom_theme_base_names"
+        android:entryValues="@array/custom_theme_base_values"
+        android:key="pref_custom_theme_base"
+        android:persistent="true"
+        android:title="@string/theme_custom_base"
+        app:iconSpaceReserved="false" />
+
+    <kr.jcb1ee.hackerskeyboard2.theme.VariantTabsPreference
+        android:key="custom_theme_editing"
+        android:title="@string/theme_custom_editing" />
+
+    <PreferenceCategory
+        android:key="custom_theme_colours"
+        android:title="@string/theme_custom_colours_dark"
+        app:iconSpaceReserved="false" />
+
+    <Preference
+        android:key="custom_theme_reset"
+        android:title="@string/theme_custom_reset"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

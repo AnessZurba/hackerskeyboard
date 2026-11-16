@@ -37,6 +37,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 
 import kr.jcb1ee.hackerskeyboard2.Keyboard.Key;
+import kr.jcb1ee.hackerskeyboard2.theme.KeyKind;
+import kr.jcb1ee.hackerskeyboard2.theme.KeyboardLook;
 
 import android.os.Handler;
 import android.os.Message;
@@ -188,18 +190,11 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     private Drawable mKeyBackground;
     /** The popup resource of the key whose long-press popup is open. */
     private int mOpenPopupResId;
-    /** The colour theme drawn over the layout's own look, or null for an image theme. */
-    private KeyboardTheme mTheme;
-    /**
-     * A styled theme's key backgrounds, label colours and icon tints by key class
-     * ({@link KeyboardTheme#keyClass}), or null: every key is drawn alike.
-     */
-    private Drawable[] mClassBackgrounds;
-    private int[] mClassTextColors;
-    private ColorFilter[] mClassIconFilters;
-    /** The label font of a styled theme, or null. */
+    /** The theme drawn over the layout's own look (see {@link #applyLook}), or null. */
+    private KeyboardLook mLook;
+    /** The look's label font, or null for the layout's. */
     private Typeface mThemeTypeface;
-    /** One key's padding (a styled key's face), when it differs from key to key. */
+    /** One key's padding (where its label goes), which can differ from key to key. */
     private final Rect mKeyPadding = new Rect();
     private int mBackgroundAlpha;
     private float mBackgroundDimAmount;
@@ -979,7 +974,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         // Use 60% of the smaller of width or height. This is kind of arbitrary.
         mKeyTextSize = Math.min(medianKeyHeight * 6 / 10, medianKeyWidth * 6 / 10);
         mLabelTextSize = mKeyTextSize * 3 / 4;
-        if (mClassBackgrounds != null) mTheme.setKeyUnit(medianKeyWidth);
+        if (mLook != null) mLook.setKeyUnit(medianKeyWidth);
 
         int keysDrawn = 0;
         for (int i = 0; i < keyCount; i++) {
@@ -996,12 +991,13 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
             }
             keysDrawn++;
             paint.setColor(key.isCursor ? mKeyCursorColor : mKeyTextColor);
-            if (mClassBackgrounds != null) {
-                // A styled theme: modifiers and Esc/Enter have their own caps and labels.
-                int keyClass = KeyboardTheme.keyClass(key);
-                keyBackground = mClassBackgrounds[keyClass];
-                paint.setColor(mClassTextColors[keyClass]);
-                iconColorFilter = mClassIconFilters[keyClass];
+            if (mLook != null) {
+                // Modifiers and Esc/Enter can have their own keys and labels.
+                int kind = KeyKind.of(key.codes != null && key.codes.length > 0
+                        ? key.codes[0] : 0, key.modifier);
+                keyBackground = mLook.keyBackground(kind);
+                paint.setColor(key.isCursor ? mLook.cursorColor(kind) : mLook.labelColor(kind));
+                iconColorFilter = mLook.iconFilter(kind);
             }
 
             int[] drawableState = key.getCurrentDrawableState();
@@ -1021,7 +1017,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                     keyBackground.setBounds(0, 0, key.width, key.height);
                 }
             }
-            if (mClassBackgrounds != null) {
+            if (mLook != null) {
                 // Labels centre on the key's face, whose size follows the key's.
                 mKeyPadding.set(0, 0, 0, 0);
                 keyBackground.getCurrent().getPadding(mKeyPadding);
@@ -1120,7 +1116,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 shouldDrawIcon = shouldDrawLabelAndIcon(key);
             }
             Drawable icon = key.icon;
-            if (mClassBackgrounds != null && mKeyboard instanceof LatinKeyboard
+            if (mLook != null && mLook.blankSpaceBar() && mKeyboard instanceof LatinKeyboard
                     && ((LatinKeyboard) mKeyboard).isPlainSpaceBar(key)) {
                 icon = null; // styled space bars are blank, like the real ones
             }
@@ -1392,58 +1388,33 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
     }
 
     /**
-     * Draws this keyboard (and its popups) in a colour theme instead of the layout's images.
+     * Draws this keyboard (and its popups) in a theme instead of the layout's own look.
      * Call before the keyboard is first shown.
      */
-    void applyTheme(KeyboardTheme theme, boolean borders) {
-        mTheme = theme;
-        setBackground(theme.keyboardBackground());
-        KeyboardTheme.KeyStyle style = theme.style;
-        if (style != null) {
-            int n = style.caps.length;
-            mClassBackgrounds = new Drawable[n];
-            mClassTextColors = new int[n];
-            mClassIconFilters = new ColorFilter[n];
-            for (int i = 0; i < n; i++) {
-                mClassBackgrounds[i] = theme.keyBackground(getContext(), borders, i);
-                mClassTextColors[i] = style.caps[i].text;
-                mClassIconFilters[i] = new PorterDuffColorFilter(style.caps[i].text,
-                        PorterDuff.Mode.SRC_IN);
-            }
-            if (style.glow != 0) {
-                mShadowColor = style.glow;
-                mShadowRadius = style.glowDp * getResources().getDisplayMetrics().density;
-            }
-        } else {
-            mClassBackgrounds = null;
-        }
-        setKeyColours(theme.keyBackground(getContext(), borders), theme);
-    }
-
-    private void setKeyColours(Drawable keyBackground, KeyboardTheme theme) {
-        mKeyBackground = keyBackground;
+    void applyLook(KeyboardLook look) {
+        mLook = look;
+        setBackground(look.keyboardBackground());
+        mShadowColor = look.shadowColor();
+        mShadowRadius = look.shadowRadius();
+        mKeyBackground = look.keyBackground(KeyKind.NORMAL);
         mPadding.set(0, 0, 0, 0);
         mKeyBackground.getPadding(mPadding);
-        boolean popup = mTheme == null;
-        mKeyTextColor = popup ? theme.popupText : theme.text;
-        mKeyHintColor = theme.hint;
-        mKeyCursorColor = theme.hint;
-        mThemeTypeface = theme.style != null ? theme.style.typeface() : null;
+        mKeyTextColor = look.labelColor(KeyKind.NORMAL);
+        mKeyHintColor = look.hintColor();
+        mKeyCursorColor = look.cursorColor(KeyKind.NORMAL);
+        mThemeTypeface = look.typeface();
         mKeyboardChanged = true;
         invalidateAllKeys();
     }
 
-    /**
-     * Where a key's hints start. Round (typewriter) keys put them half above the key's
-     * top-right corner, outside the circle, where they do not crowd the label.
-     */
+    /** Where a key's hints start: inside its top-right corner, or half above it. */
     private int hintTop(Rect padding, int hintLabelHeight) {
-        boolean round = mClassBackgrounds != null && mTheme.style.shape == KeyCapDrawable.ROUND;
-        return round ? padding.top - hintLabelHeight * 8 / 10 : padding.top;
+        boolean above = mLook != null && mLook.hintsAboveKey();
+        return above ? padding.top - hintLabelHeight * 8 / 10 : padding.top;
     }
 
-    KeyboardTheme getTheme() {
-        return mTheme;
+    KeyboardLook getLook() {
+        return mLook;
     }
 
     private void inflateMiniKeyboardContainer() {
@@ -1454,9 +1425,9 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
 
         mMiniKeyboard =
                 (LatinKeyboardBaseView)container.findViewById(R.id.LatinKeyboardBaseView);
-        if (mTheme != null) {
-            container.setBackground(mTheme.popupPanel(getContext()));
-            mMiniKeyboard.setKeyColours(mTheme.popupKeyBackground(getContext()), mTheme);
+        if (mLook != null) {
+            container.setBackground(mLook.popupPanel());
+            mMiniKeyboard.applyLook(mLook.popupLook());
         }
         mMiniKeyboard.mDetectSwipes = false;
         mMiniKeyboard.setOnKeyboardActionListener(new OnKeyboardActionListener() {

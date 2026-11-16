@@ -28,11 +28,11 @@ import androidx.core.view.WindowInsetsCompat;
  * bar meets the content changed between AppCompat versions (1.8 lets it extend under the
  * status bar), so the top is measured from where the action bar actually ends.
  */
-final class SystemBars {
+public final class SystemBars {
     private SystemBars() {
     }
 
-    static void padContent(final AppCompatActivity activity) {
+    public static void padContent(final AppCompatActivity activity) {
         final View content = activity.findViewById(android.R.id.content);
         if (content == null) return;
         final int[] bars = new int[4];

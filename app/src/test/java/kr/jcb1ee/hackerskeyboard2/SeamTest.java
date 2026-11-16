@@ -26,9 +26,7 @@ public class SeamTest {
     @Test
     public void backgroundsHaveNoTopLine() {
         int[] backgrounds = {R.drawable.keyboard_dark_background, R.drawable.keyboard_background,
-                R.drawable.keyboard_background_material_dark,
-                R.drawable.keyboard_background_material_black,
-                R.drawable.keyboard_background_material_light};
+                R.drawable.keyboard_background_material_dark};
         for (int id : backgrounds) {
             Drawable d = ApplicationProvider.getApplicationContext().getDrawable(id);
             Bitmap bmp = Bitmap.createBitmap(400, 200, Bitmap.Config.ARGB_8888);

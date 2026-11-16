@@ -1,4 +1,4 @@
-package kr.jcb1ee.hackerskeyboard2;
+package kr.jcb1ee.hackerskeyboard2.theme;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,7 +13,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
 /**
- * One key of a styled theme ({@link KeyboardTheme.KeyStyle}), drawn from shapes and
+ * One key of a styled theme ({@link ThemeSpec}), drawn from shapes and
  * gradients so it is sharp at any density: a typewriter key (a round face in a metal rim), a
  * sculpted keycap (a top face on a darker skirt) or a terminal key (an outlined cell).
  *
@@ -45,7 +45,7 @@ final class KeyCapDrawable extends Drawable {
     private Shader mFaceShader;
     private Shader mGloss;
     private int mAlpha = 255;
-    /** The usual key width, shared by a theme's keys (see {@link KeyboardTheme#setKeyUnit}). */
+    /** The usual key width, shared by a theme's keys (see {@link KeyboardLook#setKeyUnit}). */
     private final float[] mUnit;
     /** The unit and bounds the shapes were laid out for. */
     private float mLaidUnit = -1;
@@ -99,7 +99,7 @@ final class KeyCapDrawable extends Drawable {
      * A circle as wide as an ordinary key (or most of the height, if keys are wider than
      * tall), or for a wide key (Shift, Enter, the space bar) a pill as tall as the circles.
      * The padding is the circle's box: the label centres in it, hints go by its top-right
-     * corner (raised by the keyboard, see LatinKeyboardBaseView#hintTop).
+     * corner (raised by the keyboard, see KeyboardLook#hintsAboveKey).
      */
     private void layoutRound(Rect b, float d, float unit) {
         float m = 1.5f * d;
@@ -241,7 +241,8 @@ final class KeyCapDrawable extends Drawable {
         mPadRect.set(mOuter);
         mPadRect.inset(1.5f * d, 1.5f * d);
         mFaceShader = new LinearGradient(0, mOuter.top, 0, mOuter.bottom,
-                lighter(mFace, 0.04f), darker(mFace, 0.2f), Shader.TileMode.CLAMP);
+                lighter(mFace, 0.04f), darker(mFace, Color.luminance(mFace) > 0.5f ? 0.07f : 0.2f),
+                Shader.TileMode.CLAMP);
     }
 
     private void drawTerminal(Canvas c) {

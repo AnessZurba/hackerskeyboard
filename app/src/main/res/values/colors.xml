@@ -40,10 +40,6 @@
     <color name="setup_text_secondary">#3E5C76</color>
     <color name="setup_text_muted">#748CAB</color>
 
-    <color name="key_text_color_material_black">#CCFFFFFF</color>
-    <color name="key_hint_letter_color_material_black">#80FFFFFF</color>
     <color name="key_text_color_material_dark">#CCFFFFFF</color>
     <color name="key_hint_letter_color_material_dark">#80FFFFFF</color>
-    <color name="key_text_color_material_light">#000000</color>
-    <color name="key_hint_letter_color_material_light">#B337474F</color>
 </resources>

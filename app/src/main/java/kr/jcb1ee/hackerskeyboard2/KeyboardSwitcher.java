@@ -28,6 +28,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 
+import kr.jcb1ee.hackerskeyboard2.theme.KeyboardLook;
+import kr.jcb1ee.hackerskeyboard2.theme.Themes;
+
 public class KeyboardSwitcher implements
         SharedPreferences.OnSharedPreferenceChangeListener {
     private static String TAG = "PCKeyboardKbSw";
@@ -65,36 +68,8 @@ public class KeyboardSwitcher implements
     // Symbols keyboard layout with the settings key
     public static final int KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY = R.id.mode_symbols_with_settings_key;
 
-    public static final String DEFAULT_LAYOUT_ID = "7"; // Material Black
-    public static final String PREF_KEYBOARD_LAYOUT = "pref_keyboard_layout";
-    // Indexed by the stored theme number, so entries must never move. 0 (ICS), 1
-    // (Gingerbread), 3 (Transparent) and 6 (ICS dark hints) were removed; a saved one is
-    // moved to Material Black (KeyboardTheme.migrate), and the slots only keep the numbering.
-    private static final int[] THEMES = new int[] {
-        R.layout.input_material_black,
-        R.layout.input_material_black,
-        R.layout.input_material_light, // 2: Stone, now High contrast (light)
-        R.layout.input_material_black,
-        R.layout.input_material_dark,
-        R.layout.input_material_light,
-        R.layout.input_material_black,
-        R.layout.input_material_black,
-        // 8-11: Material You, AMOLED black, high contrast dark and light. Colour themes
-        // (KeyboardTheme) are drawn over input_material_dark or _light, see themeLayout().
-        R.layout.input_material_dark,
-        R.layout.input_material_dark,
-        R.layout.input_material_dark,
-        R.layout.input_material_light,
-        // 12-15: Typewriter, Keycaps (retro beige, midnight), Retro terminal: styled colour
-        // themes (KeyboardTheme.KeyStyle), all drawn over input_material_dark.
-        R.layout.input_material_dark,
-        R.layout.input_material_dark,
-        R.layout.input_material_dark,
-        R.layout.input_material_dark,
-    };
-
-    /** The colour theme in use, or null for an image theme. */
-    private KeyboardTheme mTheme;
+    /** The theme drawn now (kr.jcb1ee.hackerskeyboard2.theme decides how it looks). */
+    private KeyboardLook mLook;
 
     // Tables which contains resource ids for each character theme color
     private static final int KBD_PHONE = R.xml.kbd_phone;
@@ -162,8 +137,6 @@ public class KeyboardSwitcher implements
     private int mLastDisplayWidth;
     private LanguageSwitcher mLanguageSwitcher;
 
-    private int mLayoutId;
-
     private static final KeyboardSwitcher sInstance = new KeyboardSwitcher();
 
     public static KeyboardSwitcher getInstance() {
@@ -182,8 +155,6 @@ public class KeyboardSwitcher implements
 
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(ims);
-        sInstance.mLayoutId = KeyboardTheme.migrate(prefs);
-
         sInstance.updateSettingsKeyState(prefs);
         prefs.registerOnSharedPreferenceChangeListener(sInstance);
 
@@ -637,45 +608,31 @@ public class KeyboardSwitcher implements
         return mToolbar;
     }
 
+    /** Makes a new keyboard view, in the theme the settings ask for now. */
     public void recreateInputView() {
-        changeLatinKeyboardView(mLayoutId, true);
-    }
-
-    private void changeLatinKeyboardView(int newLayout, boolean forceReset) {
-        if (mLayoutId != newLayout || mInputView == null || forceReset) {
-            if (mInputView != null) {
-                mInputView.closing();
-            }
-            if (THEMES.length <= newLayout) {
-                newLayout = Integer.valueOf(DEFAULT_LAYOUT_ID);
-            }
-
-            LatinIMEUtil.GCUtils.getInstance().reset();
-            boolean tryGC = true;
-            for (int i = 0; i < LatinIMEUtil.GCUtils.GC_TRY_LOOP_MAX && tryGC; ++i) {
-                try {
-                    mInputView = (LatinKeyboardView) mInputMethodService
-                            .getLayoutInflater().inflate(themeLayout(newLayout),
-                                    null);
-                    tryGC = false;
-                } catch (OutOfMemoryError e) {
-                    tryGC = LatinIMEUtil.GCUtils.getInstance().tryGCOrWait(
-                            mLayoutId + "," + newLayout, e);
-                } catch (InflateException e) {
-                    tryGC = LatinIMEUtil.GCUtils.getInstance().tryGCOrWait(
-                            mLayoutId + "," + newLayout, e);
-                }
-            }
-            if (mTheme != null) {
-                mInputView.applyTheme(mTheme, PreferenceManager.getDefaultSharedPreferences(
-                        mInputMethodService).getBoolean(KeyboardTheme.PREF_KEY_BORDERS, true));
-            }
-            mInputView.setOnKeyboardActionListener(mInputMethodService);
-            mInputView.setPadding(0, 0, 0, 0);
-            mLayoutId = newLayout;
-            if (mToolbar == null) mToolbar = new KeyboardToolbar(mInputMethodService);
-            mToolbar.setKeyboardView(mInputView);
+        if (mInputView != null) {
+            mInputView.closing();
         }
+        mLook = Themes.forKeyboard(mInputMethodService);
+
+        LatinIMEUtil.GCUtils.getInstance().reset();
+        boolean tryGC = true;
+        for (int i = 0; i < LatinIMEUtil.GCUtils.GC_TRY_LOOP_MAX && tryGC; ++i) {
+            try {
+                mInputView = (LatinKeyboardView) mInputMethodService
+                        .getLayoutInflater().inflate(R.layout.input_material_dark, null);
+                tryGC = false;
+            } catch (OutOfMemoryError e) {
+                tryGC = LatinIMEUtil.GCUtils.getInstance().tryGCOrWait("input view", e);
+            } catch (InflateException e) {
+                tryGC = LatinIMEUtil.GCUtils.getInstance().tryGCOrWait("input view", e);
+            }
+        }
+        mInputView.applyLook(mLook);
+        mInputView.setOnKeyboardActionListener(mInputMethodService);
+        mInputView.setPadding(0, 0, 0, 0);
+        if (mToolbar == null) mToolbar = new KeyboardToolbar(mInputMethodService);
+        mToolbar.setKeyboardView(mInputView);
         mInputMethodService.mHandler.post(new Runnable() {
             public void run() {
                 if (mToolbar != null) {
@@ -689,38 +646,19 @@ public class KeyboardSwitcher implements
         });
     }
 
-    /** The layout to inflate for a theme id; sets {@link #mTheme} for colour themes. */
-    private int themeLayout(int id) {
-        id = KeyboardTheme.current(id);
-        mTheme = KeyboardTheme.forId(mInputMethodService, id);
-        return layoutFor(id, mTheme);
-    }
-
-    /** The layout a theme id is drawn with (colour themes over the Material layouts). */
-    static int layoutFor(int id, KeyboardTheme theme) {
-        if (theme != null) {
-            return theme.light ? R.layout.input_material_light : R.layout.input_material_dark;
-        }
-        return id >= 0 && id < THEMES.length ? THEMES[id] : R.layout.input_material_black;
-    }
-
     /**
-     * Redraws the keyboard if its colours have moved on: Material You follows the wallpaper
-     * and the system's light or dark mode, which can change while the keyboard is hidden.
+     * Redraws the keyboard if its look has moved on: a theme setting changed, or the system
+     * went light or dark, or the wallpaper colours changed, maybe while it was hidden.
      */
     void refreshThemeColours() {
-        if (mInputView == null || mLayoutId != KeyboardTheme.MATERIAL_YOU) return;
-        KeyboardTheme now = KeyboardTheme.forId(mInputMethodService, mLayoutId);
-        if (now != null && !now.sameAs(mTheme)) changeLatinKeyboardView(mLayoutId, true);
+        if (mInputView == null) return;
+        if (!Themes.forKeyboard(mInputMethodService).sameAs(mLook)) recreateInputView();
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
             String key) {
-        if (PREF_KEYBOARD_LAYOUT.equals(key)) {
-            changeLatinKeyboardView(Integer.valueOf(sharedPreferences
-                    .getString(key, DEFAULT_LAYOUT_ID)), true);
-        } else if (KeyboardTheme.PREF_KEY_BORDERS.equals(key)) {
-            changeLatinKeyboardView(mLayoutId, true);
+        if (Themes.affectsLook(key)) {
+            refreshThemeColours();
         } else if (LatinIMESettings.PREF_SETTINGS_KEY.equals(key)) {
             updateSettingsKeyState(sharedPreferences);
             recreateInputView();
