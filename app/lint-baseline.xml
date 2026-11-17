@@ -1631,28 +1631,6 @@
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                        .toString().toLowerCase()));"
-        errorLine2="                                    ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3132"
-            column="37"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                &amp;&amp; !mSuggest.isValidWord(suggestion.toString().toLowerCase());"
-        errorLine2="                                                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3234"
-            column="64"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
         errorLine1="            suggestion = suggestion.toString().toUpperCase(); // all UPPERCASE"
         errorLine2="                                               ~~~~~~~~~~~">
@@ -1664,28 +1642,6 @@
 
     <issue
         id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                        .isValidWord(touching.word.toString().toLowerCase()))) {"
-        errorLine2="                                                              ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3320"
-            column="63"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                            .isValidWord(suggestion.toString().toLowerCase()))) {"
-        errorLine2="                                                               ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="3401"
-            column="64"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="            return String.format(&quot;%d%%&quot;, (int) (val * 100));"
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -1693,50 +1649,6 @@
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/SeekBarPreference.java"
             line="61"
             column="20"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="            mLowerOriginalWord = mOriginalWordString.toLowerCase();"
-        errorLine2="                                                     ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="237"
-            column="54"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                CharSequence lowerPrevWord = prevWordForBigram.toString().toLowerCase();"
-        errorLine2="                                                                          ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="249"
-            column="75"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="                String suggestedWord = mSuggestions.get(i).toString().toLowerCase();"
-        errorLine2="                                                                      ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="315"
-            column="71"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="            sb.append(new String(word, offset, length).toUpperCase());"
-        errorLine2="                                                       ~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/Suggest.java"
-            line="450"
-            column="56"/>
     </issue>
 
     <issue
@@ -1773,17 +1685,6 @@
     </issue>
 
     <issue
-        id="Range"
-        message="Value must be ≥ 0 but `getColumnIndex` can be -1"
-        errorLine1="                    pairId = c.getInt(c.getColumnIndex(MAIN_COLUMN_ID));"
-        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/UserBigramDictionary.java"
-            line="364"
-            column="39"/>
-    </issue>
-
-    <issue
         id="UnusedAttribute"
         message="Attribute `supportsInlineSuggestions` is only used in API level 30 and higher (current min is 24)"
         errorLine1="        android:supportsInlineSuggestions=&quot;true&quot;"
@@ -1791,17 +1692,6 @@
         <location
             file="src/main/res/xml/method.xml"
             line="26"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="WrongCall"
-        message="Suspicious method call; should probably call &quot;`draw`&quot; rather than &quot;`onDraw`&quot;"
-        errorLine1="        onDraw(null);"
-        errorLine2="        ~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/CandidateView.java"
-            line="338"
             column="9"/>
     </issue>
 
@@ -1845,39 +1735,6 @@
         message="Suspicious language and region combination ru (Russian) with PH (Philippines): language ru is usually paired with: RU (Russia), BY (Belarus), KG (Kyrgyzstan), KZ (Kazakhstan), MD (Moldova), UA (Ukraine)">
         <location
             file="src/main/res/xml-ru-rPH"/>
-    </issue>
-
-    <issue
-        id="AppBundleLocaleChanges"
-        message="Found dynamic locale changes, but did not find corresponding Play Core library calls for downloading languages and splitting by language is not disabled in the `bundle` configuration"
-        errorLine1="            conf.locale = locale;"
-        errorLine2="                 ~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/InputLanguageSelection.java"
-            line="241"
-            column="18"/>
-    </issue>
-
-    <issue
-        id="InflateParams"
-        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
-        errorLine1="        mPreviewText = (TextView) inflate.inflate(R.layout.candidate_preview, null);"
-        errorLine2="                                                                              ~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/CandidateView.java"
-            line="107"
-            column="79"/>
-    </issue>
-
-    <issue
-        id="InflateParams"
-        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
-        errorLine1="                    R.layout.candidates, null);"
-        errorLine2="                                         ~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="648"
-            column="42"/>
     </issue>
 
     <issue
@@ -2244,17 +2101,6 @@
     </issue>
 
     <issue
-        id="InOrMmUsage"
-        message="Avoid using &quot;`in`&quot; as units (it does not work accurately on all devices); use &quot;`dp`&quot; instead"
-        errorLine1="    &lt;dimen name=&quot;candidate_min_touchable_width&quot;>0.3in&lt;/dimen>"
-        errorLine2="                                                ~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="50"
-            column="49"/>
-    </issue>
-
-    <issue
         id="RestrictedApi"
         message="BaseBuilder.setLayoutMargin can only be called from within the same library (androidx.autofill:autofill)"
         errorLine1="                        .setLayoutMargin(0, 0, pad / 2, 0)"
@@ -2362,83 +2208,6 @@
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
             line="2187"
             column="26"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="                            dictionaries.add(res.getIdentifier(dictFileName,"
-        errorLine2="                                                 ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIME.java"
-            line="468"
-            column="50"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="                int dictId = res.getIdentifier(&quot;dictionaries&quot;, &quot;xml&quot;, pkgName);"
-        errorLine2="                                 ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/PluginManager.java"
-            line="62"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="                int langId = res.getIdentifier(&quot;dict_language&quot;, &quot;string&quot;, pkgName);"
-        errorLine2="                                 ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/PluginManager.java"
-            line="131"
-            column="34"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="                int rawId = res.getIdentifier(&quot;main&quot;, &quot;raw&quot;, pkgName);"
-        errorLine2="                                ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/PluginManager.java"
-            line="137"
-            column="33"/>
-    </issue>
-
-    <issue
-        id="DiscouragedApi"
-        message="Use of this function is discouraged because resource reflection makes it harder to perform build optimizations and compile-time verification of code. It is much more efficient to retrieve resources by identifier (e.g. `R.foo.bar`) than by name (e.g. `getIdentifier(&quot;bar&quot;, &quot;foo&quot;, null)`)."
-        errorLine1="                        int id = res.getIdentifier(&quot;main&quot; + parts, &quot;raw&quot;, pkgName);"
-        errorLine2="                                     ~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/PluginManager.java"
-            line="145"
-            column="38"/>
-    </issue>
-
-    <issue
-        id="UseCompatLoadingForDrawables"
-        message="Use `ResourcesCompat.getDrawable()`"
-        errorLine1="        mSelectionHighlight = context.getResources().getDrawable("
-        errorLine2="                              ^">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/CandidateView.java"
-            line="99"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseCompatLoadingForDrawables"
-        message="Use `ResourcesCompat.getDrawable()`"
-        errorLine1="        mDivider = res.getDrawable(R.drawable.keyboard_suggest_strip_divider);"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/CandidateView.java"
-            line="118"
-            column="20"/>
     </issue>
 
     <issue
@@ -2664,17 +2433,6 @@
     <issue
         id="UseCompatLoadingForDrawables"
         message="Use `ResourcesCompat.getDrawable()`"
-        errorLine1="                    mRes.getDrawable(R.drawable.sym_keyboard_feedback_language_arrows_right);"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinKeyboard.java"
-            line="934"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="UseCompatLoadingForDrawables"
-        message="Use `ResourcesCompat.getDrawable()`"
         errorLine1="        mPreviewText.setBackgroundDrawable(getResources().getDrawable(hasPopup ? R.drawable.keyboard_key_feedback_more_background : R.drawable.keyboard_key_feedback_background));"
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -2839,17 +2597,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;title_suggested_punctuation&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_suggested_punctuation&quot;>Suggested punctuation&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="34"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;title_input_mode_settings&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
         errorLine1="    &lt;string name=&quot;title_input_mode_settings&quot;>Input mode settings&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -2960,72 +2707,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;quick_fixes&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;quick_fixes&quot;>Quick fixes&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="65"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;quick_fixes_summary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;quick_fixes_summary&quot;>Corrects commonly typed mistakes&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="67"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;show_suggestions&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;show_suggestions&quot;>Show suggestions&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="70"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;show_suggestions_summary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;show_suggestions_summary&quot;>Display suggested words while typing&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="72"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;auto_complete&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;auto_complete&quot;>Auto-complete&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="75"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;auto_complete_summary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;auto_complete_summary&quot;>Spacebar and punctuation automatically insert highlighted word&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="77"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;prefs_settings_key&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil), &quot;rm&quot; (Romansh)"
         errorLine1="    &lt;string name=&quot;prefs_settings_key&quot;>Show settings key&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -3065,17 +2746,6 @@
         <location
             file="src/main/res/values/strings.xml"
             line="92"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;added_word&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;added_word&quot;>&lt;xliff:g id=&quot;word&quot;>%s&lt;/xliff:g> : Saved&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="105"
             column="13"/>
     </issue>
 
@@ -3246,45 +2916,12 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;hint_add_to_dictionary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;hint_add_to_dictionary&quot;>\u2190 Touch again to save&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="201"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;has_dictionary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
         errorLine1="    &lt;string name=&quot;has_dictionary&quot;>Dictionary available&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
             line="204"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;prefs_enable_recorrection&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil), &quot;rm&quot; (Romansh)"
-        errorLine1="    &lt;string name=&quot;prefs_enable_recorrection&quot;>Touch to correct words&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="207"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;prefs_enable_recorrection_summary&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil), &quot;rm&quot; (Romansh)"
-        errorLine1="    &lt;string name=&quot;prefs_enable_recorrection_summary&quot;>Touch entered words to correct them&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="209"
             column="13"/>
     </issue>
 
@@ -3329,50 +2966,6 @@
         <location
             file="src/main/res/values/strings.xml"
             line="215"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;keyboard_layout&quot; is not translated in &quot;lo&quot; (Lao), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;ta&quot; (Tamil)"
-        errorLine1="    &lt;string name=&quot;keyboard_layout&quot;>Keyboard Theme&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="218"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_key_borders&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_key_borders&quot;>Key borders&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="224"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_key_borders_on&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_key_borders_on&quot;>Keys are drawn as shapes&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="225"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_key_borders_off&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_key_borders_off&quot;>Labels only; a key lights up while pressed (colour themes)&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="226"
             column="13"/>
     </issue>
 
@@ -3466,39 +3059,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;title_suggestions_in_landscape&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_suggestions_in_landscape&quot;>Suggestions in landscape mode&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="312"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_suggestions_in_landscape_true&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_suggestions_in_landscape_true&quot;>Same as in portrait mode&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="313"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;summary_suggestions_in_landscape_false&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;summary_suggestions_in_landscape_false&quot;>Hide suggestions in landscape mode&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="314"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;title_fullscreen_override&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
         errorLine1="    &lt;string name=&quot;title_fullscreen_override&quot;>Landscape mode fullscreen editor&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -3560,17 +3120,6 @@
         <location
             file="src/main/res/values/strings.xml"
             line="322"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_application_category&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_application_category&quot;>Application-specific settings&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="325"
             column="13"/>
     </issue>
 
@@ -3714,17 +3263,6 @@
         <location
             file="src/main/res/values/strings.xml"
             line="358"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;title_candidate_scale&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;title_candidate_scale&quot;>Suggestion label scaling&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="359"
             column="13"/>
     </issue>
 
@@ -3923,17 +3461,6 @@
         <location
             file="src/main/res/values/strings.xml"
             line="438"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
-        message="&quot;recorrect_warning&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;string name=&quot;recorrect_warning&quot;>FYI: recorrection does not work correctly on pre-Gingerbread devices due to missing operating system support.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="440"
             column="13"/>
     </issue>
 
@@ -4544,17 +4071,6 @@
 
     <issue
         id="MissingTranslation"
-        message="&quot;gesture_words&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
-        errorLine1="    &lt;plurals name=&quot;gesture_words&quot;>"
-        errorLine2="             ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="516"
-            column="14"/>
-    </issue>
-
-    <issue
-        id="MissingTranslation"
         message="&quot;gesture_delete_hint&quot; is not translated in &quot;de&quot; (German), &quot;fi&quot; (Finnish), &quot;lo&quot; (Lao), &quot;ru&quot; (Russian), &quot;pt&quot; (Portuguese), &quot;bg&quot; (Bulgarian), &quot;lt&quot; (Lithuanian), &quot;hr&quot; (Croatian), &quot;lv&quot; (Latvian), &quot;fr&quot; (French), &quot;hu&quot; (Hungarian), &quot;hy&quot; (Armenian), &quot;si&quot; (Sinhala), &quot;uk&quot; (Ukrainian), &quot;sk&quot; (Slovak), &quot;sl&quot; (Slovenian), &quot;ca&quot; (Catalan), &quot;sr&quot; (Serbian), &quot;sv&quot; (Swedish), &quot;ko&quot; (Korean), &quot;in&quot; (Indonesian), &quot;el&quot; (Greek), &quot;en&quot; (English), &quot;it&quot; (Italian), &quot;ta&quot; (Tamil), &quot;es&quot; (Spanish), &quot;iw&quot; (Hebrew), &quot;zh&quot; (Chinese), &quot;cs&quot; (Czech), &quot;ar&quot; (Arabic), &quot;vi&quot; (Vietnamese), &quot;nb&quot; (Norwegian Bokmål), &quot;th&quot; (Thai), &quot;ja&quot; (Japanese), &quot;tl&quot; (Tagalog), &quot;fa&quot; (Persian), &quot;rm&quot; (Romansh), &quot;pl&quot; (Polish), &quot;da&quot; (Danish), &quot;ro&quot; (Romanian), &quot;nl&quot; (Dutch), &quot;tr&quot; (Turkish)"
         errorLine1="    &lt;string name=&quot;gesture_delete_hint&quot;>Slide back for fewer · lift to delete · back to ⌫ to cancel&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
@@ -4708,39 +4224,6 @@
     </issue>
 
     <issue
-        id="Untranslatable"
-        message="The resource string &quot;layout_stone_bold&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
-        errorLine1="    &lt;string name=&quot;layout_stone_bold&quot;  translatable=&quot;false&quot;>Кость (жирный)&lt;/string>"
-        errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="192"
-            column="39"/>
-    </issue>
-
-    <issue
-        id="Untranslatable"
-        message="The resource string &quot;layout_material_dark&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
-        errorLine1="    &lt;string name=&quot;layout_material_dark&quot; translatable=&quot;false&quot;>Материал (тёмная)&lt;/string>"
-        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="193"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="Untranslatable"
-        message="The resource string &quot;layout_material_light&quot; is marked as translatable=&quot;false&quot;, but is translated to &quot;ru&quot; (Russian) here"
-        errorLine1="    &lt;string name=&quot;layout_material_light&quot; translatable=&quot;false&quot;>Материал (светлая)&lt;/string>"
-        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ru/strings.xml"
-            line="194"
-            column="42"/>
-    </issue>
-
-    <issue
         id="PluralsCandidate"
         message="Formatting %d followed by words (&quot;words&quot;): This should probably be a plural rather than a string"
         errorLine1="    &lt;string name=&quot;summary_adaptive_clear&quot;>%d words learned&lt;/string>"
@@ -4763,28 +4246,6 @@
     </issue>
 
     <issue
-        id="StaticFieldLeak"
-        message="This `AsyncTask` class should be static or leaks might occur (kr.jcb1ee.hackerskeyboard2.ExpandableDictionary.LoadDictionaryTask)"
-        errorLine1="    private class LoadDictionaryTask extends AsyncTask&lt;Void, Void, Void> {"
-        errorLine2="                  ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/ExpandableDictionary.java"
-            line="495"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="StaticFieldLeak"
-        message="Do not place Android context classes in static fields (static reference to `RingCharBuffer` which has field `mContext` pointing to `Context`); this is a memory leak"
-        errorLine1="        private static RingCharBuffer sRingCharBuffer = new RingCharBuffer();"
-        errorLine2="                ~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/LatinIMEUtil.java"
-            line="78"
-            column="17"/>
-    </issue>
-
-    <issue
         id="HandlerLeak"
         message="This `Handler` class should be static or leaks might occur (kr.jcb1ee.hackerskeyboard2.LatinKeyboardBaseView.UIHandler)"
         errorLine1="    class UIHandler extends Handler {"
@@ -4796,50 +4257,6 @@
     </issue>
 
     <issue
-        id="InefficientWeight"
-        message="Use a `layout_width` of `0dp` instead of `wrap_content` for better performance"
-        errorLine1="        android:layout_width=&quot;wrap_content&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/candidates.xml"
-            line="31"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/candidate_feedback_background` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="    android:background=&quot;@drawable/candidate_feedback_background&quot;"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/candidate_preview.xml"
-            line="28"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_suggest_strip` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_suggest_strip&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/candidates.xml"
-            line="26"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_background_material_black` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_background_material_black&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_material_black.xml"
-            line="29"
-            column="9"/>
-    </issue>
-
-    <issue
         id="Overdraw"
         message="Possible overdraw: Root element paints background `@drawable/keyboard_background_material_dark` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
         errorLine1="        android:background=&quot;@drawable/keyboard_background_material_dark&quot;"
@@ -4847,39 +4264,6 @@
         <location
             file="src/main/res/layout/input_material_dark.xml"
             line="29"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_background_material_light` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_background_material_light&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_material_light.xml"
-            line="29"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_background` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_background&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_stone_bold.xml"
-            line="28"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="Overdraw"
-        message="Possible overdraw: Root element paints background `@drawable/keyboard_popup_panel_background` with a theme that also paints a background (inferred theme is `@android:style/Theme.Holo`)"
-        errorLine1="        android:background=&quot;@drawable/keyboard_popup_panel_background&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/layout/input_stone_popup.xml"
-            line="26"
             column="9"/>
     </issue>
 
@@ -4914,13 +4298,6 @@
             file="src/main/res/layout/main.xml"
             line="7"
             column="5"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.raw.main` appears to be unused">
-        <location
-            file="src/main/res/raw/main.dict"/>
     </issue>
 
     <issue
@@ -5482,15 +4859,6 @@
     </issue>
 
     <issue
-        id="IconDuplicates"
-        message="The following unrelated icon files have identical contents: btn_keyboard_key_popup_selected_material_black.9.png, btn_keyboard_key_popup_selected_material_dark.9.png">
-        <location
-            file="src/main/res/drawable-xxhdpi/btn_keyboard_key_popup_selected_material_dark.9.png"/>
-        <location
-            file="src/main/res/drawable-xxhdpi/btn_keyboard_key_popup_selected_material_black.9.png"/>
-    </issue>
-
-    <issue
         id="Autofill"
         message="Missing `autofillHints` attribute"
         errorLine1="        &lt;EditText"
@@ -5510,17 +4878,6 @@
             file="src/main/java/kr/jcb1ee/hackerskeyboard2/KeyboardToolbar.java"
             line="63"
             column="13"/>
-    </issue>
-
-    <issue
-        id="ClickableViewAccessibility"
-        message="Custom view `CandidateView` overrides `onTouchEvent` but not `performClick`"
-        errorLine1="    public boolean onTouchEvent(MotionEvent me) {"
-        errorLine2="                   ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/kr/jcb1ee/hackerskeyboard2/CandidateView.java"
-            line="379"
-            column="20"/>
     </issue>
 
     <issue

@@ -26,8 +26,6 @@
     <!-- Long-press popup keys: 0.325in until the popups were made 10% taller. -->
     <dimen name="popup_key_height">0.3575in</dimen>
     <dimen name="keyboard_bottom_padding">0.06in</dimen>
-    <dimen name="candidate_strip_height">42dip</dimen>
-    <dimen name="candidate_strip_fading_edge_length">63dip</dimen>
     <dimen name="spacebar_vertical_correction">4dip</dimen>
     <!-- If the screen height in landscape is larger than the below value, then the keyboard
          will not go into extract (fullscreen) mode. -->
@@ -48,5 +46,4 @@
     <!-- We use "inch", not "dip" because this value tries dealing with physical distance related
          to user's finger. -->
     <dimen name="keyboard_vertical_correction">-0.05in</dimen>
-    <dimen name="candidate_min_touchable_width">0.3in</dimen>
 </resources>

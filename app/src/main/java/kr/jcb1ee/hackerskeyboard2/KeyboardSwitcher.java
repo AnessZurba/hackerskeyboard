@@ -106,11 +106,6 @@ public class KeyboardSwitcher implements
     private int mImeOptions;
     private boolean mIsSymbols;
     private int mFullMode;
-    /**
-     * mIsAutoCompletionActive indicates that auto completed word will be input
-     * instead of what user actually typed.
-     */
-    private boolean mIsAutoCompletionActive;
     private boolean mHasVoice;
     private boolean mVoiceOnPrimary;
     private boolean mPreferSymbols;
@@ -318,7 +313,7 @@ public class KeyboardSwitcher implements
         keyboard.setShiftState(Keyboard.SHIFT_OFF);
         keyboard.setImeOptions(mInputMethodService.getResources(), mMode,
                 imeOptions);
-        keyboard.updateSymbolIcons(mIsAutoCompletionActive);
+        keyboard.updateSymbolIcons();
     }
 
     private LatinKeyboard getKeyboard(KeyboardId id) {
@@ -331,7 +326,7 @@ public class KeyboardSwitcher implements
                             ? LocaleContext.of(mInputMethodService, input) : mInputMethodService,
                     id.mXml, id.mKeyboardMode, id.mKeyboardHeightPercent);
             keyboard.setVoiceMode(hasVoiceButton(id.mXml == R.xml.kbd_symbols), mHasVoice);
-            keyboard.setLanguageSwitcher(mLanguageSwitcher, mIsAutoCompletionActive);
+            keyboard.setLanguageSwitcher(mLanguageSwitcher);
 
             if (id.mEnableShiftLock) {
                 keyboard.enableShiftLock();
@@ -662,16 +657,6 @@ public class KeyboardSwitcher implements
         } else if (LatinIMESettings.PREF_SETTINGS_KEY.equals(key)) {
             updateSettingsKeyState(sharedPreferences);
             recreateInputView();
-        }
-    }
-
-    public void onAutoCompletionStateChanged(boolean isAutoCompletion) {
-        if (isAutoCompletion != mIsAutoCompletionActive) {
-            LatinKeyboardView keyboardView = getInputView();
-            mIsAutoCompletionActive = isAutoCompletion;
-            keyboardView.invalidateKey(((LatinKeyboard) keyboardView
-                    .getKeyboard())
-                    .onAutoCompletionStateChanged(isAutoCompletion));
         }
     }
 

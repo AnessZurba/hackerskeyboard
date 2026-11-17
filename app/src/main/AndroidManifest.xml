@@ -1,22 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.READ_USER_DICTIONARY" />
-    <uses-permission android:name="android.permission.WRITE_USER_DICTIONARY" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.faketouch" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-    <!-- Android 11+ package visibility: declare intents used to discover plugin dictionaries.
-         Without this, queryBroadcastReceivers() and queryIntentActivities() return empty
-         results for third-party packages on API 30+. -->
     <queries>
-        <intent>
-            <action android:name="com.menny.android.anysoftkeyboard.DICTIONARY" />
-        </intent>
-        <intent>
-            <action android:name="org.pocketworkstation.DICT" />
-        </intent>
         <!-- The mic key asks the system speech recogniser; without this the keyboard cannot
              see whether one is installed (and Samsung's Bixby/Google split makes it matter). -->
         <intent>

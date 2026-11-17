@@ -74,8 +74,6 @@
 
 
 
-    <!-- Indicates that a word has been added to the dictionary -->
-    <string name="added_word"><xliff:g id="word">%s</xliff:g> : сохранено</string>
 
 
 
@@ -157,8 +155,6 @@
     <!-- Title summary for input language selection screen -->
     <string name="language_selection_summary">Для смены языка \"сдвиньте\" пробел</string>
 
-    <!-- Add to dictionary hint -->
-    <string name="hint_add_to_dictionary">\u2190 Нажмите еще раз, чтобы сохранить</string>
 
     <!-- Inform the user that a particular language has an available dictionary -->
     <string name="has_dictionary">Доступен словарь</string>
@@ -294,7 +290,6 @@
         <item>Все: 3 &#x21d2; 3#³, e &#x21d2; eEé</item>
     </string-array>
 
-    <string name="recorrect_warning">Для сведения: рекоррекция не работает правильно на устройствах пре-Gingerbread из-за отсутствия поддержки операционной системы.</string>
     <!-- Title for Latin keyboard debug settings activity / dialog -->
     <string name="main_setup_configure_imes">Включить клавиатуру</string>
     <string name="main_setup_set_ime">Установить метод ввода</string>

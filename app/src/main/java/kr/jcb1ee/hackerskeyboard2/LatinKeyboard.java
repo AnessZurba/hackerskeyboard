@@ -40,16 +40,13 @@ import java.util.Locale;
 
 public class LatinKeyboard extends Keyboard {
 
-    private static final boolean DEBUG_PREFERRED_LETTER = true;
     private static final String TAG = "PCKeyboardLK";
     private static final int OPACITY_FULLY_OPAQUE = 255;
-    private static final int SPACE_LED_LENGTH_PERCENT = 80;
 
     private Drawable mShiftLockIcon;
     private Drawable mShiftLockPreviewIcon;
     private Drawable mOldShiftIcon;
     private Drawable mSpaceIcon;
-    private Drawable mSpaceAutoCompletionIndicator;
     private Drawable mSpacePreviewIcon;
     private Drawable mMicIcon;
     private Drawable mMicPreviewIcon;
@@ -64,7 +61,7 @@ public class LatinKeyboard extends Keyboard {
     private Key mF1Key;
     private final Drawable mHintIcon;
     private Key mSpaceKey;
-    /** Whether the space bar shows only the plain space mark (no language, no LED). */
+    /** Whether the space bar shows only the plain space mark (no language). */
     private boolean mPlainSpaceBar = true;
     private Key m123Key;
     private final int[] mSpaceKeyIndexArray;
@@ -85,19 +82,12 @@ public class LatinKeyboard extends Keyboard {
     private CharSequence m123Label;
     private boolean mCurrentlyInSpace;
     private SlidingLocaleDrawable mSlidingLocaleIcon;
-    private int[] mPrefLetterFrequencies;
-    private int mPrefLetter;
-    private int mPrefLetterX;
-    private int mPrefLetterY;
-    private int mPrefDistance;
 
     // TODO: remove this attribute when either Keyboard.mDefaultVerticalGap or Key.parent becomes
     // non-private.
     private final int mVerticalGap;
 
     private static final float SPACEBAR_DRAG_THRESHOLD = 0.51f;
-    private static final float OVERLAP_PERCENTAGE_LOW_PROB = 0.70f;
-    private static final float OVERLAP_PERCENTAGE_HIGH_PROB = 0.85f;
     // Minimum width of space key preview (proportional to keyboard width)
     private static final float SPACEBAR_POPUP_MIN_RATIO = 0.4f;
     // Minimum width of space key preview (proportional to screen height)
@@ -126,7 +116,6 @@ public class LatinKeyboard extends Keyboard {
         mShiftLockPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_shift_locked);
         setDefaultBounds(mShiftLockPreviewIcon);
         mSpaceIcon = res.getDrawable(R.drawable.sym_keyboard_space);
-        mSpaceAutoCompletionIndicator = res.getDrawable(R.drawable.sym_keyboard_space_led);
         mSpacePreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_space);
         mMicIcon = res.getDrawable(R.drawable.sym_keyboard_mic);
         mMicPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_mic);
@@ -251,9 +240,9 @@ public class LatinKeyboard extends Keyboard {
     }
 
 
-    public void updateSymbolIcons(boolean isAutoCompletion) {
+    public void updateSymbolIcons() {
         updateDynamicKeys();
-        updateSpaceBarForLocale(isAutoCompletion);
+        updateSpaceBarForLocale();
     }
 
     private void setDefaultBounds(Drawable drawable) {
@@ -420,14 +409,6 @@ public class LatinKeyboard extends Keyboard {
         return key.popupResId == R.xml.popup_punctuation || key.popupResId == R.xml.popup_smileys;
     }
 
-    /**
-     * @return a key which should be invalidated.
-     */
-    public Key onAutoCompletionStateChanged(boolean isAutoCompletion) {
-        updateSpaceBarForLocale(isAutoCompletion);
-        return mSpaceKey;
-    }
-
     public boolean isLanguageSwitchEnabled() {
         return mLocale != null;
     }
@@ -437,21 +418,14 @@ public class LatinKeyboard extends Keyboard {
         return key == mSpaceKey && mPlainSpaceBar;
     }
 
-    private void updateSpaceBarForLocale(boolean isAutoCompletion) {
+    private void updateSpaceBarForLocale() {
         if (mSpaceKey == null) return;
-        mPlainSpaceBar = mLocale == null && !isAutoCompletion;
+        mPlainSpaceBar = mLocale == null;
         // If application locales are explicitly selected.
         if (mLocale != null) {
-            mSpaceKey.icon = new BitmapDrawable(mRes,
-                    drawSpaceBar(OPACITY_FULLY_OPAQUE, isAutoCompletion));
+            mSpaceKey.icon = new BitmapDrawable(mRes, drawSpaceBar(OPACITY_FULLY_OPAQUE));
         } else {
-            // sym_keyboard_space_led can be shared with Black and White symbol themes.
-            if (isAutoCompletion) {
-                mSpaceKey.icon = new BitmapDrawable(mRes,
-                        drawSpaceBar(OPACITY_FULLY_OPAQUE, isAutoCompletion));
-            } else {
-                mSpaceKey.icon = mRes.getDrawable(R.drawable.sym_keyboard_space);
-            }
+            mSpaceKey.icon = mRes.getDrawable(R.drawable.sym_keyboard_space);
         }
     }
 
@@ -535,7 +509,7 @@ public class LatinKeyboard extends Keyboard {
         return language;
     }
 
-    private Bitmap drawSpaceBar(int opacity, boolean isAutoCompletion) {
+    private Bitmap drawSpaceBar(int opacity) {
         final int width = mSpaceKey.width;
         final int height = mSpaceIcon.getIntrinsicHeight();
         final Bitmap buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -575,21 +549,12 @@ public class LatinKeyboard extends Keyboard {
         }
 
         // Draw the spacebar icon at the bottom
-        if (isAutoCompletion) {
-            final int iconWidth = width * SPACE_LED_LENGTH_PERCENT / 100;
-            final int iconHeight = mSpaceAutoCompletionIndicator.getIntrinsicHeight();
-            int x = (width - iconWidth) / 2;
-            int y = height - iconHeight;
-            mSpaceAutoCompletionIndicator.setBounds(x, y, x + iconWidth, y + iconHeight);
-            mSpaceAutoCompletionIndicator.draw(canvas);
-        } else {
-            final int iconWidth = mSpaceIcon.getIntrinsicWidth();
-            final int iconHeight = mSpaceIcon.getIntrinsicHeight();
-            int x = (width - iconWidth) / 2;
-            int y = height - iconHeight;
-            mSpaceIcon.setBounds(x, y, x + iconWidth, y + iconHeight);
-            mSpaceIcon.draw(canvas);
-        }
+        final int iconWidth = mSpaceIcon.getIntrinsicWidth();
+        final int iconHeight = mSpaceIcon.getIntrinsicHeight();
+        int x = (width - iconWidth) / 2;
+        int y = height - iconHeight;
+        mSpaceIcon.setBounds(x, y, x + iconWidth, y + iconHeight);
+        mSpaceIcon.draw(canvas);
         return buffer;
     }
 
@@ -635,7 +600,7 @@ public class LatinKeyboard extends Keyboard {
         return mSpaceDragLastDiff > 0 ? 1 : -1;
     }
 
-    public void setLanguageSwitcher(LanguageSwitcher switcher, boolean isAutoCompletion) {
+    public void setLanguageSwitcher(LanguageSwitcher switcher) {
         mLanguageSwitcher = switcher;
         Locale locale = mLanguageSwitcher.getLocaleCount() > 0
                 ? mLanguageSwitcher.getInputLocale()
@@ -648,7 +613,7 @@ public class LatinKeyboard extends Keyboard {
             locale = null;
         }
         mLocale = locale;
-        updateSymbolIcons(isAutoCompletion);
+        updateSymbolIcons();
     }
 
     private boolean mCursorSliding;
@@ -657,19 +622,10 @@ public class LatinKeyboard extends Keyboard {
         return mCurrentlyInSpace;
     }
 
-    void setPreferredLetters(int[] frequencies) {
-        mPrefLetterFrequencies = frequencies;
-        mPrefLetter = 0;
-    }
-
     void keyReleased() {
         mCurrentlyInSpace = false;
         mCursorSliding = false;
         mSpaceDragLastDiff = 0;
-        mPrefLetter = 0;
-        mPrefLetterX = 0;
-        mPrefLetterY = 0;
-        mPrefDistance = Integer.MAX_VALUE;
         if (mSpaceKey != null) {
             updateLocaleDrag(Integer.MAX_VALUE);
         }
@@ -714,99 +670,12 @@ public class LatinKeyboard extends Keyboard {
                     return insideSpace;
                 }
             }
-        } else if (mPrefLetterFrequencies != null) {
-            // New coordinate? Reset
-            if (mPrefLetterX != x || mPrefLetterY != y) {
-                mPrefLetter = 0;
-                mPrefDistance = Integer.MAX_VALUE;
-            }
-            // Handle preferred next letter
-            final int[] pref = mPrefLetterFrequencies;
-            if (mPrefLetter > 0) {
-                if (DEBUG_PREFERRED_LETTER) {
-                    if (mPrefLetter == code && !key.isInsideSuper(x, y)) {
-                        Log.d(TAG, "CORRECTED !!!!!!");
-                    }
-                }
-                return mPrefLetter == code;
-            } else {
-                final boolean inside = key.isInsideSuper(x, y);
-                int[] nearby = getNearestKeys(x, y);
-                List<Key> nearbyKeys = getKeys();
-                if (inside) {
-                    // If it's a preferred letter
-                    if (inPrefList(code, pref)) {
-                        // Check if its frequency is much lower than a nearby key
-                        mPrefLetter = code;
-                        mPrefLetterX = x;
-                        mPrefLetterY = y;
-                        for (int i = 0; i < nearby.length; i++) {
-                            Key k = nearbyKeys.get(nearby[i]);
-                            if (k != key && inPrefList(k.codes[0], pref)) {
-                                final int dist = distanceFrom(k, x, y);
-                                if (dist < (int) (k.width * OVERLAP_PERCENTAGE_LOW_PROB) &&
-                                        (pref[k.codes[0]] > pref[mPrefLetter] * 3))  {
-                                    mPrefLetter = k.codes[0];
-                                    mPrefDistance = dist;
-                                    if (DEBUG_PREFERRED_LETTER) {
-                                        Log.d(TAG, "CORRECTED ALTHOUGH PREFERRED !!!!!!");
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-
-                        return mPrefLetter == code;
-                    }
-                }
-
-                // Get the surrounding keys and intersect with the preferred list
-                // For all in the intersection
-                //   if distance from touch point is within a reasonable distance
-                //       make this the pref letter
-                // If no pref letter
-                //   return inside;
-                // else return thiskey == prefletter;
-
-                for (int i = 0; i < nearby.length; i++) {
-                    Key k = nearbyKeys.get(nearby[i]);
-                    if (inPrefList(k.codes[0], pref)) {
-                        final int dist = distanceFrom(k, x, y);
-                        if (dist < (int) (k.width * OVERLAP_PERCENTAGE_HIGH_PROB)
-                                && dist < mPrefDistance)  {
-                            mPrefLetter = k.codes[0];
-                            mPrefLetterX = x;
-                            mPrefLetterY = y;
-                            mPrefDistance = dist;
-                        }
-                    }
-                }
-                // Didn't find any
-                if (mPrefLetter == 0) {
-                    return inside;
-                } else {
-                    return mPrefLetter == code;
-                }
-            }
         }
 
         // Lock into the spacebar
         if (mCurrentlyInSpace) return false;
 
         return key.isInsideSuper(x, y);
-    }
-
-    private boolean inPrefList(int code, int[] pref) {
-        if (code < pref.length && code >= 0) return pref[code] > 0;
-        return false;
-    }
-
-    private int distanceFrom(Key k, int x, int y) {
-        if (y > k.y && y < k.y + k.height) {
-            return Math.abs(k.x + k.width / 2 - x);
-        } else {
-            return Integer.MAX_VALUE;
-        }
     }
 
     @Override

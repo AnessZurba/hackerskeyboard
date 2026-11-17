@@ -32,7 +32,6 @@
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"Vienmēr rādīt"</string>
     <string name="settings_key_mode_always_hide_name" msgid="7833948046716923994">"Vienmēr slēpt"</string>
     <!-- no translation found for settings_key_modes:0 (8549888726962891527) -->
-    <string name="added_word" msgid="8993883354622484372">"<xliff:g id="WORD">%s</xliff:g>: saglabāts"</string>
     <string name="label_go_key" msgid="1635148082137219148">"Sākt"</string>
     <string name="label_next_key" msgid="362972844525672568">"Tālāk"</string>
     <string name="label_done_key" msgid="2441578748772529288">"Gatavs"</string>
@@ -58,7 +57,6 @@
     <string name="popular_domain_4" msgid="35359437471311470">".edu"</string>
     <string name="language_selection_title" msgid="1651299598555326750">"Ievades valodas"</string>
     <string name="language_selection_summary" msgid="187110938289512256">"Slidiniet pirkstu uz atstarpes taustiņa, lai mainītu valodu"</string>
-    <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Pieskarieties vēlreiz, lai saglabātu"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Ir pieejama vārdnīca."</string>
     <string name="keyboard_layout" msgid="437433231038683666">"Tastatūras motīvs"</string>
 </resources>

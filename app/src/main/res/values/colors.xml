@@ -16,14 +16,8 @@
 ** See the License for the specific language governing permissions and 
 ** limitations under the License.
 */
-//    <color name="candidate_recommended">#FF33B5E5</color>
-//    <color name="candidate_other">#FF33B5E5</color>
-//    android:color/holo_blue_light=#FF33B5E5
 -->
 <resources>
-    <color name="candidate_normal">#FFFFFFFF</color>
-    <color name="candidate_recommended">#FFFCAE00</color>
-    <color name="candidate_other">#FFFCAE00</color>
     <color name="latinkeyboard_transparent">#00000000</color>
     <color name="latinkeyboard_bar_language_shadow_white">#80000000</color>
     <color name="latinkeyboard_dim_color_white">#FFDDDDDD</color>

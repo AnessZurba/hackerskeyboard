@@ -32,7 +32,6 @@
     <string name="settings_key_mode_always_show_name" msgid="3047567041784760575">"Mostrar sempre"</string>
     <string name="settings_key_mode_always_hide_name" msgid="7833948046716923994">"Ocultar sempre"</string>
     <!-- no translation found for settings_key_modes:0 (8549888726962891527) -->
-    <string name="added_word" msgid="8993883354622484372">"<xliff:g id="WORD">%s</xliff:g>: guardada"</string>
     <string name="label_go_key" msgid="1635148082137219148">"Ir"</string>
     <string name="label_next_key" msgid="362972844525672568">"Seguinte"</string>
     <string name="label_done_key" msgid="2441578748772529288">"Feito"</string>
@@ -58,7 +57,6 @@
     <string name="popular_domain_4" msgid="35359437471311470">".edu"</string>
     <string name="language_selection_title" msgid="1651299598555326750">"Idiomas de entrada"</string>
     <string name="language_selection_summary" msgid="187110938289512256">"Deslize o dedo pela barra de espaço para alterar o idioma"</string>
-    <string name="hint_add_to_dictionary" msgid="9006292060636342317">"← Toque novamente para guardar"</string>
     <string name="has_dictionary" msgid="6071847973466625007">"Dicionário disponível"</string>
     <string name="keyboard_layout" msgid="437433231038683666">"Tema do teclado"</string>
 </resources>

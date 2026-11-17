@@ -16,7 +16,6 @@
 
 package kr.jcb1ee.hackerskeyboard2;
 
-import android.content.Context;
 import android.util.Log;
 
 
@@ -36,14 +35,12 @@ public class TextEntryState {
         PUNCTUATION_AFTER_ACCEPTED,
         SPACE_AFTER_ACCEPTED,
         SPACE_AFTER_PICKED,
-        UNDO_COMMIT,
-        CORRECTING,
-        PICKED_CORRECTION;
+        UNDO_COMMIT;
     }
 
     private static State sState = State.UNKNOWN;
 
-    public static void newSession(Context context) {
+    public static void newSession() {
         sState = State.START;
     }
 
@@ -79,20 +76,7 @@ public class TextEntryState {
     }
 
     public static void acceptedSuggestion(CharSequence typedWord, CharSequence actualWord) {
-        State oldState = sState;
-        if (typedWord.equals(actualWord)) {
-            acceptedTyped(typedWord);
-        }
-        if (oldState == State.CORRECTING || oldState == State.PICKED_CORRECTION) {
-            sState = State.PICKED_CORRECTION;
-        } else {
-            sState = State.PICKED_SUGGESTION;
-        }
-        displayState();
-    }
-
-    public static void selectedForCorrection() {
-        sState = State.CORRECTING;
+        sState = State.PICKED_SUGGESTION;
         displayState();
     }
 
@@ -117,7 +101,6 @@ public class TextEntryState {
                 }
                 break;
             case PICKED_SUGGESTION:
-            case PICKED_CORRECTION:
                 if (isSpace) {
                     sState = State.SPACE_AFTER_PICKED;
                 } else if (isSeparator) {
@@ -145,9 +128,6 @@ public class TextEntryState {
                     sState = State.IN_WORD;
                 }
                 break;
-            case CORRECTING:
-                sState = State.START;
-                break;
         }
         displayState();
     }
@@ -171,10 +151,6 @@ public class TextEntryState {
             Log.d(TAG, "Returning state = " + sState);
         }
         return sState;
-    }
-
-    public static boolean isCorrecting() {
-        return sState == State.CORRECTING || sState == State.PICKED_CORRECTION;
     }
 
     private static void displayState() {
