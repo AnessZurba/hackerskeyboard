@@ -19,7 +19,9 @@
  * java/src/com/android/inputmethod/latin/BinaryDictionary.java at
  * 127336e9f29d69607eab55982324b210279ae8c5. Only the natives registered by our
  * com_android_inputmethod_latin_BinaryDictionary.cpp; one traverse session; no gesture input,
- * personalization, migration or Android dependencies; results as plain Suggestion objects.
+ * personalization input events, migration or Android dependencies; results as plain
+ * Suggestion objects. Updatable (v4) dictionaries as AOSP's ExpandableBinaryDictionary uses
+ * them: on memory, or a directory reopened after each flush.
  */
 
 package kr.jcb1ee.hackerskeyboard2.suggest;
@@ -83,16 +85,84 @@ final class BinaryDictionary {
     private static native String getPropertyNative(long dict, String query);
     private static native boolean isCorruptedNative(long dict);
 
+    /** AOSP's FormatSpec.VERSION403: the updatable (v4) format. */
+    static final int FORMAT_VERSION_4 = 403;
+    /** AOSP's BinaryDictionary.NOT_A_VALID_TIMESTAMP. */
+    static final int NOT_A_VALID_TIMESTAMP = -1;
+    // What the traverse session sizes its caches by, for the small updatable dictionaries.
+    private static final long DYNAMIC_DICT_SIZE = 64 * 1024;
+
     private long mNativeDict;
-    private final DicTraverseSession mSession;
+    private DicTraverseSession mSession;
+    private final String mLocale;
+    /** An updatable dictionary's directory, or null (read-only, or on memory). */
+    private final String mDirectory;
 
     /**
      * Opens {@code length} bytes at {@code offset} of {@code path} (a plain file, or an APK
      * with the dictionary stored uncompressed). Check {@link #isValid()} afterwards.
      */
     BinaryDictionary(String path, long offset, long length, String locale) {
+        mLocale = locale;
+        mDirectory = null;
         mNativeDict = openNative(path, offset, length, false /* isUpdatable */);
         mSession = mNativeDict != 0 ? new DicTraverseSession(locale, mNativeDict, length) : null;
+    }
+
+    private BinaryDictionary(long nativeDict, String locale, String directory) {
+        mLocale = locale;
+        mDirectory = directory;
+        mNativeDict = nativeDict;
+        mSession = nativeDict != 0
+                ? new DicTraverseSession(locale, nativeDict, DYNAMIC_DICT_SIZE) : null;
+    }
+
+    /**
+     * A new empty updatable dictionary held in memory only (nothing is written anywhere).
+     * Check {@link #isValid()}.
+     */
+    static BinaryDictionary createInMemory(String locale, Map<String, String> attributes) {
+        String[] keys = attributes.keySet().toArray(new String[0]);
+        String[] values = new String[keys.length];
+        for (int i = 0; i < keys.length; i++) values[i] = attributes.get(keys[i]);
+        long dict = createOnMemoryNative(FORMAT_VERSION_4, locale, keys, values);
+        return new BinaryDictionary(dict, locale, null);
+    }
+
+    /**
+     * Opens the updatable dictionary in {@code directory}, creating it empty with
+     * {@code attributes} when there is none (or it can't be read). Check {@link #isValid()}.
+     */
+    static BinaryDictionary openOrCreateUpdatable(java.io.File directory, String locale,
+            Map<String, String> attributes) {
+        String path = directory.getAbsolutePath();
+        long dict = directory.isDirectory() ? openNative(path, 0, 0, true /* isUpdatable */) : 0;
+        if (dict != 0 && isCorruptedNative(dict)) {
+            closeNative(dict);
+            dict = 0;
+        }
+        if (dict == 0) {
+            deleteRecursively(directory);
+            java.io.File parent = directory.getParentFile();
+            if (parent != null) parent.mkdirs();
+            String[] keys = attributes.keySet().toArray(new String[0]);
+            String[] values = new String[keys.length];
+            for (int i = 0; i < keys.length; i++) values[i] = attributes.get(keys[i]);
+            if (BinaryDictionaryUtils.createEmptyDictFileNative(path, FORMAT_VERSION_4, locale,
+                    keys, values)) {
+                dict = openNative(path, 0, 0, true /* isUpdatable */);
+            }
+        }
+        return new BinaryDictionary(dict, locale, path);
+    }
+
+    static void deleteRecursively(java.io.File f) {
+        java.io.File[] children = f.listFiles();
+        if (children != null) {
+            for (java.io.File c : children) deleteRecursively(c);
+        }
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
     }
 
     boolean isValid() {
@@ -129,6 +199,81 @@ final class BinaryDictionary {
     }
 
     /**
+     * Adds (or updates) a word with {@code probability} (0-255), for dictionaries built from
+     * a word list (the personal dictionary): not decaying, no history.
+     */
+    boolean addUnigram(String word, int probability) {
+        if (!isValid() || word.isEmpty()) return false;
+        return addUnigramEntryNative(mNativeDict, word.codePoints().toArray(), probability,
+                null /* shortcutTarget */, NOT_A_PROBABILITY, false /* isBeginningOfSentence */,
+                false /* isNotAWord */, false /* isPossiblyOffensive */, NOT_A_VALID_TIMESTAMP);
+    }
+
+    boolean removeUnigram(String word) {
+        if (!isValid() || word.isEmpty()) return false;
+        return removeUnigramEntryNative(mNativeDict, word.codePoints().toArray());
+    }
+
+    /**
+     * Records that {@code word} was typed after {@code previousWord} (null: unknown, "": the
+     * start of a sentence), as AOSP's user history does: the word's and the pair's counts go
+     * up and decay with time. A word that is not {@code isValid} (not in another dictionary)
+     * becomes a suggestion only once it has been typed twice.
+     */
+    boolean updateEntriesForWord(String previousWord, String word, boolean isValid, int count,
+            int timestamp) {
+        if (!isValid() || word.isEmpty()) return false;
+        return updateEntriesForWordWithNgramContextNative(mNativeDict, context(previousWord),
+                beginningOfSentence(previousWord), word.codePoints().toArray(), isValid, count,
+                timestamp);
+    }
+
+    /** Forgets that {@code word} followed {@code previousWord}. */
+    boolean removeNgram(String previousWord, String word) {
+        if (!isValid() || word.isEmpty() || previousWord == null) return false;
+        return removeNgramEntryNative(mNativeDict, context(previousWord),
+                beginningOfSentence(previousWord), word.codePoints().toArray());
+    }
+
+    /** The probability of {@code word} after {@code previousWord}, or NOT_A_PROBABILITY. */
+    int getNgramProbability(String previousWord, String word) {
+        if (!isValid() || word.isEmpty()) return NOT_A_PROBABILITY;
+        return getNgramProbabilityNative(mNativeDict, context(previousWord),
+                beginningOfSentence(previousWord), word.codePoints().toArray());
+    }
+
+    private static int[][] context(String previousWord) {
+        if (previousWord == null) return new int[0][];
+        return new int[][] {previousWord.codePoints().toArray()};
+    }
+
+    private static boolean[] beginningOfSentence(String previousWord) {
+        if (previousWord == null) return new boolean[0];
+        return new boolean[] {previousWord.isEmpty()};
+    }
+
+    /**
+     * Writes an updatable dictionary to its directory (running AOSP's garbage collection,
+     * which also applies the decay, when the dictionary asks for it) and reopens it, as
+     * AOSP does. False for one held in memory or when writing failed.
+     */
+    boolean flush() {
+        if (!isValid() || mDirectory == null) return false;
+        boolean ok = needsToRunGCNative(mNativeDict, false /* mindsBlockByGC, as AOSP */)
+                ? flushWithGCNative(mNativeDict, mDirectory)
+                : flushNative(mNativeDict, mDirectory);
+        reopen();
+        return ok;
+    }
+
+    private void reopen() {
+        close();
+        mNativeDict = openNative(mDirectory, 0, 0, true /* isUpdatable */);
+        mSession = mNativeDict != 0
+                ? new DicTraverseSession(mLocale, mNativeDict, DYNAMIC_DICT_SIZE) : null;
+    }
+
+    /**
      * Runs the decoder. {@code codePoints} is what was typed; {@code xs}/{@code ys} the touch
      * points (NOT_A_COORDINATE where unknown: the decoder then matches only that letter, not its
      * neighbours).
@@ -141,6 +286,7 @@ final class BinaryDictionary {
             return out;
         }
         DicTraverseSession s = mSession;
+        // No input with a previous word: the words that followed it (AOSP's predictions).
         int inputSize = Math.min(codePoints.length, MAX_WORD_LENGTH - 1);
         Arrays.fill(s.mInputCodePoints, NOT_A_CODE);
         System.arraycopy(codePoints, 0, s.mInputCodePoints, 0, inputSize);
@@ -184,6 +330,7 @@ final class BinaryDictionary {
 
     void close() {
         if (mSession != null) mSession.close();
+        mSession = null;
         if (mNativeDict != 0) {
             closeNative(mNativeDict);
             mNativeDict = 0;
