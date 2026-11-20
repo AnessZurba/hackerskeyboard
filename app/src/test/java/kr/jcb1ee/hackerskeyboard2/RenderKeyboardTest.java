@@ -62,6 +62,11 @@ public class RenderKeyboardTest {
             ime.mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_PHONE, 0, false);
             Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         }
+        // The symbols layout (the ?123 key).
+        if ("symbols".equals(panel)) {
+            ime.mKeyboardSwitcher.toggleSymbols();
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        }
         if ("emoji".equals(panel) || "emojisearch".equals(panel)) {
             int w0 = ime.getResources().getDisplayMetrics().widthPixels;
             toolbar.measure(View.MeasureSpec.makeMeasureSpec(w0, View.MeasureSpec.EXACTLY),
@@ -188,8 +193,62 @@ public class RenderKeyboardTest {
                 break;
             }
         }
+        // -PrenderPreview=q draws that key's press preview bubble above it; #<code> picks a key
+        // by its code (#-5: Delete, #10: Enter, #32: space), for keys drawn with an icon.
+        View bubble = null;
+        int bubbleX = 0, bubbleY = 0;
+        String preview = System.getProperty("renderPreview");
+        if (preview != null) {
+            LatinKeyboardView view = KeyboardSwitcher.getInstance().getInputView();
+            java.util.List<Keyboard.Key> keys = view.getKeyboard().getKeys();
+            for (int i = 0; i < keys.size(); i++) {
+                Keyboard.Key key = keys.get(i);
+                boolean match = preview.startsWith("#")
+                        ? key.codes != null && key.codes.length > 0
+                                && key.codes[0] == Integer.parseInt(preview.substring(1))
+                        : key.label != null && preview.contentEquals(key.label);
+                if (!match) continue;
+                java.lang.reflect.Method tracker = LatinKeyboardBaseView.class
+                        .getDeclaredMethod("getPointerTracker", int.class);
+                tracker.setAccessible(true);
+                java.lang.reflect.Method show = LatinKeyboardBaseView.class
+                        .getDeclaredMethod("showKey", int.class, PointerTracker.class);
+                show.setAccessible(true);
+                try {
+                    show.invoke(view, i, tracker.invoke(view, 0));
+                } catch (java.lang.reflect.InvocationTargetException e) {
+                    // no window to show it in: the bubble is set up all the same
+                }
+                java.lang.reflect.Field f =
+                        LatinKeyboardBaseView.class.getDeclaredField("mPreviewText");
+                f.setAccessible(true);
+                bubble = (View) f.get(view);
+                bubble.measure(View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                int bw = Math.max(bubble.getMeasuredWidth(), key.width
+                        + bubble.getPaddingLeft() + bubble.getPaddingRight());
+                int bh = ime.getResources().getDimensionPixelSize(R.dimen.key_preview_height);
+                bubble.measure(View.MeasureSpec.makeMeasureSpec(bw, View.MeasureSpec.EXACTLY),
+                        View.MeasureSpec.makeMeasureSpec(bh, View.MeasureSpec.EXACTLY));
+                bubble.layout(0, 0, bw, bh);
+                int[] at = new int[2];
+                view.getLocationInWindow(at);
+                int[] base = new int[2];
+                toolbar.getLocationInWindow(base);
+                bubbleX = Math.max(0, Math.min(w - bw,
+                        at[0] - base[0] + key.x - (bw - key.width) / 2));
+                bubbleY = Math.max(0, at[1] - base[1] + key.y - bh);
+                break;
+            }
+        }
         Canvas canvas = new Canvas(bmp);
         toolbar.draw(canvas);
+        if (bubble != null) {
+            canvas.save();
+            canvas.translate(bubbleX, bubbleY);
+            bubble.draw(canvas);
+            canvas.restore();
+        }
         if (popup != null) {
             canvas.translate(popupX, popupY);
             popup.draw(canvas);

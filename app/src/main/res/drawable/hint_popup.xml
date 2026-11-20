@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The popup hint drawn over a whole key: faint dots in its lower right corner, where the old
+     9-patch had them. The padding is the 9-patch's: a key's main icon centres inside it. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:paddingLeft="5.33dp"
+    android:paddingTop="8.67dp"
+    android:paddingRight="6dp"
+    android:paddingBottom="4dp">
+    <item
+        android:gravity="bottom|right"
+        android:right="5.33dp"
+        android:bottom="3.33dp"
+        android:width="6.67dp"
+        android:height="1.33dp"
+        android:drawable="@drawable/hint_popup_dots" />
+</layer-list>

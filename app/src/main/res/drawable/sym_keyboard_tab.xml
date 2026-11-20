@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glyph from Material Icons (Apache License 2.0, https://github.com/google/material-design-icons).
+     White: the keyboard tints key icons in the theme's label colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="34dp"
+    android:viewportWidth="24"
+    android:viewportHeight="34">
+    <group android:translateX="0.524" android:translateY="5.286"
+        android:scaleX="0.976" android:scaleY="0.976">
+        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+            android:pathData="M11.59,7.41L15.17,11H1v2h14.17l-3.59,3.59L13,18l6,-6 -6,-6 -1.41,1.41zM20,6v12h2V6h-2z" />
+    </group>
+</vector>

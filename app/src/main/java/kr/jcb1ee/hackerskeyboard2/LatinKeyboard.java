@@ -20,15 +20,13 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.util.Log;
@@ -124,8 +122,14 @@ public class LatinKeyboard extends Keyboard {
         setDefaultBounds(mMicPreviewIcon);
         mButtonArrowLeftIcon = res.getDrawable(R.drawable.sym_keyboard_language_arrows_left);
         mButtonArrowRightIcon = res.getDrawable(R.drawable.sym_keyboard_language_arrows_right);
-        m123MicIcon = res.getDrawable(R.drawable.sym_keyboard_123_mic);
-        m123MicPreviewIcon = res.getDrawable(R.drawable.sym_keyboard_feedback_123_mic);
+        // "123" and a mic, drawn as text and the vector mic (no longer a bitmap).
+        final float dp = res.getDisplayMetrics().density;
+        m123MicIcon = new KeyIcons.TextThenIcon("123",
+                res.getDrawable(R.drawable.sym_keyboard_mic), 15 * dp,
+                Math.round(54 * dp), Math.round(34 * dp));
+        m123MicPreviewIcon = new KeyIcons.TextThenIcon("123",
+                res.getDrawable(R.drawable.sym_keyboard_feedback_mic), 20 * dp,
+                Math.round(58 * dp), Math.round(45.33f * dp));
         mHintIcon = res.getDrawable(R.drawable.hint_popup);
         setDefaultBounds(m123MicPreviewIcon);
         sSpacebarVerticalCorrection = res.getDimensionPixelOffset(
@@ -344,8 +348,8 @@ public class LatinKeyboard extends Keyboard {
 
     private void setMicF1Key(Key key) {
         // HACK: draw mMicIcon and mHintIcon at the same time
-        final Drawable micWithSettingsHintDrawable = new BitmapDrawable(mRes,
-                drawSynthesizedSettingsHintImage(key.width, key.height, mMicIcon, mHintIcon));
+        final Drawable micWithSettingsHintDrawable =
+                new KeyIcons.WithHint(mMicIcon, mHintIcon, key.width, key.height);
 
         if (key.popupResId == 0 || isMicKeyPopup(key.popupResId)) {
             key.popupResId = R.xml.popup_settings; // the other choice only
@@ -369,8 +373,7 @@ public class LatinKeyboard extends Keyboard {
         key.shiftLabel = null;
         key.codes = new int[] { LatinKeyboardView.KEYCODE_VOICE };
         // Drawn into the key's size like the other icons (the bare drawable is too big).
-        key.icon = new BitmapDrawable(mRes,
-                drawSynthesizedSettingsHintImage(key.width, key.height, mMicIcon, null));
+        key.icon = new KeyIcons.WithHint(mMicIcon, null, key.width, key.height);
         key.iconPreview = mMicPreviewIcon;
         key.popupResId = 0;
     }
@@ -380,8 +383,8 @@ public class LatinKeyboard extends Keyboard {
             key.codes = new int[] { key.label.charAt(0) };
             return; // leave key otherwise unmodified
         }
-        final Drawable settingsHintDrawable = new BitmapDrawable(mRes,
-                drawSynthesizedSettingsHintImage(key.width, key.height, mSettingsIcon, mHintIcon));
+        final Drawable settingsHintDrawable =
+                new KeyIcons.WithHint(mSettingsIcon, mHintIcon, key.width, key.height);
     	key.label = null;
     	key.icon = settingsHintDrawable;
     	key.codes = new int[] { LatinKeyboardView.KEYCODE_OPTIONS };
@@ -423,7 +426,7 @@ public class LatinKeyboard extends Keyboard {
         mPlainSpaceBar = mLocale == null;
         // If application locales are explicitly selected.
         if (mLocale != null) {
-            mSpaceKey.icon = new BitmapDrawable(mRes, drawSpaceBar(OPACITY_FULLY_OPAQUE));
+            mSpaceKey.icon = new SpaceBarDrawable(OPACITY_FULLY_OPAQUE);
         } else {
             mSpaceKey.icon = mRes.getDrawable(R.drawable.sym_keyboard_space);
         }
@@ -434,36 +437,6 @@ public class LatinKeyboard extends Keyboard {
         paint.setTextSize(textSize);
         paint.getTextBounds(text, 0, text.length(), bounds);
         return bounds.width();
-    }
-
-    // Overlay two images: mainIcon and hintIcon.
-    private Bitmap drawSynthesizedSettingsHintImage(
-            int width, int height, Drawable mainIcon, Drawable hintIcon) {
-        if (mainIcon == null)
-            return null;
-        Rect hintIconPadding = new Rect(0, 0, 0, 0);
-        if (hintIcon != null) hintIcon.getPadding(hintIconPadding);
-        final Bitmap buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        final Canvas canvas = new Canvas(buffer);
-        canvas.drawColor(mRes.getColor(R.color.latinkeyboard_transparent), PorterDuff.Mode.CLEAR);
-
-        // Draw main icon at the center of the key visual
-        // Assuming the hintIcon shares the same padding with the key's background drawable
-        final int drawableX = (width + hintIconPadding.left - hintIconPadding.right
-                - mainIcon.getIntrinsicWidth()) / 2;
-        final int drawableY = (height + hintIconPadding.top - hintIconPadding.bottom
-                - mainIcon.getIntrinsicHeight()) / 2;
-        setDefaultBounds(mainIcon);
-        canvas.translate(drawableX, drawableY);
-        mainIcon.draw(canvas);
-        canvas.translate(-drawableX, -drawableY);
-
-        // Draw hint icon fully in the key (none: just the main icon)
-        if (hintIcon != null) {
-            hintIcon.setBounds(0, 0, width, height);
-            hintIcon.draw(canvas);
-        }
-        return buffer;
     }
 
     // Layout local language name and left and right arrow on space bar.
@@ -509,53 +482,85 @@ public class LatinKeyboard extends Keyboard {
         return language;
     }
 
-    private Bitmap drawSpaceBar(int opacity) {
-        final int width = mSpaceKey.width;
-        final int height = mSpaceIcon.getIntrinsicHeight();
-        final Bitmap buffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        final Canvas canvas = new Canvas(buffer);
-        canvas.drawColor(mRes.getColor(R.color.latinkeyboard_transparent), PorterDuff.Mode.CLEAR);
+    /**
+     * The space bar with the input language's name (and arrows when there are several),
+     * drawn straight onto the keyboard's canvas so the text is as sharp as the labels.
+     */
+    private final class SpaceBarDrawable extends Drawable {
+        private final int mOpacity;
+        private final Paint mPaint = new Paint();
+        private ColorFilter mFilter;
 
-        // If application locales are explicitly selected.
-        if (mLocale != null) {
-            final Paint paint = new Paint();
-            paint.setAlpha(opacity);
+        SpaceBarDrawable(int opacity) {
+            mOpacity = opacity;
+        }
+
+        @Override public int getIntrinsicWidth() { return mSpaceKey.width; }
+        @Override public int getIntrinsicHeight() { return mSpaceIcon.getIntrinsicHeight(); }
+
+        @Override
+        public void draw(Canvas canvas) {
+            final Rect b = getBounds();
+            final int width = b.width();
+            final int height = b.height();
+            canvas.save();
+            canvas.translate(b.left, b.top);
+            final Paint paint = mPaint;
+            paint.reset();
+            paint.setAlpha(mOpacity);
             paint.setAntiAlias(true);
             paint.setTextAlign(Align.CENTER);
-
-            final boolean allowVariableTextSize = true;
+            paint.setColorFilter(mFilter);
             Locale locale = mLanguageSwitcher.getInputLocale();
-            //Log.i("PCKeyboard", "input locale: " + locale);
             final String language = layoutSpaceBar(paint, locale,
                     mButtonArrowLeftIcon, mButtonArrowRightIcon, width, height,
-                    getTextSizeFromTheme(android.R.style.TextAppearance_Small, 14),
-                    allowVariableTextSize);
+                    getTextSizeFromTheme(android.R.style.TextAppearance_Small, 14), true);
 
             // Draw language text with shadow
             final int shadowColor = mRes.getColor(R.color.latinkeyboard_bar_language_shadow_white);
             final float baseline = height * SPACEBAR_LANGUAGE_BASELINE;
             final float descent = paint.descent();
             paint.setColor(shadowColor);
+            paint.setAlpha(Color.alpha(shadowColor) * mOpacity / 255);
             canvas.drawText(language, width / 2, baseline - descent - 1, paint);
-            paint.setColor(mRes.getColor(R.color.latinkeyboard_dim_color_white));
-
+            final int textColor = mRes.getColor(R.color.latinkeyboard_dim_color_white);
+            paint.setColor(textColor);
+            paint.setAlpha(Color.alpha(textColor) * mOpacity / 255);
             canvas.drawText(language, width / 2, baseline - descent, paint);
 
             // Put arrows that are already layed out on either side of the text
             if (mLanguageSwitcher.getLocaleCount() > 1) {
+                mButtonArrowLeftIcon.setColorFilter(mFilter);
+                mButtonArrowRightIcon.setColorFilter(mFilter);
                 mButtonArrowLeftIcon.draw(canvas);
                 mButtonArrowRightIcon.draw(canvas);
             }
+
+            // Draw the spacebar icon at the bottom
+            final int iconWidth = mSpaceIcon.getIntrinsicWidth();
+            final int iconHeight = mSpaceIcon.getIntrinsicHeight();
+            int x = (width - iconWidth) / 2;
+            int y = height - iconHeight;
+            mSpaceIcon.setBounds(x, y, x + iconWidth, y + iconHeight);
+            mSpaceIcon.setColorFilter(mFilter);
+            mSpaceIcon.draw(canvas);
+            canvas.restore();
         }
 
-        // Draw the spacebar icon at the bottom
-        final int iconWidth = mSpaceIcon.getIntrinsicWidth();
-        final int iconHeight = mSpaceIcon.getIntrinsicHeight();
-        int x = (width - iconWidth) / 2;
-        int y = height - iconHeight;
-        mSpaceIcon.setBounds(x, y, x + iconWidth, y + iconHeight);
-        mSpaceIcon.draw(canvas);
-        return buffer;
+        @Override
+        public void setAlpha(int alpha) {
+            // drawn at its own opacity
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter filter) {
+            mFilter = filter;
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
+        }
     }
 
     private int getSpacePreviewWidth() {

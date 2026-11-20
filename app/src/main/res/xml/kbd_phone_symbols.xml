@@ -63,7 +63,7 @@
     <Row>
         <Key
             android:codes="42"
-            android:keyIcon="@drawable/sym_keyboard_numstar"
+            android:keyLabel="*"
             android:keyEdgeFlags="left" />
         <!-- Wait is a semicolon. -->
         <Key
@@ -71,7 +71,7 @@
             android:keyLabel="Wait" />
         <Key
             android:codes="35"
-            android:keyIcon="@drawable/sym_keyboard_numpound" />
+            android:keyLabel="#" />
         <Key
             android:keyLabel="."
             android:keyWidth="20%p"

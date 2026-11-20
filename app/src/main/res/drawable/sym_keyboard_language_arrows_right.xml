@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glyph drawn for this keyboard (Apache License 2.0, as the rest of the project).
+     White: the keyboard tints key icons in the theme's label colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="19.33dp"
+    android:viewportWidth="16"
+    android:viewportHeight="19.33"
+    android:alpha="0.8">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M8,7.3 L8,15.3 L14,11.3 Z" />
+</vector>

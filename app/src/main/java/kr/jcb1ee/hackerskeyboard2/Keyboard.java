@@ -260,6 +260,8 @@ public class Keyboard {
         public CharSequence label;
         public CharSequence shiftLabel;
         public CharSequence capsLabel;
+        /** Small text under the label (a phone keypad's letters), or null. */
+        public CharSequence subLabel;
 
         /** Icon to display instead of a label. Icon takes precedence over a label */
         public Drawable icon;
@@ -448,6 +450,7 @@ public class Keyboard {
             shiftLabel = a.getText(R.styleable.Keyboard_Key_shiftLabel);
             if (shiftLabel != null && shiftLabel.length() == 0) shiftLabel = null;
             capsLabel = a.getText(R.styleable.Keyboard_Key_capsLabel);
+            subLabel = a.getText(R.styleable.Keyboard_Key_subLabel);
             if (capsLabel != null && capsLabel.length() == 0) capsLabel = null;
             text = a.getText(R.styleable.Keyboard_Key_keyOutputText);
 

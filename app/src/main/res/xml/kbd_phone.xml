@@ -27,16 +27,21 @@
     <Row
         android:rowEdgeFlags="top"
     >
+        <!-- Digits are drawn as text with their letters under them (subLabel). 1 has no
+             letters: a blank one keeps its digit level with the others. -->
         <Key
             android:codes="49"
-            android:keyIcon="@drawable/sym_keyboard_num1"
+            android:keyLabel="1"
+            android:subLabel=" "
             android:keyEdgeFlags="left" />
         <Key
             android:codes="50"
-            android:keyIcon="@drawable/sym_keyboard_num2" />
+            android:keyLabel="2"
+            android:subLabel="ABC" />
         <Key
             android:codes="51"
-            android:keyIcon="@drawable/sym_keyboard_num3" />
+            android:keyLabel="3"
+            android:subLabel="DEF" />
         <Key
             android:codes="@integer/key_delete"
             android:keyIcon="@drawable/sym_keyboard_delete"
@@ -49,14 +54,17 @@
     <Row>
         <Key
             android:codes="52"
-            android:keyIcon="@drawable/sym_keyboard_num4"
+            android:keyLabel="4"
+            android:subLabel="GHI"
             android:keyEdgeFlags="left" />
         <Key
             android:codes="53"
-            android:keyIcon="@drawable/sym_keyboard_num5" />
+            android:keyLabel="5"
+            android:subLabel="JKL" />
         <Key
             android:codes="54"
-            android:keyIcon="@drawable/sym_keyboard_num6" />
+            android:keyLabel="6"
+            android:subLabel="MNO" />
         <Key
             android:keyLabel="-"
             android:keyWidth="20%p"
@@ -66,14 +74,17 @@
     <Row>
         <Key
             android:codes="55"
-            android:keyIcon="@drawable/sym_keyboard_num7"
+            android:keyLabel="7"
+            android:subLabel="PQRS"
             android:keyEdgeFlags="left" />
         <Key
             android:codes="56"
-            android:keyIcon="@drawable/sym_keyboard_num8" />
+            android:keyLabel="8"
+            android:subLabel="TUV" />
         <Key
             android:codes="57"
-            android:keyIcon="@drawable/sym_keyboard_num9" />
+            android:keyLabel="9"
+            android:subLabel="WXYZ" />
         <Key
             android:keyLabel="."
             android:keyWidth="20%p"
@@ -85,12 +96,12 @@
     >
         <Key
             android:codes="@integer/key_symbol"
-            android:keyIcon="@drawable/sym_keyboard_numalt"
-            android:iconPreview="@drawable/sym_keyboard_feedback_numalt"
+            android:keyLabel="*#("
             android:keyEdgeFlags="left" />
         <Key
             android:codes="48"
-            android:keyIcon="@drawable/sym_keyboard_num0" />
+            android:keyLabel="0"
+            android:subLabel="+" />
         <Key
             android:codes="@integer/key_space"
             android:keyIcon="@drawable/sym_keyboard_space"

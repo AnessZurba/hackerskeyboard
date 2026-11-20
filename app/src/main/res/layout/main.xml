@@ -35,7 +35,7 @@
             <ImageView
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/icon"
+                android:src="@mipmap/ic_launcher"
                 android:padding="8dp"
                 android:background="@drawable/setup_icon_border"
                 android:contentDescription="@string/english_ime_name" />

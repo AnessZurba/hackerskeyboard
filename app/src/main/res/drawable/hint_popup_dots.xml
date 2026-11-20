@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Glyph drawn for this keyboard (Apache License 2.0, as the rest of the project).
+     The three dots of the popup hint (see hint_popup). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="6.67dp"
+    android:height="1.33dp"
+    android:viewportWidth="10"
+    android:viewportHeight="2"
+    android:alpha="0.33">
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M1,1 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0 Z M5,1 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0 Z M9,1 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0 Z" />
+</vector>

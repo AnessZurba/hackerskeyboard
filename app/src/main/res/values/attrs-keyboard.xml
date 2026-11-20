@@ -81,6 +81,8 @@
         <attr name="capsLabel" format="string" />
         <!-- Corner hint for a key whose popup is a keyboard resource rather than characters. -->
         <attr name="hintLabel" format="string" />
+        <!-- Small text drawn under the label, as the letters under a phone keypad's digits. -->
+        <attr name="subLabel" format="string" />
         <!-- The icon to display on the key instead of the label. -->
         <attr name="keyIcon" format="reference" />
         <!-- Mode of the keyboard. If the mode doesn't match the

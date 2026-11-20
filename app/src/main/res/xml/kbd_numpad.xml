@@ -86,8 +86,7 @@
     >
         <Key
             latin:codes="@integer/key_symbol"
-            latin:keyIcon="@drawable/sym_keyboard_numalt"
-            latin:iconPreview="@drawable/sym_keyboard_feedback_numalt"
+            latin:keyLabel="*#("
             latin:keyEdgeFlags="left" />
         <Key
             latin:codes="48"

@@ -130,7 +130,7 @@ android.testOptions.unitTests.all {
     if (project.hasProperty('renderPress')) systemProperty 'renderPress', project.property('renderPress')
     if (project.hasProperty('renderMode')) systemProperty 'renderMode', project.property('renderMode')
     // Theme renders: RenderKeyboardTest, theme.CustomThemeScreenTest.
-    ['renderVariant', 'renderNight', 'renderLongPress', 'renderScreens'].each { p ->
+    ['renderVariant', 'renderNight', 'renderLongPress', 'renderPreview', 'renderScreens'].each { p ->
         if (project.hasProperty(p)) systemProperty p, project.property(p)
     }
     // -PupdateGolden rewrites golden files (KeyOutputTest) instead of comparing with them.

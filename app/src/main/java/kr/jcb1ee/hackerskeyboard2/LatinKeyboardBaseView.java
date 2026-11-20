@@ -34,6 +34,7 @@ import android.graphics.RectF;
 import android.graphics.Region.Op;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 
 import kr.jcb1ee.hackerskeyboard2.Keyboard.Key;
@@ -887,6 +888,13 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         canvas.drawText(accent, x, baseline, paint);
     }
 
+    /** The height of a capital letter in the paint's current size. */
+    private int capHeight(Paint paint) {
+        Rect bounds = new Rect();
+        paint.getTextBounds(KEY_LABEL_HEIGHT_REFERENCE_CHAR, 0, 1, bounds);
+        return bounds.height();
+    }
+
     private int getLabelHeight(Paint paint, int labelSize) {
         Integer labelHeightValue = mTextHeightCache.get(labelSize);
         if (labelHeightValue != null) {
@@ -1090,8 +1098,25 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
                 // Draw main key label
                 final int centerX = (key.width + padding.left - padding.right) / 2;
                 final int centerY = (key.height + padding.top - padding.bottom) / 2;
-                final float baseline = centerY
+                float baseline = centerY
                         + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
+                if (key.subLabel != null) {
+                    // A phone keypad's digit, with its letters in small type under it.
+                    // (Measured here, not with getLabelHeight: its cache is by size only.)
+                    paint.setTextSize(labelSize * 0.75f);
+                    final int digitHeight = capHeight(paint);
+                    paintHint.setTextSize(mKeyTextSize * 0.28f * mLabelScale);
+                    final int subHeight = capHeight(paintHint);
+                    final float gap = subHeight * 0.8f;
+                    baseline = centerY - (digitHeight + gap + subHeight) / 2f + digitHeight;
+                    final int colour = paint.getColor();
+                    paintHint.setTextAlign(Align.CENTER);
+                    paintHint.setColor((colour & 0x00FFFFFF) | (Color.alpha(colour) * 3 / 4) << 24);
+                    canvas.drawText(key.subLabel.toString(), centerX,
+                            baseline + gap + subHeight, paintHint);
+                    paintHint.setTextAlign(Align.RIGHT);
+                    paintHint.setColor(mKeyHintColor);
+                }
                 if (key.isDeadKey()) {
                     drawDeadKeyLabel(canvas, label, centerX, baseline, paint);
                 } else {
@@ -1242,7 +1267,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         Drawable icon = key.icon;
         if (icon != null && !shouldDrawLabelAndIcon(key)) {
             mPreviewText.setCompoundDrawables(null, null, null,
-                    key.iconPreview != null ? key.iconPreview : icon);
+                    previewIcon(key.iconPreview != null ? key.iconPreview : icon));
             mPreviewText.setText(null);
         } else {
             mPreviewText.setCompoundDrawables(null, null, null, null);
@@ -1283,7 +1308,7 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         // Retrieve and cache the popup keyboard if any.
         boolean hasPopup = (getLongPressKeyboard(key) != null);
         // Set background manually, the StateListDrawable doesn't work.
-        mPreviewText.setBackgroundDrawable(getResources().getDrawable(hasPopup ? R.drawable.keyboard_key_feedback_more_background : R.drawable.keyboard_key_feedback_background));
+        setPreviewBackground(hasPopup);
         popupPreviewX += mOffsetInWindow[0];
         popupPreviewY += mOffsetInWindow[1];
 
@@ -1310,6 +1335,50 @@ public class LatinKeyboardBaseView extends View implements PointerTracker.UIProx
         // Record popup preview position to display mini-keyboard later at the same positon
         mPopupPreviewDisplayedY = popupPreviewY;
         mPreviewText.setVisibility(VISIBLE);
+    }
+
+    /**
+     * The preview bubble's background: the theme's popup panel (the layout's plain bubble
+     * without a theme), with dots along its bottom when the key has a long-press popup.
+     */
+    private void setPreviewBackground(boolean hasPopup) {
+        final float dp = getResources().getDisplayMetrics().density;
+        Drawable panel = mLook != null ? mLook.popupPanel()
+                : androidx.appcompat.content.res.AppCompatResources.getDrawable(getContext(),
+                        R.drawable.keyboard_key_feedback_background);
+        Drawable bubble = panel;
+        if (hasPopup) {
+            Drawable dots = androidx.appcompat.content.res.AppCompatResources.getDrawable(
+                    getContext(), R.drawable.hint_popup_dots).mutate();
+            dots.setTint(mLook != null ? mLook.labelColor(KeyKind.NORMAL) : 0xFFFFFFFF);
+            LayerDrawable layers = new LayerDrawable(new Drawable[] {panel, dots});
+            layers.setLayerGravity(1, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+            layers.setLayerSize(1, Math.round(13.33f * dp), Math.round(2.67f * dp));
+            layers.setLayerInsetBottom(1, Math.round(5 * dp));
+            bubble = layers;
+        }
+        mPreviewText.setBackground(bubble);
+        mPreviewText.setPadding(Math.round(6 * dp), Math.round(6 * dp), Math.round(6 * dp),
+                Math.round(10 * dp));
+        if (mLook != null) mPreviewText.setTextColor(mLook.labelColor(KeyKind.NORMAL));
+    }
+
+    /** A key's icon for the preview bubble, in the theme's label colour. */
+    private Drawable previewIcon(Drawable icon) {
+        if (mLook == null) return icon;
+        Drawable.ConstantState state = icon.getConstantState();
+        // A copy: the key's own icon is tinted while it is drawn, then the tint is cleared.
+        Drawable tinted = state != null ? state.newDrawable(getResources()).mutate() : icon;
+        if (tinted.getBounds().isEmpty()) {
+            Rect b = icon.getBounds();
+            if (b.isEmpty()) {
+                tinted.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+            } else {
+                tinted.setBounds(b);
+            }
+        }
+        tinted.setColorFilter(mLook.iconFilter(KeyKind.NORMAL));
+        return tinted;
     }
 
     /**
