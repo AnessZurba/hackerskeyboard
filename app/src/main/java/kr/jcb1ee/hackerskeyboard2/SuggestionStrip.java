@@ -36,12 +36,18 @@ import android.widget.TextView;
  * Up to three word suggestions in the toolbar row, in place of its buttons (Samsung style):
  * the best one in the middle, the next ones beside it, "⋯" at the start for more suggestions
  * (a panel over the keys) and an arrow at the end that brings the toolbar's buttons back.
- * Right-to-left words mirror the row. Colours come from the toolbar.
+ * Right-to-left words mirror the row. Colours come from the toolbar. A long press on a word
+ * can put a short prompt in the words' place ("Remove “word” from suggestions?  Remove")
+ * until the next words.
  */
 final class SuggestionStrip extends LinearLayout {
     /** What the strip's taps do. */
     interface Listener {
         void onSuggestionPicked(String word);
+
+        /** A word was long-pressed (to forget or save it). */
+        default void onSuggestionLongPressed(String word) {
+        }
 
         /** "⋯" (or, while the panel is open, its collapse arrow) was tapped. */
         default void onMoreToggled() {
@@ -62,6 +68,10 @@ final class SuggestionStrip extends LinearLayout {
     private final String[] mWords = new String[3];
     private final ImageView mMore;
     private final ImageView mArrow;
+    // The long-press prompt: a line of text and perhaps an action, in the words' place.
+    private final LinearLayout mPrompt;
+    private final TextView mPromptText, mPromptAction;
+    private Runnable mPromptRun;
     private boolean mExpanded;
     private boolean mMiddleIsCorrection;
     private boolean mRtl;
@@ -105,11 +115,46 @@ final class SuggestionStrip extends LinearLayout {
                 view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                 mListener.onSuggestionPicked(word);
             });
+            v.setOnLongClickListener(view -> {
+                String word = mWords[slotAt(position)];
+                if (word == null || mListener == null) return false;
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                mListener.onSuggestionLongPressed(word);
+                return true;
+            });
             mSlots[i] = v;
             LayoutParams lp = new LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
             lp.setMargins(dp(2), dp(3), dp(2), dp(3));
             addView(v, lp);
         }
+        mPrompt = new LinearLayout(context);
+        mPrompt.setOrientation(HORIZONTAL);
+        mPrompt.setGravity(Gravity.CENTER_VERTICAL);
+        mPromptText = new TextView(context);
+        mPromptText.setMaxLines(2);
+        mPromptText.setEllipsize(TextUtils.TruncateAt.END);
+        mPromptText.setGravity(Gravity.CENTER);
+        mPromptText.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
+        mPromptText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        mPromptText.setPadding(dp(8), 0, dp(8), 0);
+        mPromptText.setOnClickListener(v -> hidePrompt()); // tap the question: never mind
+        mPromptAction = new TextView(context);
+        mPromptAction.setMaxLines(1);
+        mPromptAction.setGravity(Gravity.CENTER);
+        mPromptAction.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        mPromptAction.setTypeface(Typeface.DEFAULT_BOLD);
+        mPromptAction.setPadding(dp(14), 0, dp(14), 0);
+        mPromptAction.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            Runnable run = mPromptRun;
+            hidePrompt();
+            if (run != null) run.run();
+        });
+        mPrompt.addView(mPromptText, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
+        mPrompt.addView(mPromptAction, new LayoutParams(LayoutParams.WRAP_CONTENT,
+                LayoutParams.MATCH_PARENT));
+        mPrompt.setVisibility(GONE);
+        addView(mPrompt, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1));
         addView(mArrow, new LayoutParams(dp(40), LayoutParams.MATCH_PARENT));
         applyColours();
     }
@@ -137,6 +182,7 @@ final class SuggestionStrip extends LinearLayout {
      * fade and slide (none when the system's animations are off).
      */
     void setWords(String left, String middle, String right, boolean middleIsCorrection) {
+        hidePrompt();
         boolean had = hasWords();
         String[] before = new String[3];
         for (int i = 0; i < 3; i++) before[i] = mSlots[i].getText().toString();
@@ -193,6 +239,47 @@ final class SuggestionStrip extends LinearLayout {
 
     void clear() {
         setWords(null, null, null, false);
+    }
+
+    /**
+     * Shows {@code text} in the words' place, with {@code action} (null: none) running
+     * {@code onAction}, until the action or the text is tapped or the words change.
+     */
+    void showPrompt(String text, String action, Runnable onAction) {
+        mPromptText.setText(text);
+        mPromptText.setContentDescription(text);
+        mPromptAction.setText(action);
+        mPromptAction.setVisibility(action != null ? VISIBLE : GONE);
+        mPromptRun = onAction;
+        // Right-to-left: the action goes on the left, where reading ends.
+        mPrompt.removeView(mPromptAction);
+        mPrompt.addView(mPromptAction, mRtl ? 0 : 1, new LayoutParams(LayoutParams.WRAP_CONTENT,
+                LayoutParams.MATCH_PARENT));
+        for (TextView v : mSlots) v.setVisibility(GONE);
+        for (View d : mDividers) d.setVisibility(GONE);
+        mPrompt.setVisibility(VISIBLE);
+        applyColours();
+    }
+
+    void hidePrompt() {
+        if (mPrompt.getVisibility() != VISIBLE) return;
+        mPrompt.setVisibility(GONE);
+        mPromptRun = null;
+        for (TextView v : mSlots) v.setVisibility(VISIBLE);
+        applyColours();
+    }
+
+    boolean promptShown() {
+        return mPrompt.getVisibility() == VISIBLE;
+    }
+
+    /** The prompt's text and action (tests). */
+    TextView promptText() {
+        return mPromptText;
+    }
+
+    TextView promptAction() {
+        return mPromptAction;
     }
 
     boolean hasWords() {
@@ -277,8 +364,11 @@ final class SuggestionStrip extends LinearLayout {
         }
         for (View d : mDividers) {
             d.setBackgroundColor(blend(mBackground, mForeground, 0.3f));
-            d.setVisibility(hasWords() ? VISIBLE : INVISIBLE);
+            d.setVisibility(promptShown() ? GONE : hasWords() ? VISIBLE : INVISIBLE);
         }
+        mPromptText.setTextColor(blend(mBackground, mForeground, 0.85f));
+        mPromptAction.setTextColor(mAccent);
+        mPromptAction.setBackground(pressedBackground(false));
         mMore.setImageTintList(ColorStateList.valueOf(mExpanded ? mAccent
                 : blend(mBackground, mForeground, 0.75f)));
         mArrow.setImageTintList(ColorStateList.valueOf(blend(mBackground, mForeground, 0.7f)));

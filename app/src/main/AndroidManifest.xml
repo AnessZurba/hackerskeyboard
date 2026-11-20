@@ -11,6 +11,10 @@
         <intent>
             <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
         </intent>
+        <!-- Android's personal dictionary (UserDictionary), read by suggest.PersonalDictionary:
+             since Android 6 its provider answers only the current keyboard and spell checker,
+             with no permission to ask for; this keeps the provider visible from Android 11. -->
+        <provider android:authorities="user_dictionary" />
     </queries>
 
     <application android:label="@string/english_ime_name"

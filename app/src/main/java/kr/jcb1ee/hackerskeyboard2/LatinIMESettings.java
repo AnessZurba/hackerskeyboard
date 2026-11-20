@@ -40,6 +40,8 @@ import androidx.preference.PreferenceGroup;
 public class LatinIMESettings extends AppCompatActivity {
 
     /* package */ static final String PREF_SETTINGS_KEY = "settings_key";
+    static final String PREF_FORGET_LEARNED = "forget_learned_words";
+    static final String PREF_PERSONAL_DICTIONARY = "personal_dictionary";
 
     @Override
     protected void onCreate(Bundle icicle) {
@@ -116,6 +118,27 @@ public class LatinIMESettings extends AppCompatActivity {
                 });
             }
 
+            Preference forget = findPreference(PREF_FORGET_LEARNED);
+            if (forget != null) {
+                forget.setOnPreferenceClickListener(p -> {
+                    confirmForgetLearnedWords();
+                    return true;
+                });
+            }
+            Preference personal = findPreference(PREF_PERSONAL_DICTIONARY);
+            if (personal != null) {
+                personal.setOnPreferenceClickListener(p -> {
+                    try {
+                        startActivity(new android.content.Intent(
+                                android.provider.Settings.ACTION_USER_DICTIONARY_SETTINGS));
+                    } catch (android.content.ActivityNotFoundException e) {
+                        Toast.makeText(requireContext(), R.string.personal_dictionary_missing,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                });
+            }
+
             // TODO(klausw): remove these when no longer needed
             mKeyboardModePortraitPreference = (ListPreference) findPreference("pref_keyboard_mode_portrait");
             mKeyboardModeLandscapePreference = (ListPreference) findPreference("pref_keyboard_mode_landscape");
@@ -159,6 +182,21 @@ public class LatinIMESettings extends AppCompatActivity {
             }
 
             mLabelVersion.setSummary(version);
+        }
+
+        /** "Forget learned words", after a confirmation: every language, saved words too. */
+        private void confirmForgetLearnedWords() {
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.title_forget_learned)
+                    .setMessage(R.string.forget_learned_confirm)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.forget_learned_button, (d, which) -> {
+                        android.content.Context app = requireContext().getApplicationContext();
+                        kr.jcb1ee.hackerskeyboard2.suggest.LearnedWords.forgetAll(app);
+                        Toast.makeText(app, R.string.toast_forget_learned, Toast.LENGTH_SHORT)
+                                .show();
+                    })
+                    .show();
         }
 
         private void updateAdaptiveClearSummary() {

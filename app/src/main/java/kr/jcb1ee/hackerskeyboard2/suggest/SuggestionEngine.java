@@ -14,7 +14,10 @@
 
 package kr.jcb1ee.hackerskeyboard2.suggest;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Word suggestions for one language: corrections and completions of the word being typed.
@@ -38,6 +41,15 @@ public interface SuggestionEngine {
     List<Suggestion> suggestions(String typed, int[] xs, int[] ys, String previousWord,
             KeyGeometry keys, int max);
 
+    /**
+     * Like {@link #suggestions(String, int[], int[], String, KeyGeometry, int)}, with the
+     * word before as {@link WordContext} (it steers the learned words).
+     */
+    default List<Suggestion> suggestionsAfter(String typed, int[] xs, int[] ys,
+            WordContext previous, KeyGeometry keys, int max) {
+        return suggestions(typed, xs, ys, previous != null ? previous.word : null, keys, max);
+    }
+
     /** Whether {@code word} is in the dictionary (as is, or lower-cased). */
     boolean isValidWord(String word);
 
@@ -49,4 +61,67 @@ public interface SuggestionEngine {
 
     /** Frees the dictionary. Later calls return nothing. */
     void close();
+
+    // ------------------------------------------------------------ the user's own words
+    // Optional: an engine without them suggests from its dictionary only.
+
+    /** Where a suggested word comes from, for the strip's long press. */
+    enum WordSource {
+        /** Not a word anywhere (as typed). */
+        NONE,
+        /** The main dictionary (perhaps also learned). */
+        DICTIONARY,
+        /** Learned from typing, or saved from the strip, only. */
+        LEARNED,
+        /** Android's personal dictionary (perhaps also learned). */
+        PERSONAL_DICTIONARY
+    }
+
+    /**
+     * Uses (and from now on learns into) the learned words in {@code dir}, the language's
+     * directory in the app's private files. Does IO: call it off the main thread.
+     */
+    default void attachLearnedWords(File dir) {
+    }
+
+    /** The words of Android's personal dictionary for this language, word to probability. */
+    default void setPersonalWords(Map<String, Integer> words) {
+    }
+
+    /**
+     * The words that followed {@code previous} in the user's typing, most likely first
+     * (next-word suggestions), at most {@code max}.
+     */
+    default List<Suggestion> predictions(WordContext previous, int max) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Learns that {@code word} was typed (committed) after {@code previous}.
+     * {@code capitalizedForSentence}: its capital first letter may be the automatic one at
+     * the start of a sentence.
+     */
+    default void learn(WordContext previous, String word, boolean capitalizedForSentence) {
+    }
+
+    /** Forgets that {@code word} followed {@code previous} (a reverted auto-correction). */
+    default void unlearn(WordContext previous, String word, boolean capitalizedForSentence) {
+    }
+
+    /** Saves {@code word} for good (tapped in the strip as typed). */
+    default void save(WordContext previous, String word, boolean capitalizedForSentence) {
+    }
+
+    /** Forgets a learned or saved word; false if it was neither. */
+    default boolean forget(String word) {
+        return false;
+    }
+
+    default WordSource source(String word) {
+        return isValidWord(word) ? WordSource.DICTIONARY : WordSource.NONE;
+    }
+
+    /** Writes what was learned to its files. */
+    default void flushLearnedWords() {
+    }
 }

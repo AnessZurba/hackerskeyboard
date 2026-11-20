@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +32,13 @@ import java.util.Set;
  * {@link SuggestionEngine} on the AOSP LatinIME decoder (libjni_latinime) and an AOSP-format
  * main dictionary (assets/dicts/main_LANG.dict, stored uncompressed and mapped in place, or
  * one the user imported into files/dicts, see {@link DictionaryFiles}).
+ *
+ * <p>Two more dictionaries join it, as in AOSP's DictionaryFacilitator, each searched by the
+ * same decoder and the results merged by score: the personal one (Android's personal
+ * dictionary and the words saved from the strip; an updatable dictionary held in memory and
+ * rebuilt when they change) and the learned one ({@link LearnedWords}: AOSP's user history
+ * dictionary, which also gives the next-word suggestions). A word in either counts as a word:
+ * it is suggested and never auto-corrected.
  */
 public final class AospSuggestionEngine implements SuggestionEngine {
     /** Where the main dictionaries are, inside the assets. */
@@ -45,6 +53,11 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     private final String mLocale;
     private final LetterVariants mVariants;
     private BinaryDictionary mDict;
+    /** Android's personal dictionary (word to probability); with the saved words, on memory. */
+    private Map<String, Integer> mPersonalWords = Collections.emptyMap();
+    private BinaryDictionary mPersonal;
+    private int mPersonalBuiltFor = -1; // mLearned's generation the dictionary was built from
+    private LearnedWords mLearned;
     /** The keys the decoder was last given, and them as the decoder sees them. */
     private KeyGeometry mKeys, mGeometry;
     private ProximityInfo mProximity;
@@ -140,8 +153,18 @@ public final class AospSuggestionEngine implements SuggestionEngine {
     }
 
     @Override
-    public synchronized List<Suggestion> suggestions(String typed, int[] xs, int[] ys,
+    public List<Suggestion> suggestions(String typed, int[] xs, int[] ys,
             String previousWord, KeyGeometry keys, int max) {
+        return suggestionsAfter(typed, xs, ys, WordContext.of(previousWord, false), keys, max);
+    }
+
+    /**
+     * Like {@link #suggestions(String, int[], int[], String, KeyGeometry, int)}; the word
+     * before steers only the learned words (the main dictionaries have no word pairs).
+     */
+    @Override
+    public synchronized List<Suggestion> suggestionsAfter(String typed, int[] xs, int[] ys,
+            WordContext previous, KeyGeometry keys, int max) {
         if (mDict == null || typed == null || typed.isEmpty() || max <= 0) {
             return Collections.emptyList();
         }
@@ -151,14 +174,26 @@ public final class AospSuggestionEngine implements SuggestionEngine {
         typed = input.text;
         int[] codePoints = typed.codePoints().toArray();
         List<Suggestion> raw = mDict.getSuggestions(codePoints, input.xs, input.ys, proximity,
-                previousWord, true /* block offensive words */);
+                null, true /* block offensive words */);
+        BinaryDictionary personal = personal();
+        if (personal != null || mLearned != null) {
+            raw = new ArrayList<>(raw);
+            if (personal != null) {
+                raw.addAll(personal.getSuggestions(codePoints, input.xs, input.ys, proximity,
+                        null, false));
+            }
+            if (mLearned != null) {
+                raw.addAll(mLearned.suggestions(codePoints, input.xs, input.ys, proximity,
+                        contextWord(previous)));
+            }
+        }
         // Native results come sorted; keep it explicit (stable for equal scores).
         List<Suggestion> sorted = new ArrayList<>(raw);
         sorted.sort((a, b) -> Integer.compare(b.score, a.score));
         CaseShape shape = CaseShape.of(typed);
         // The decoder ignores case, so "creek" can come back as "Creek" first; when the word
-        // as typed is in the dictionary, its case variants become the typed word.
-        boolean typedIsWord = mDict.getProbability(typed) != BinaryDictionary.NOT_A_PROBABILITY;
+        // as typed is in a dictionary, its case variants become the typed word.
+        boolean typedIsWord = isExactlyAWord(typed);
         Set<String> seen = new LinkedHashSet<>();
         List<Suggestion> out = new ArrayList<>();
         for (Suggestion s : sorted) {
@@ -167,8 +202,31 @@ public final class AospSuggestionEngine implements SuggestionEngine {
             if (!seen.add(w)) continue;
             out.add(w.equals(s.word) ? s : s.withWord(w));
         }
-        if (typedIsWord) preferVariantSpelling(typed, out);
+        if (typedIsWord) {
+            if (mDict.getProbability(typed) != BinaryDictionary.NOT_A_PROBABILITY) {
+                preferVariantSpelling(typed, out);
+            } else {
+                typedFirst(typed, out);
+            }
+        }
         return out.size() > max ? new ArrayList<>(out.subList(0, max)) : out;
+    }
+
+    /**
+     * The user's own word typed exactly goes first: a learned word's probability comes from
+     * how often it was typed among everything learned, often far below the main
+     * dictionary's near misses ("Zanzibarr", typed on purpose, before "Zanzibar").
+     */
+    private static void typedFirst(String typed, List<Suggestion> out) {
+        for (int i = 0; i < out.size(); i++) {
+            if (out.get(i).word.equals(typed)) {
+                if (i > 0) out.add(0, out.remove(i));
+                return;
+            }
+        }
+        int score = out.isEmpty() ? 0 : out.get(0).score;
+        out.add(0, new Suggestion(typed, score,
+                Suggestion.KIND_CORRECTION | Suggestion.FLAG_EXACT_MATCH));
     }
 
     /**
@@ -198,10 +256,184 @@ public final class AospSuggestionEngine implements SuggestionEngine {
         if (mDict == null || word == null) return false;
         word = mVariants.strip(word);
         if (word.isEmpty()) return false;
-        if (mDict.getProbability(word) != BinaryDictionary.NOT_A_PROBABILITY) return true;
+        if (isExactlyAWord(word)) return true;
         String lower = word.toLowerCase(localeObject());
-        return !lower.equals(word)
-                && mDict.getProbability(lower) != BinaryDictionary.NOT_A_PROBABILITY;
+        return !lower.equals(word) && isExactlyAWord(lower);
+    }
+
+    /** Whether {@code word}, exactly so, is in a dictionary or learned. */
+    private boolean isExactlyAWord(String word) {
+        return isWordElsewhere(word) || (mLearned != null && mLearned.contains(word));
+    }
+
+    /** Whether {@code word}, exactly so, is in the main or the personal dictionary. */
+    private boolean isWordElsewhere(String word) {
+        if (mDict.getProbability(word) != BinaryDictionary.NOT_A_PROBABILITY) return true;
+        return mPersonalWords.containsKey(word)
+                || (mLearned != null && mLearned.isSaved(word));
+    }
+
+    // ---------------------------------------------------------------- the user's words
+
+    @Override
+    public synchronized void attachLearnedWords(File dir) {
+        if (mDict == null || mLearned != null) return;
+        mLearned = LearnedWords.acquire(dir, mLocale);
+        mPersonalBuiltFor = -1;
+    }
+
+    @Override
+    public synchronized void setPersonalWords(Map<String, Integer> words) {
+        mPersonalWords = new HashMap<>(words);
+        mPersonalBuiltFor = -1;
+    }
+
+    /**
+     * The personal dictionary, rebuilt when Android's personal dictionary or the saved words
+     * changed (a few hundred words take a millisecond or two); null when both are empty.
+     */
+    private BinaryDictionary personal() {
+        int generation = mLearned != null ? mLearned.generation() : 0;
+        if (generation == mPersonalBuiltFor) return mPersonal;
+        mPersonalBuiltFor = generation;
+        if (mPersonal != null) mPersonal.close();
+        mPersonal = null;
+        Map<String, Integer> words = new HashMap<>(mPersonalWords);
+        if (mLearned != null) {
+            for (String w : mLearned.saved()) {
+                if (!words.containsKey(w)) {
+                    words.put(w, PersonalDictionary.DECODER_DEFAULT_FREQUENCY);
+                }
+            }
+        }
+        if (words.isEmpty()) return null;
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("dictionary", "user:" + mLocale.toLowerCase(Locale.ROOT));
+        attributes.put("locale", mLocale);
+        attributes.put("version", String.valueOf(LearnedWords.now()));
+        BinaryDictionary d = BinaryDictionary.createInMemory(mLocale, attributes);
+        if (!d.isValid()) {
+            d.close();
+            return null;
+        }
+        for (Map.Entry<String, Integer> e : words.entrySet()) {
+            d.addUnigram(mVariants.strip(e.getKey()), e.getValue());
+        }
+        mPersonal = d;
+        return d;
+    }
+
+    @Override
+    public synchronized List<Suggestion> predictions(WordContext previous, int max) {
+        if (mDict == null || mLearned == null || previous == null || !previous.hasWord()
+                || max <= 0) {
+            return Collections.emptyList();
+        }
+        List<Suggestion> raw = mLearned.predictions(contextWord(previous), proximityFor(mKeys));
+        List<Suggestion> sorted = new ArrayList<>(raw);
+        sorted.sort((a, b) -> Integer.compare(b.score, a.score));
+        Set<String> seen = new LinkedHashSet<>();
+        List<Suggestion> out = new ArrayList<>();
+        for (Suggestion s : sorted) {
+            if (seen.add(s.word)) out.add(s);
+            if (out.size() == max) break;
+        }
+        return out;
+    }
+
+    @Override
+    public synchronized void learn(WordContext previous, String word,
+            boolean capitalizedForSentence) {
+        String w = learnable(word, capitalizedForSentence);
+        if (w == null) return;
+        mLearned.learn(contextWord(previous), w, isWordElsewhere(w), LearnedWords.now());
+    }
+
+    @Override
+    public synchronized void unlearn(WordContext previous, String word,
+            boolean capitalizedForSentence) {
+        String w = learnable(word, capitalizedForSentence);
+        String before = contextWord(previous);
+        if (w == null || before == null) return;
+        mLearned.unlearn(before, w);
+    }
+
+    @Override
+    public synchronized void save(WordContext previous, String word,
+            boolean capitalizedForSentence) {
+        String w = learnable(word, capitalizedForSentence);
+        if (w == null) return;
+        mLearned.save(contextWord(previous), w, LearnedWords.now());
+    }
+
+    @Override
+    public synchronized boolean forget(String word) {
+        if (mLearned == null || word == null) return false;
+        return mLearned.forget(mVariants.strip(word), localeObject());
+    }
+
+    @Override
+    public synchronized WordSource source(String word) {
+        if (mDict == null || word == null) return WordSource.NONE;
+        word = mVariants.strip(word);
+        if (word.isEmpty()) return WordSource.NONE;
+        String lower = word.toLowerCase(localeObject());
+        if (mPersonalWords.containsKey(word) || mPersonalWords.containsKey(lower)) {
+            return WordSource.PERSONAL_DICTIONARY;
+        }
+        if (mDict.getProbability(word) != BinaryDictionary.NOT_A_PROBABILITY
+                || mDict.getProbability(lower) != BinaryDictionary.NOT_A_PROBABILITY) {
+            return WordSource.DICTIONARY;
+        }
+        if (mLearned != null && (mLearned.contains(word) || mLearned.contains(lower))) {
+            return WordSource.LEARNED;
+        }
+        return WordSource.NONE;
+    }
+
+    @Override
+    public synchronized void flushLearnedWords() {
+        if (mLearned != null) mLearned.flush();
+    }
+
+    /**
+     * The form a committed word is learned in (null: not learned): niqqud and harakat
+     * dropped; a capital that may be the automatic one at the start of a sentence made lower
+     * case unless only the capitalised word is known (AOSP's rule); never words with digits
+     * or without letters, all capitals ("OK", shouting) or longer than the decoder takes.
+     */
+    private String learnable(String word, boolean capitalizedForSentence) {
+        if (mDict == null || mLearned == null || word == null) return null;
+        String w = mVariants.strip(word.trim());
+        if (w.isEmpty() || w.length() > BinaryDictionary.MAX_WORD_LENGTH) return null;
+        int letters = 0, upper = 0;
+        for (int i = 0; i < w.length(); ) {
+            int c = w.codePointAt(i);
+            if (Character.isDigit(c) || Character.isWhitespace(c)) return null;
+            if (Character.isLetter(c)) {
+                letters++;
+                if (Character.isUpperCase(c)) upper++;
+            }
+            i += Character.charCount(c);
+        }
+        if (letters == 0 || (letters > 1 && upper == letters)) return null;
+        return sentenceCase(w, capitalizedForSentence);
+    }
+
+    /** The word as the learned dictionary keys it (see {@link #learnable}). */
+    private String sentenceCase(String w, boolean capitalizedForSentence) {
+        if (!capitalizedForSentence || !Character.isUpperCase(w.codePointAt(0))) return w;
+        String lower = w.toLowerCase(localeObject());
+        if (lower.equals(w)) return w;
+        if (isExactlyAWord(w) && !isExactlyAWord(lower)) return w; // "Paris", a saved name
+        return lower;
+    }
+
+    /** The previous word as the learned dictionary keys it; null none, "" sentence start. */
+    private String contextWord(WordContext previous) {
+        if (previous == null) return null;
+        if (!previous.hasWord()) return previous.word;
+        return sentenceCase(mVariants.strip(previous.word), previous.startedSentence);
     }
 
     @Override
@@ -213,6 +445,14 @@ public final class AospSuggestionEngine implements SuggestionEngine {
 
     @Override
     public synchronized void close() {
+        if (mLearned != null) {
+            mLearned.release();
+            mLearned = null;
+        }
+        if (mPersonal != null) {
+            mPersonal.close();
+            mPersonal = null;
+        }
         if (mProximity != null) {
             mProximity.close();
             mProximity = null;

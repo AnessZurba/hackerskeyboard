@@ -54,15 +54,30 @@ public final class SuggestionQueue {
         public final boolean typedIsWord;
         /** The engine's confidence in the first suggestion as a correction of {@code typed}. */
         public final float confidence;
+        /**
+         * Next-word suggestions (nothing typed yet, {@code typed} is ""): the words that
+         * followed {@link #previous} in the user's typing.
+         */
+        public final boolean prediction;
+        /** The word before, as the request gave it. */
+        public final WordContext previous;
         final long generation;
 
         Result(long generation, String typed, List<Suggestion> suggestions, boolean typedIsWord,
                 float confidence) {
+            this(generation, typed, suggestions, typedIsWord, confidence, false,
+                    WordContext.NONE);
+        }
+
+        Result(long generation, String typed, List<Suggestion> suggestions, boolean typedIsWord,
+                float confidence, boolean prediction, WordContext previous) {
             this.generation = generation;
             this.typed = typed;
             this.suggestions = Collections.unmodifiableList(suggestions);
             this.typedIsWord = typedIsWord;
             this.confidence = confidence;
+            this.prediction = prediction;
+            this.previous = previous;
         }
 
         /**
@@ -72,7 +87,9 @@ public final class SuggestionQueue {
          * suggestion reaches {@code threshold}.
          */
         public String autoCorrection(float threshold) {
-            if (typedIsWord || typed.length() < 2 || suggestions.isEmpty()) return null;
+            if (prediction || typedIsWord || typed.length() < 2 || suggestions.isEmpty()) {
+                return null;
+            }
             for (int i = 0; i < typed.length(); i++) {
                 if (Character.isDigit(typed.charAt(i))) return null;
             }
@@ -116,16 +133,44 @@ public final class SuggestionQueue {
      */
     public void request(final String typed, final int[] xs, final int[] ys,
             final KeyGeometry keys, final int max) {
+        request(typed, xs, ys, WordContext.NONE, keys, max);
+    }
+
+    /**
+     * Like {@link #request(String, int[], int[], KeyGeometry, int)}, {@code previous} being
+     * the word before (it steers the learned words).
+     */
+    public void request(final String typed, final int[] xs, final int[] ys,
+            final WordContext previous, final KeyGeometry keys, final int max) {
+        submit(generation -> {
+            List<Suggestion> s = mEngine.suggestionsAfter(typed, xs, ys, previous, keys, max);
+            boolean valid = mEngine.isValidWord(typed);
+            float confidence = s.isEmpty() ? 0f
+                    : mEngine.autoCorrectionConfidence(typed, s.get(0));
+            return new Result(generation, typed, s, valid, confidence, false, previous);
+        });
+    }
+
+    /**
+     * Asks for next-word suggestions after {@code previous} (nothing typed yet); the result
+     * arrives like a word's, with {@link Result#prediction} set.
+     */
+    public void requestPredictions(final WordContext previous, final int max) {
+        submit(generation -> new Result(generation, "", mEngine.predictions(previous, max),
+                false, 0f, true, previous));
+    }
+
+    private interface Query {
+        Result run(long generation);
+    }
+
+    private void submit(Query query) {
         if (mClosed) return;
         final long generation = mGeneration.incrementAndGet();
         try {
             mLatest = mWorker.submit(() -> {
                 if (generation != mGeneration.get()) return null; // superseded while queued
-                List<Suggestion> s = mEngine.suggestions(typed, xs, ys, null, keys, max);
-                boolean valid = mEngine.isValidWord(typed);
-                float confidence = s.isEmpty() ? 0f
-                        : mEngine.autoCorrectionConfidence(typed, s.get(0));
-                final Result result = new Result(generation, typed, s, valid, confidence);
+                final Result result = query.run(generation);
                 mMain.execute(() -> {
                     if (!mClosed && generation == mGeneration.get()) {
                         mListener.onSuggestions(result);
@@ -136,6 +181,24 @@ public final class SuggestionQueue {
         } catch (RejectedExecutionException e) {
             mLatest = null;
         }
+    }
+
+    /**
+     * Runs {@code work} on the engine's thread, after what is queued (learning, the personal
+     * dictionary's words). Never dropped, unlike requests; nothing after {@link #close}.
+     */
+    public void post(final java.util.function.Consumer<SuggestionEngine> work) {
+        if (mClosed) return;
+        try {
+            mWorker.execute(() -> work.accept(mEngine));
+        } catch (RejectedExecutionException e) {
+            // closing
+        }
+    }
+
+    /** Where {@code word} comes from (on the caller's thread: it may wait for a query). */
+    public SuggestionEngine.WordSource source(String word) {
+        return mClosed ? SuggestionEngine.WordSource.NONE : mEngine.source(word);
     }
 
     /** Drops any pending request and result. */
@@ -176,7 +239,10 @@ public final class SuggestionQueue {
         }
     }
 
-    /** Stops the thread and closes the engine (after any query that is running). */
+    /**
+     * Stops the thread and closes the engine (after any query that is running, and the work
+     * posted before), which writes out what it learned.
+     */
     public void close() {
         if (mClosed) return;
         mClosed = true;

@@ -263,6 +263,38 @@
             android:dependency="word_suggestions"
             />
 
+        <CheckBoxPreference
+            android:key="learn_words"
+            android:title="@string/title_learn_words"
+            android:summary="@string/summary_learn_words"
+            android:persistent="true"
+            android:defaultValue="true"
+            android:dependency="word_suggestions"
+            />
+
+        <CheckBoxPreference
+            android:key="next_word_suggestions"
+            android:title="@string/title_next_word"
+            android:summary="@string/summary_next_word"
+            android:persistent="true"
+            android:defaultValue="true"
+            android:dependency="word_suggestions"
+            />
+
+        <Preference
+            android:key="forget_learned_words"
+            android:title="@string/title_forget_learned"
+            android:summary="@string/summary_forget_learned"
+            android:persistent="false"
+            />
+
+        <Preference
+            android:key="personal_dictionary"
+            android:title="@string/title_personal_dictionary"
+            android:summary="@string/summary_personal_dictionary"
+            android:persistent="false"
+            />
+
         <Preference
             android:key="dictionaries"
             android:title="@string/title_dictionaries"

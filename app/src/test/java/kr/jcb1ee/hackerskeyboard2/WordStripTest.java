@@ -83,6 +83,9 @@ public class WordStripTest {
     @After
     public void tearDown() {
         stop();
+        // What the tests typed is learned (in the test app's files): none of it carries over.
+        kr.jcb1ee.hackerskeyboard2.suggest.LearnedWords.forgetAll(
+                ApplicationProvider.getApplicationContext());
         if (mToolbar != null && !mToolbar.isToolbarShown()) mToolbar.toggleToolbar();
         if (mToolbar != null) mToolbar.showChips(Collections.<View>emptyList());
         prefs().edit().remove(LatinIME.PREF_WORD_SUGGESTIONS)
@@ -482,7 +485,10 @@ public class WordStripTest {
                 type(String.valueOf(c));
             }
         }
-        return stripWords();
+        // The decoder's best three (the strip shows the typed non-word on the left).
+        List<String> best = mToolbar.allSuggestions();
+        best.remove(word);
+        return best.subList(0, Math.min(3, best.size()));
     }
 
     // ------------------------------------------------------------------ look
@@ -525,6 +531,13 @@ public class WordStripTest {
                 Arrays.asList(LatinIME.stripSlots("helo", s, "hello")));
         assertEquals(Arrays.asList(null, "qzx", null),
                 Arrays.asList(LatinIME.stripSlots("qzx", Collections.<Suggestion>emptyList(), null)));
+        // A typed word that is no word goes on the left (tap it to keep and save it).
+        assertEquals(Arrays.asList("helo", "hello", "help"),
+                Arrays.asList(LatinIME.stripSlots("helo", s, null, false)));
+        assertEquals(Arrays.asList("help", "hello", "helot"),
+                Arrays.asList(LatinIME.stripSlots("helo", s, null, true)));
+        assertEquals(Arrays.asList(null, "qzx", null), Arrays.asList(LatinIME.stripSlots("qzx",
+                Collections.<Suggestion>emptyList(), null, false)));
     }
 
     // ------------------------------------------------------------------ Hebrew and Arabic

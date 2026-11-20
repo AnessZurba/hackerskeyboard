@@ -62,6 +62,29 @@
     <string name="summary_word_suggestions">Suggest words in the toolbar row while typing</string>
     <string name="title_auto_correction">Auto-correction</string>
     <string name="summary_auto_correction">Space and punctuation correct a mistyped word when the suggestion is clear; Backspace undoes it</string>
+    <!-- Settings: learning from typing (kept on the device, never in password or private fields) -->
+    <string name="title_learn_words">Learn new words</string>
+    <string name="summary_learn_words">Remember words you type that are not in the dictionary, and which words you type after which. Kept on this device; never in password, incognito or no-suggestion fields</string>
+    <string name="title_next_word">Next-word suggestions</string>
+    <string name="summary_next_word">After a word and a space, suggest the words you often type next</string>
+    <string name="title_forget_learned">Forget learned words</string>
+    <string name="summary_forget_learned">Delete the words and word pairs learned from your typing, and the words you saved, in every language</string>
+    <string name="forget_learned_confirm">Forget every learned and saved word? This can\'t be undone. Android\'s personal dictionary is not changed.</string>
+    <string name="forget_learned_button">Forget</string>
+    <string name="toast_forget_learned">Learned words forgotten</string>
+    <string name="title_personal_dictionary">Personal dictionary</string>
+    <string name="summary_personal_dictionary">Android\'s list of your own words: they are suggested and never auto-corrected</string>
+    <string name="personal_dictionary_missing">This device has no personal dictionary settings</string>
+    <!-- The suggestion strip: saving, forgetting (long press) -->
+    <string name="suggestion_saved">Saved</string>
+    <string name="suggestion_forgotten">Removed</string>
+    <string name="suggestion_forget_prompt">Remove “%s” from suggestions?</string>
+    <string name="suggestion_forget">Remove</string>
+    <string name="suggestion_save_prompt">Save “%s” to suggestions?</string>
+    <string name="suggestion_save">Save</string>
+    <string name="suggestion_in_personal_dictionary">“%s” is in Android\'s personal dictionary</string>
+    <string name="suggestion_open_personal_dictionary">Open</string>
+    <string name="suggestion_in_dictionary">“%s” is in the dictionary</string>
 	
     
 	

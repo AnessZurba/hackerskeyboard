@@ -7,6 +7,9 @@
         <exclude domain="file" path="clipboard_history.json" />
         <exclude domain="file" path="clip_images/" />
         <exclude domain="file" path="adaptive_user_words.tsv" />
+        <exclude domain="file" path="learning/" />
+        <exclude domain="database" path="auto_dict.db" />
+        <exclude domain="database" path="userbigram_dict.db" />
         <exclude domain="file" path="last_crash.txt" />
         <exclude domain="sharedpref" path="toolbar_private.xml" />
         <exclude domain="sharedpref" path="clipboard_state.xml" />
@@ -15,6 +18,9 @@
         <exclude domain="file" path="clipboard_history.json" />
         <exclude domain="file" path="clip_images/" />
         <exclude domain="file" path="adaptive_user_words.tsv" />
+        <exclude domain="file" path="learning/" />
+        <exclude domain="database" path="auto_dict.db" />
+        <exclude domain="database" path="userbigram_dict.db" />
         <exclude domain="file" path="last_crash.txt" />
         <exclude domain="sharedpref" path="toolbar_private.xml" />
         <exclude domain="sharedpref" path="clipboard_state.xml" />

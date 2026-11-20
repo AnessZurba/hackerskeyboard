@@ -154,6 +154,48 @@ public class SuggestionQualityTest {
         assertTrue(rate(s.get(Error.TRANSPOSITION), false) > 0.60);
     }
 
+    /**
+     * English again with a full set of the user's own words next to the main dictionary
+     * (stage 4): 300 personal-dictionary words, 2000 learned words and 3000 learned pairs,
+     * so the latency with the three dictionaries can be compared with {@link #english}'s.
+     */
+    @Test
+    public void englishWithUserWords() throws IOException {
+        Map<Error, Score> s = measure("en_US", "en",
+                new File("src/main/assets/wordlists/en.txt"), "main_en.dict + user words",
+                new int[0][], "suggestion-quality-userwords.txt", false,
+                Integer.getInteger("suggestWords", 1000), false, true);
+        assertTrue(rate(s.get(Error.NONE), true) > 0.85);
+        assertTrue(rate(s.get(Error.NEIGHBOUR), false) > 0.55);
+    }
+
+    /** Fills {@code engine}'s personal and learned words with made-up ones (deterministic). */
+    private static void addUserWords(AospSuggestionEngine engine, File dir) {
+        engine.attachLearnedWords(dir);
+        Random random = new Random(4);
+        Map<String, Integer> personal = new HashMap<>();
+        while (personal.size() < 300) personal.put(madeUp(random), 160);
+        engine.setPersonalWords(personal);
+        List<String> learned = new ArrayList<>();
+        while (learned.size() < 2000) learned.add(madeUp(random));
+        for (String w : learned) {
+            engine.learn(WordContext.NONE, w, false);
+            engine.learn(WordContext.NONE, w, false);
+        }
+        for (int i = 0; i < 3000; i++) {
+            String a = learned.get(random.nextInt(learned.size()));
+            String b = learned.get(random.nextInt(learned.size()));
+            engine.learn(WordContext.of(a, false), b, false);
+        }
+    }
+
+    private static String madeUp(Random random) {
+        StringBuilder b = new StringBuilder();
+        int n = 4 + random.nextInt(7);
+        for (int i = 0; i < n; i++) b.append((char) ('a' + random.nextInt(26)));
+        return b.toString();
+    }
+
     @Test
     public void hebrew() throws IOException {
         Map<Error, Score> s = measure("iw", "iw", "he.txt", "main_iw.dict", new int[][] {
@@ -217,7 +259,14 @@ public class SuggestionQualityTest {
             String dictName, int[][] variants, String reportName) throws IOException {
         return measure(locale, layoutLocale, new File("src/main/assets/wordlists/" + wordlist),
                 dictName, variants, reportName, false, Integer.getInteger("suggestWords", 1000),
-                false);
+                false, false);
+    }
+
+    private Map<Error, Score> measure(String locale, String layoutLocale, File wordlist,
+            String dictName, int[][] variants, String reportName, boolean longPressOnBase,
+            int n, boolean digraphs) throws IOException {
+        return measure(locale, layoutLocale, wordlist, dictName, variants, reportName,
+                longPressOnBase, n, digraphs, false);
     }
 
     /**
@@ -226,8 +275,13 @@ public class SuggestionQualityTest {
      */
     private Map<Error, Score> measure(String locale, String layoutLocale, File wordlist,
             String dictName, int[][] variants, String reportName, boolean longPressOnBase,
-            int n, boolean digraphs) throws IOException {
+            int n, boolean digraphs, boolean userWords) throws IOException {
         AospSuggestionEngine engine = SuggestTestSupport.engine(locale);
+        File userDir = null;
+        if (userWords) {
+            userDir = Files.createTempDirectory("hk-userwords").toFile();
+            addUserWords(engine, new File(userDir, "en"));
+        }
         Layout layout = new Layout(layoutLocale, longPressOnBase);
         KeyGeometry keys = layout.keys;
         List<String> words = sampleWords(engine, layout, wordlist, n);
@@ -274,6 +328,7 @@ public class SuggestionQualityTest {
             if (score.n > 0) scores.put(error, score);
         }
         engine.close();
+        if (userDir != null) BinaryDictionary.deleteRecursively(userDir);
 
         StringBuilder report = new StringBuilder();
         report.append(String.format(Locale.ROOT, "AOSP decoder, %s, kbd_full (%s) at %dx%d px,"
