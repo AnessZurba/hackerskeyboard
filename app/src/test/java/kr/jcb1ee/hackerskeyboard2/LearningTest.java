@@ -568,7 +568,9 @@ public class LearningTest {
         mEdit.setSelection(0);
         SystemClockAdvance.by(1000);
         selectionChanged(before);
-        assertFalse("a cursor move ends them", mToolbar.suggestionsShown());
+        // (Now at "Good": its alternatives, if any, not the next words.)
+        assertEquals("Good", mIme.recorrectionWord());
+        assertFalse("a cursor move ends them", stripWords().contains("morning"));
     }
 
     @Test
@@ -614,6 +616,66 @@ public class LearningTest {
         type("زقطبونة زقطبونة زقطبو");
         assertTrue(stripWords().toString(), stripWords().contains("زقطبونة"));
         assertTrue(mToolbar.suggestionStrip().isRightToLeft());
+    }
+
+    // ------------------------------------------------------------------ re-correction
+
+    /** Puts the cursor at {@code at} as a tap in the text would (not the keyboard's doing). */
+    private void placeCursor(int at) {
+        int before = mEdit.getSelectionStart();
+        mEdit.setSelection(at);
+        SystemClockAdvance.by(1000);
+        selectionChanged(before);
+    }
+
+    @Test
+    public void tapAWordToSeeAlternativesAndReplaceIt() {
+        start(MULTI_LINE);
+        type("the helo world ");
+        assertEquals("The helo world |", field());
+        assertFalse(mToolbar.suggestionsShown());
+        placeCursor(6); // inside "helo"
+        assertEquals("helo", mIme.recorrectionWord());
+        assertTrue(mToolbar.suggestionsShown());
+        assertTrue(stripWords().toString(), stripWords().contains("hello"));
+        tapWord("hello");
+        assertEquals("The hello| world ", field());
+        assertNull(mIme.recorrectionWord());
+        assertFalse(mToolbar.suggestionsShown());
+        // Right after a word works too; a key typed ends it.
+        placeCursor(15); // after "world"
+        assertEquals("world", mIme.recorrectionWord());
+        type("s");
+        assertNull(mIme.recorrectionWord());
+        assertEquals("The hello worlds| ", field());
+    }
+
+    @Test
+    public void noAlternativesOutsideWordsOrNormalFields() {
+        start(MULTI_LINE);
+        type("the helo  world");
+        placeCursor(9); // between the two spaces
+        assertNull(mIme.recorrectionWord());
+        assertFalse(mToolbar.suggestionsShown());
+        start(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        mEdit.setText("the helo world");
+        placeCursor(6);
+        assertNull(mIme.recorrectionWord());
+        start(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        mEdit.setText("helo");
+        placeCursor(2);
+        assertNull(mIme.recorrectionWord());
+    }
+
+    @Test
+    public void hebrewRecorrection() {
+        startIn("iw", MULTI_LINE);
+        type("שלומ עולם ");
+        placeCursor(2);
+        assertEquals("שלומ", mIme.recorrectionWord());
+        assertTrue(mToolbar.suggestionStrip().isRightToLeft());
+        tapWord("שלום");
+        assertEquals("שלום| עולם ", field());
     }
 
     // ------------------------------------------------------------------ privacy

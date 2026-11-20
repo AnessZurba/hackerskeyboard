@@ -188,6 +188,10 @@ public class LatinIME extends InputMethodService implements
     private boolean mLastCommittedAutoCapitalized;
     // The next commit saves the word for good (the typed word tapped in the strip).
     private boolean mSaveNextCommit;
+    // Re-correction: a word the user put the cursor in (or right after), its place in the
+    // text, while the strip offers alternatives for it; null when none.
+    private String mRecorrectWord;
+    private int mRecorrectStart, mRecorrectEnd;
     // TODO move this state variable outside LatinIME
     private boolean mModCtrl;
     private boolean mModAlt;
@@ -795,6 +799,7 @@ public class LatinIME extends InputMethodService implements
         }
         mWordResult = null;
         mNextContext = null;
+        mRecorrectWord = null;
         if (mKeyboardSwitcher.getInputContainer() != null) {
             mKeyboardSwitcher.getInputContainer().clearSuggestions();
         }
@@ -857,6 +862,12 @@ public class LatinIME extends InputMethodService implements
             }
         }
         mJustAccepted = false;
+        if (!mPredicting && newSelStart == newSelEnd && now - mLastOwnEditTime > 300) {
+            offerRecorrection(newSelStart); // the user put the cursor somewhere
+        } else if (mRecorrectWord != null && (newSelStart != newSelEnd
+                || newSelStart < mRecorrectStart || newSelStart > mRecorrectEnd)) {
+            endRecorrection();
+        }
         postUpdateShiftKeyState();
 
         // Make a note of the cursor position
@@ -1506,11 +1517,18 @@ public class LatinIME extends InputMethodService implements
         if (mModCtrl && (primaryCode == 'z' || primaryCode == 'Z')) mHints.onUndoOtherwise(swipesUndo());
         mAdaptive.beforeKey(primaryCode);
         mContextAtKey = mNextContext;
-        if (!keepsNextWordContext(primaryCode)) mNextContext = null;
+        boolean recorrecting = mRecorrectWord != null;
+        if (!keepsNextWordContext(primaryCode)) {
+            mNextContext = null;
+            mRecorrectWord = null; // typing on: the alternatives go
+        }
         onKeyInternal(primaryCode, keyCodes, x, y);
-        // A key that ended the next-word suggestions without asking for new ones (a digit,
-        // a symbol, an arrow): they go.
-        if (mContextAtKey != null && mNextContext == null && !mPredicting) updateSuggestions();
+        // A key that ended the next-word suggestions or the re-correction without asking for
+        // new ones (a digit, a symbol, an arrow): they go.
+        if ((mContextAtKey != null || recorrecting) && mNextContext == null
+                && mRecorrectWord == null && !mPredicting) {
+            updateSuggestions();
+        }
         mContextAtKey = null;
         mAdaptive.afterKey(primaryCode);
         mLastOwnEditTime = SystemClock.uptimeMillis();
@@ -2778,6 +2796,9 @@ public class LatinIME extends InputMethodService implements
     private void updateWordStrip() {
         KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
         CharSequence typed = mWord.getTypedWord();
+        if (!mPredicting && mRecorrectWord != null && isPredictionOn() && wordStripAvailable()) {
+            return; // the alternatives stay until the cursor moves or a key is typed
+        }
         if (!mPredicting && nextWordsWanted()) {
             if (mWordResult != null && !mWordResult.prediction) mWordResult = null;
             // As for a word, the strip keeps what it shows until these arrive.
@@ -2820,6 +2841,10 @@ public class LatinIME extends InputMethodService implements
     private void onWordSuggestions(SuggestionQueue.Result r) {
         if (r.prediction) {
             onNextWords(r);
+            return;
+        }
+        if (!mPredicting && mRecorrectWord != null) {
+            onRecorrections(r);
             return;
         }
         CharSequence typed = mWord.getTypedWord();
@@ -2935,7 +2960,11 @@ public class LatinIME extends InputMethodService implements
         if (mWordQueue == null) return;
         SuggestionQueue.Result r = mWordResult;
         if (!mPredicting) {
-            if (r != null && r.prediction && nextWordsWanted()) pickNextWord(word);
+            if (mRecorrectWord != null) {
+                replaceRecorrected(word);
+            } else if (r != null && r.prediction && nextWordsWanted()) {
+                pickNextWord(word);
+            }
             return;
         }
         mLastOwnEditTime = SystemClock.uptimeMillis();
@@ -2972,6 +3001,110 @@ public class LatinIME extends InputMethodService implements
         updateWordStrip();
         updateShiftKeyState(getCurrentInputEditorInfo());
         ic.endBatchEdit();
+    }
+
+    // ---------------------------------------------------------------- re-correction
+
+    /** How far around the cursor a word to re-correct is looked for. */
+    private static final int RECORRECT_CHARS = 48;
+
+    /**
+     * The cursor was put in a word or right after it (not by the keyboard): its alternatives
+     * are asked for, to show in the strip. Only where suggestions are shown (normal text
+     * fields: never passwords, addresses, terminals or no-suggestion fields).
+     */
+    private void offerRecorrection(int cursor) {
+        String had = mRecorrectWord;
+        mRecorrectWord = null;
+        InputConnection ic = getCurrentInputConnection();
+        if (mWordQueue == null || ic == null || !isPredictionOn() || !wordStripAvailable()
+                || mModCtrl || mModAlt || mModMeta) {
+            if (had != null) updateSuggestions();
+            return;
+        }
+        CharSequence[] around = textAround(ic, RECORRECT_CHARS, RECORRECT_CHARS);
+        CharSequence before = around[0] != null ? around[0] : "";
+        CharSequence after = around[1] != null ? around[1] : "";
+        int left = 0, right = 0;
+        while (left < before.length() && isRecorrectable(before.charAt(before.length() - 1 - left))) left++;
+        while (right < after.length() && isRecorrectable(after.charAt(right))) right++;
+        String word = before.subSequence(before.length() - left, before.length()).toString()
+                + after.subSequence(0, right);
+        boolean letters = false, digits = false;
+        for (int i = 0; i < word.length(); i++) {
+            if (Character.isLetter(word.charAt(i))) letters = true;
+            if (Character.isDigit(word.charAt(i))) digits = true;
+        }
+        // Not a word, or maybe cut off at the edge of what the editor gave.
+        if (!letters || digits || left == before.length() && left == RECORRECT_CHARS
+                || right == after.length() && right == RECORRECT_CHARS) {
+            if (had != null) updateSuggestions();
+            return;
+        }
+        mRecorrectWord = word;
+        mRecorrectStart = cursor - left;
+        mRecorrectEnd = cursor + right;
+        mNextContext = null;
+        WordContext context = WordContext.fromTextBefore(
+                before.subSequence(0, before.length() - left));
+        mWordQueue.request(word, null, null, context, keyGeometry(), WORD_QUERY_SIZE);
+    }
+
+    /** Letters (and the marks and apostrophes inside words) make the word to re-correct. */
+    private boolean isRecorrectable(char c) {
+        if (Character.isLetterOrDigit(c)) return true;
+        int type = Character.getType(c);
+        if (type == Character.NON_SPACING_MARK || type == Character.COMBINING_SPACING_MARK) {
+            return true;
+        }
+        return (c == '\'' || c == '\u2019') && !isWordSeparator(c);
+    }
+
+    /** The alternatives for the word at the cursor: shown when there are any. */
+    private void onRecorrections(SuggestionQueue.Result r) {
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar == null || !r.typed.equals(mRecorrectWord)) return;
+        boolean others = false;
+        for (Suggestion s : r.suggestions) {
+            if (!s.word.equals(r.typed)) others = true;
+        }
+        if (!others) {
+            mRecorrectWord = null;
+            toolbar.clearSuggestions();
+            return;
+        }
+        mWordResult = r;
+        String[] slots = stripSlots(r.typed, r.suggestions, null, r.typedIsWord);
+        List<String> all = new ArrayList<>();
+        for (Suggestion s : r.suggestions) all.add(s.word);
+        toolbar.showSuggestions(slots[0], slots[1], slots[2], false, all);
+    }
+
+    /** An alternative picked: it takes the word's place; the cursor goes after it. */
+    private void replaceRecorrected(String word) {
+        InputConnection ic = getCurrentInputConnection();
+        String old = mRecorrectWord;
+        mRecorrectWord = null;
+        mWordResult = null;
+        if (ic != null && !word.equals(old)) {
+            mLastOwnEditTime = SystemClock.uptimeMillis();
+            ic.beginBatchEdit();
+            ic.setComposingRegion(mRecorrectStart, mRecorrectEnd);
+            ic.commitText(word, 1);
+            ic.endBatchEdit();
+        }
+        KeyboardToolbar toolbar = mKeyboardSwitcher.getInputContainer();
+        if (toolbar != null) toolbar.clearSuggestions();
+    }
+
+    private void endRecorrection() {
+        mRecorrectWord = null;
+        updateSuggestions();
+    }
+
+    /** The word the strip offers alternatives for, or null (tests). */
+    String recorrectionWord() {
+        return mRecorrectWord;
     }
 
     // ---------------------------------------------------------------- learning
