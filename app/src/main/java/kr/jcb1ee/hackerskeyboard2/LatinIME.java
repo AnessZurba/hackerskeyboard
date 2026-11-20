@@ -1597,8 +1597,9 @@ public class LatinIME extends InputMethodService implements
             break;
         case Keyboard.KEYCODE_MODE_CHANGE:
             // Symbol key is handled in onPress() when device has distinct
-            // multi-touch panel.
-            if (!distinctMultiTouch)
+            // multi-touch panel; on the number keypad it switches on release
+            // (a long press flips phone and numpad order instead).
+            if (!distinctMultiTouch || onNumberKeypad())
                 changeKeyboardMode();
             break;
         case LatinKeyboardView.KEYCODE_CTRL_LEFT:
@@ -3627,6 +3628,12 @@ public class LatinIME extends InputMethodService implements
         }
     }
 
+    /** Whether the number keypad (number and phone fields) is showing. */
+    private boolean onNumberKeypad() {
+        LatinKeyboardView view = mKeyboardSwitcher.getInputView();
+        return view != null && view.isPhoneKeyboard();
+    }
+
     public void onPress(int primaryCode) {
         InputConnection ic = getCurrentInputConnection();
         if (mKeyboardSwitcher.isVibrateAndSoundFeedbackRequired()) {
@@ -3639,7 +3646,7 @@ public class LatinIME extends InputMethodService implements
             mShiftKeyState.onPress();
             startMultitouchShift();
         } else if (distinctMultiTouch
-                && primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
+                && primaryCode == Keyboard.KEYCODE_MODE_CHANGE && !onNumberKeypad()) {
             changeKeyboardMode();
             mSymbolKeyState.onPress();
             mKeyboardSwitcher.setAutoModeSwitchStateMomentary();
@@ -3688,7 +3695,7 @@ public class LatinIME extends InputMethodService implements
             }
             mShiftKeyState.onRelease();
         } else if (distinctMultiTouch
-                && primaryCode == Keyboard.KEYCODE_MODE_CHANGE) {
+                && primaryCode == Keyboard.KEYCODE_MODE_CHANGE && !onNumberKeypad()) {
             // Snap back to the previous keyboard mode if the user chords the
             // mode change key and
             // other key, then released the mode change key.

@@ -165,6 +165,11 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
         mPhoneKeyboard = phoneKeyboard;
     }
 
+    /** Whether the number keypad (number and phone fields) is showing. */
+    boolean isPhoneKeyboard() {
+        return getKeyboard() != null && getKeyboard() == mPhoneKeyboard;
+    }
+
     @Override
     public void setPreviewEnabled(boolean previewEnabled) {
         if (getKeyboard() == mPhoneKeyboard) {

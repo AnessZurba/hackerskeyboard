@@ -93,6 +93,26 @@ public class NumpadTest {
         }
     }
 
+    /** On the keypad the symbols key switches on release, so a long press can flip first. */
+    @Test
+    public void symbolsKeySwitchesOnRelease() {
+        start(InputType.TYPE_CLASS_PHONE);
+        int code = Keyboard.KEYCODE_MODE_CHANGE;
+        mIme.onPress(code);
+        ShadowLooper.idleMainLooper();
+        assertEquals("not on press", "1", topLeft());
+        mIme.onKey(code, new int[] {code}, 0, 0);
+        mIme.onRelease(code);
+        ShadowLooper.idleMainLooper();
+        assertTrue("symbols after release", !"1".equals(topLeft()));
+        // And back to the digits the same way.
+        mIme.onPress(code);
+        mIme.onKey(code, new int[] {code}, 0, 0);
+        mIme.onRelease(code);
+        ShadowLooper.idleMainLooper();
+        assertEquals("1", topLeft());
+    }
+
     @Test
     public void numpadKeepsBackspaceTopRightAndPlusOnZero() {
         prefs().edit().putBoolean(KeyboardSwitcher.PREF_NUMPAD, true).commit();
