@@ -52,6 +52,8 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
     static final int KEYCODE_NEXT_LANGUAGE = -104;
     static final int KEYCODE_PREV_LANGUAGE = -105;
     static final int KEYCODE_COMPOSE = -10024;
+    /** Long press on the number keypad's symbols key: phone order (1-2-3 on top) or numpad (7-8-9). */
+    static final int KEYCODE_NUMPAD_TOGGLE = -10030;
     
 	// The following keycodes match (negative) KeyEvent keycodes.
     // Would be better to use the real KeyEvent values, but many
@@ -191,6 +193,8 @@ public class LatinKeyboardView extends LatinKeyboardBaseView {
             return invokeOnKey(KEYCODE_OPTIONS_LONGPRESS);
         } else if (primaryCode == KEYCODE_DPAD_CENTER) {
             return invokeOnKey(KEYCODE_COMPOSE);
+        } else if (primaryCode == Keyboard.KEYCODE_MODE_CHANGE && getKeyboard() == mPhoneKeyboard) {
+            return invokeOnKey(KEYCODE_NUMPAD_TOGGLE);
         } else if (primaryCode == '0' && getKeyboard() == mPhoneKeyboard) {
             // Long pressing on 0 in phone number keypad gives you a '+'.
             return invokeOnKey('+');

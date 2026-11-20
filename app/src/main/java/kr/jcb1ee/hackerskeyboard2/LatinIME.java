@@ -1568,6 +1568,9 @@ public class LatinIME extends InputMethodService implements
         case LatinKeyboardView.KEYCODE_OPTIONS_LONGPRESS:
             onOptionKeyLongPressed();
             break;
+        case LatinKeyboardView.KEYCODE_NUMPAD_TOGGLE:
+            mKeyboardSwitcher.toggleNumpad();
+            break;
         case LatinKeyboardView.KEYCODE_COMPOSE:
             mComposeMode = !mComposeMode;
             mComposeBuffer.clear();

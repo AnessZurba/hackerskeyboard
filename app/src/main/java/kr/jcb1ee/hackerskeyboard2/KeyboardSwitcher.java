@@ -74,6 +74,9 @@ public class KeyboardSwitcher implements
     // Tables which contains resource ids for each character theme color
     private static final int KBD_PHONE = R.xml.kbd_phone;
     private static final int KBD_PHONE_SYMBOLS = R.xml.kbd_phone_symbols;
+    private static final int KBD_NUMPAD = R.xml.kbd_numpad;
+    /** Number fields: numpad order (7-8-9 on top) instead of the phone's (1-2-3 on top). */
+    static final String PREF_NUMPAD = "pref_phone_numpad";
     private static final int KBD_SYMBOLS = R.xml.kbd_symbols;
     private static final int KBD_SYMBOLS_SHIFT = R.xml.kbd_symbols_shift;
     private static final int KBD_QWERTY = R.xml.kbd_qwerty;
@@ -383,7 +386,7 @@ public class KeyboardSwitcher implements
                     mHasSettingsKey ? KEYBOARDMODE_SYMBOLS_WITH_SETTINGS_KEY
                             : KEYBOARDMODE_SYMBOLS, false, hasVoice);
         case MODE_PHONE:
-            return new KeyboardId(KBD_PHONE, 0, false, hasVoice);
+            return new KeyboardId(numpad() ? KBD_NUMPAD : KBD_PHONE, 0, false, hasVoice);
         case MODE_URL:
             return new KeyboardId(keyboardRowsResId,
                     mHasSettingsKey ? KEYBOARDMODE_URL_WITH_SETTINGS_KEY
@@ -402,6 +405,18 @@ public class KeyboardSwitcher implements
                             : KEYBOARDMODE_WEB, true, hasVoice);
         }
         return null;
+    }
+
+    private boolean numpad() {
+        return androidx.preference.PreferenceManager.getDefaultSharedPreferences(
+                mInputMethodService).getBoolean(PREF_NUMPAD, false);
+    }
+
+    /** Flips the number keypad between phone and numpad order, and remembers it. */
+    void toggleNumpad() {
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(mInputMethodService)
+                .edit().putBoolean(PREF_NUMPAD, !numpad()).apply();
+        if (mMode == MODE_PHONE) setKeyboardMode(mMode, mImeOptions, mHasVoice, false);
     }
 
     public int getKeyboardMode() {

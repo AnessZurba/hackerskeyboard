@@ -62,6 +62,7 @@ public class LayoutLoadTest {
                 {"compact", R.xml.kbd_compact}, {"compact fn", R.xml.kbd_compact_fn},
                 {"symbols", R.xml.kbd_symbols}, {"symbols shift", R.xml.kbd_symbols_shift},
                 {"phone", R.xml.kbd_phone}, {"phone symbols", R.xml.kbd_phone_symbols},
+                {"numpad", R.xml.kbd_numpad},
         };
         for (Object[] s : shared) {
             out.append(describe("en", (String) s[0], (Integer) s[1], 0));

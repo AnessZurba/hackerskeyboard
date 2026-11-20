@@ -50,6 +50,11 @@ phone symbols:
   N Pause , -
   * Wait # .
   123 + [32] [10]
+numpad:
+  7 8 9 [-5]
+  4 5 6 -
+  1 2 3 .
+  [-2] 0 [32] [10]
 
 ## ar
 5-row:
