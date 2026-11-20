@@ -55,6 +55,13 @@ public class RenderKeyboardTest {
         KeyboardToolbar toolbar = (KeyboardToolbar) ime.onCreateInputView();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
         String panel = System.getProperty("renderPanel");
+        // The number keypad, in phone or numpad order.
+        if ("phone".equals(panel) || "numpad".equals(panel)) {
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(ime).edit()
+                    .putBoolean(KeyboardSwitcher.PREF_NUMPAD, "numpad".equals(panel)).commit();
+            ime.mKeyboardSwitcher.setKeyboardMode(KeyboardSwitcher.MODE_PHONE, 0, false);
+            Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        }
         if ("emoji".equals(panel) || "emojisearch".equals(panel)) {
             int w0 = ime.getResources().getDisplayMetrics().widthPixels;
             toolbar.measure(View.MeasureSpec.makeMeasureSpec(w0, View.MeasureSpec.EXACTLY),

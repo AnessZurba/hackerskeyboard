@@ -28,6 +28,7 @@ import org.robolectric.shadows.ShadowLooper;
 public class NumpadTest {
     private ServiceController<SelectionPanelTest.TestIME> mController;
     private LatinIME mIme;
+    private EditText mEdit;
 
     private static SharedPreferences prefs() {
         return PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext());
@@ -43,9 +44,9 @@ public class NumpadTest {
 
     private void start(int inputType) {
         SelectionPanelTest.sInputType = inputType;
-        EditText edit = new EditText(ApplicationProvider.getApplicationContext());
+        mEdit = new EditText(ApplicationProvider.getApplicationContext());
         SelectionPanelTest.sConnection = new InputConnectionWrapper(
-                edit.onCreateInputConnection(new EditorInfo()), true);
+                mEdit.onCreateInputConnection(new EditorInfo()), true);
         mController = Robolectric.buildService(SelectionPanelTest.TestIME.class).create();
         mIme = mController.get();
         mIme.onCreateInputView();
@@ -129,5 +130,10 @@ public class NumpadTest {
         assertEquals(top, del.y);
         assertEquals(right, del.x + del.width);
         assertNotNull(zero);
+        assertEquals("a + hint on 0", "+", String.valueOf(zero.popupCharacters));
+        // Long press on 0 types +, as in phone order.
+        assertTrue(mIme.mKeyboardSwitcher.getInputView().onLongPress(zero));
+        ShadowLooper.idleMainLooper();
+        assertEquals("+", mEdit.getText().toString());
     }
 }
