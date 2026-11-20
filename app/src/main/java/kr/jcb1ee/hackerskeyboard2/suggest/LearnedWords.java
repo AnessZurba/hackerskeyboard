@@ -14,6 +14,12 @@
 
 package kr.jcb1ee.hackerskeyboard2.suggest;
 
+import android.content.Context;
+import android.text.InputType;
+import android.view.inputmethod.EditorInfo;
+
+import androidx.core.view.inputmethod.EditorInfoCompat;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,8 +54,10 @@ import java.util.concurrent.TimeUnit;
  * use it, so a keyboard reopened for the same language sees what the old one learned. All
  * methods are thread safe; the native work runs under this object's lock.
  */
-final class LearnedWords {
+public final class LearnedWords {
     static final String DIR = "learning";
+    /** The old engine's learned words (stage 5 left them unread); "Forget" deletes them. */
+    private static final String[] OLD_DATABASES = {"auto_dict.db", "userbigram_dict.db"};
     private static final String HISTORY = "history";
     private static final String SAVED = "saved.txt";
     /** AOSP's dictionary type prefix for the user history dictionary. */
@@ -69,6 +77,48 @@ final class LearnedWords {
     private LearnedWords(File dir, String locale) {
         mDir = dir;
         mLocale = locale;
+    }
+
+    /** The directory for {@code locale}'s learned words in the app's private files. */
+    public static File directory(Context context, String locale) {
+        return directoryFor(context.getFilesDir(), locale);
+    }
+
+    /**
+     * "Forget learned words": everything learned and saved, in every language, including
+     * what the old engine had learned. Blocks for the file work.
+     */
+    public static void forgetAll(Context context) {
+        clearAll(context.getFilesDir());
+        for (String db : OLD_DATABASES) context.deleteDatabase(db);
+    }
+
+    /**
+     * Whether what is typed in {@code info}'s field may be learned (and saved): plain text
+     * only, never passwords, never fields that ask for no suggestions or no personalized
+     * learning (incognito tabs and private chats set IME_FLAG_NO_PERSONALIZED_LEARNING),
+     * never addresses (URI, e-mail), filters or terminals (TYPE_NULL).
+     */
+    public static boolean allowedIn(EditorInfo info) {
+        if (info == null) return false;
+        int type = info.inputType;
+        if ((type & InputType.TYPE_MASK_CLASS) != InputType.TYPE_CLASS_TEXT) return false;
+        if ((type & InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0) return false;
+        if ((info.imeOptions & EditorInfoCompat.IME_FLAG_NO_PERSONALIZED_LEARNING) != 0) {
+            return false;
+        }
+        switch (type & InputType.TYPE_MASK_VARIATION) {
+            case InputType.TYPE_TEXT_VARIATION_PASSWORD:
+            case InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD:
+            case InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD:
+            case InputType.TYPE_TEXT_VARIATION_URI:
+            case InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS:
+            case InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS:
+            case InputType.TYPE_TEXT_VARIATION_FILTER:
+                return false;
+            default:
+                return true;
+        }
     }
 
     /** The directory for {@code locale}'s learned words under the app's files directory. */
@@ -102,11 +152,12 @@ final class LearnedWords {
         synchronized (sOpen) {
             if (--mUsers > 0) return;
             sOpen.remove(mDir.getAbsolutePath());
-        }
-        synchronized (this) {
-            flushLocked();
-            if (mHistory != null) mHistory.close();
-            mHistory = null;
+            // Still under sOpen: whoever opens this directory next reads what is written here.
+            synchronized (this) {
+                flushLocked();
+                if (mHistory != null) mHistory.close();
+                mHistory = null;
+            }
         }
     }
 

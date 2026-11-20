@@ -188,6 +188,11 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             }
 
             @Override
+            public void onSuggestionLongPressed(String word) {
+                ime().onStripWordLongPressed(word);
+            }
+
+            @Override
             public void onMoreToggled() {
                 toggleMoreSuggestions();
             }
@@ -546,6 +551,21 @@ final class KeyboardToolbar extends LinearLayout implements ClipboardHistory.Lis
             updateMorePanel(true);
         }
         updateRowContent();
+    }
+
+    /** Every candidate shown or for the panel, best first (tests). */
+    List<String> allSuggestions() {
+        return new ArrayList<>(mAllWords);
+    }
+
+    /**
+     * A long-pressed word's prompt in the strip ("Remove “word” from suggestions?"), with an
+     * action (null: none), until the next words.
+     */
+    void showWordPrompt(String text, String action, Runnable onAction) {
+        if (!mStrip.hasWords()) return;
+        closeMoreSuggestions(false);
+        mStrip.showPrompt(text, action, onAction);
     }
 
     void clearSuggestions() {
